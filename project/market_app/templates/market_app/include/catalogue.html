@@ -1,0 +1,29 @@
+<div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-2 m-0">
+  {% for product in products %}
+    <div class="col">
+      <a class="text-decoration-none text-dark" href="{% url 'market_app:product' product.pk %}">
+
+        <div class="card h-100">
+          <img class="card-img-top"
+               src="{{ product.get_img_url }}" alt="product image">
+          <p class="text-center">
+            {{ product }}
+          </p>
+          <div class="p-1">
+            <div style="text-align: right">
+              {% if product.discount_percent %}
+
+                <s>{{ product.original_price }}</s>
+                <b>{{ product.sale_price }}</b>
+              {% else %}
+                <p>{{ product.original_price }}</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </a>
+
+    </div>
+
+  {% endfor %}
+</div>

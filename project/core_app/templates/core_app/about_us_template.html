@@ -1,0 +1,27 @@
+{% extends 'core_app/base_template.html' %}
+{% load i18n %}
+
+{% block main_center_card %}
+  <div class="card-header content-title">
+  {% trans 'About us' %}
+  </div>
+  <div class="card-body">
+    <p>
+    Some information about the site
+  </p>
+    <p>
+      {% trans 'Contact information' %}:
+    </p>
+    <ul>
+      <li>
+        {% trans 'Email' %}: contact@email.org
+      </li>
+      <li>
+        {% trans 'Phone number' %}: Your Phone Number
+      </li>
+      <li>
+        {% trans 'Address' %}: Put Your Address Here
+      </li>
+    </ul>
+  </div>
+{% endblock %}

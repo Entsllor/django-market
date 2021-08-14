@@ -1,0 +1,40 @@
+{% load i18n %}
+<div class="card my-2 border-0 sticky-top">
+  <div class="card-header content-title">
+    {% trans 'Navigation' %}
+  </div>
+  <ul class="list-group list-group-flush text-center">
+    <li class="list-group-item">
+      <a href="{% url 'market_app:catalogue' %}">
+        {% trans 'Main Page' %}
+      </a>
+    </li>
+    {% if user.market_set %}
+      <li class="list-group-item">
+        <a href="{% url 'market_app:create_product' %}">
+          {% trans 'Create product' %}
+        </a>
+      </li>
+      <li class="list-group-item">
+        <a href="{% url 'market_app:create_market' %}">
+          {% trans 'Create market' %}
+        </a>
+      </li>
+      <li class="list-group-item">
+        <a href="{% url 'market_app:my_markets' %}">
+          {% trans 'My markets' %}
+        </a>
+      </li>
+    {% endif %}
+    <li class="list-group-item">
+      <a href="{% url 'market_app:cart' %}">
+        {% trans 'My cart' %}
+      </a>
+    </li>
+    <li class="list-group-item">
+      <a href="{% url 'market_app:top_up' %}">
+        {% trans 'balance' %} {{ user.shopping_account.balance }}
+      </a>
+    </li>
+  </ul>
+</div>

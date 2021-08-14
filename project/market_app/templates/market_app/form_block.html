@@ -1,0 +1,13 @@
+{% extends 'market_app/app_base.html' %}
+{% load i18n %}
+
+
+{% block main_center_card %}
+  <h2 class="card-header content-title">
+    {% block card-title %}{% endblock %}
+  </h2>
+  <div class="card-body">
+    {% block form_block %}
+    {% endblock %}
+  </div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'market_app/form_block.html' %}
+{% load i18n %}
+
+{% block card-title %}
+  {% trans 'Create market' %}
+{% endblock %}
+
+{% block form_block %}
+  <form action="{% url 'market_app:create_market' %}" method="post">
+    {% include 'core_app/include/pretty_form.html' with form=form %}
+    {% csrf_token %}
+  </form>
+{% endblock %}

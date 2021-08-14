@@ -1,0 +1,28 @@
+{% extends 'accounts/app_base.html' %}
+{% load i18n %}
+
+{% block main_center_card %}
+  <h2 class="card-header content-title">
+    {% trans 'Profile' %}: {{ user.username }}
+  </h2>
+
+  <div class="list-group list-group-flush">
+    {% for label, value in profile.get_public_information.items %}
+    {% if value %}
+      <li class="list-group-item">
+        <div class="row">
+          <div class="col-md-3">
+
+            <b>{{ label|capfirst }}</b>:
+          </div>
+          <div class="col-md-9">
+            {{ value }}
+
+          </div>
+        </div>
+      </li>
+    {% endif %}
+  {% endfor %}
+  </div>
+
+{% endblock %}

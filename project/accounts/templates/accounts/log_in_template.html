@@ -1,0 +1,22 @@
+{% extends 'core_app/form_page.html' %}
+{% load i18n %}
+
+{% block page_title %}
+  {% trans 'Log in' %}
+{% endblock %}
+
+
+{% block form_block %}
+  <form method="post"
+        action="{% url 'accounts:log_in' %}">
+    {% csrf_token %}
+    {% include 'core_app/include/pretty_form.html' with form=form %}
+    <hr class="my-4">
+    <a href="{% url 'accounts:registration' %}"
+       class="link-secondary">
+      <p class="text-center">
+        {% trans "I don't have an account" %}
+      </p>
+    </a>
+  </form>
+{% endblock %}

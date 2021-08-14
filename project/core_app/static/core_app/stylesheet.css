@@ -1,0 +1,26 @@
+.content-title {
+  text-align: center;
+  background-color: #212529;
+  color: white;
+}
+
+.article-container {
+  background-color: white;
+  min-height: 100vh;
+  word-wrap: break-word;
+}
+
+.to_top_button {
+  position: fixed;
+  right: 2vh;
+  bottom: 2vh;
+}
+
+.article-body {
+  padding: 0 1em;
+}
+
+.article-header {
+  text-align: center;
+  padding-top: 0.5em;
+}

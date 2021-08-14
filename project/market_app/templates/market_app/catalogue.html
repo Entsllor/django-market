@@ -1,0 +1,5 @@
+{% extends 'market_app/app_base.html' %}
+
+{% block main_center_block %}
+  {% include 'market_app/include/catalogue.html' with products=products %}
+{% endblock %}

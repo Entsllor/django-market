@@ -1,0 +1,31 @@
+{% extends 'market_app/app_base.html' %}
+{% load i18n %}
+
+{% block main_center_block %}
+  <div class="card my-2">
+    <div class="card-header content-title">
+      <h3 class="">{{ market.name }}</h3>
+    </div>
+
+    <div class="card-body">
+      <img class="img-fluid float-end"
+           src="{{ market.get_img_url }}"
+           alt="market logo">
+
+      <p class="card-text">
+        {% if market.description %}
+          {% trans 'Description' %} {{ market.description }} <br>
+        {% endif %}
+        {% trans 'Market owner' %}: {{ market.owner.username }} <br>
+        {% trans 'Product count' %}
+        {{ market.product_set.count }}
+      </p>
+    </div>
+    {% if market.owner == user %}
+      <a href="{% url 'market_app:edit_market' pk=market.pk %}"
+         class="btn btn-dark" role="button">{% trans 'Edit market' %}</a>
+    {% endif %}
+  </div>
+
+  {% include 'market_app/include/catalogue.html' with products=market.product_set.all %}
+{% endblock %}

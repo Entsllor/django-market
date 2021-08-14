@@ -1,0 +1,246 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-07-29 22:47+0500\n"
+"PO-Revision-Date: 2021-07-29 18:11+0500\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || (n"
+"%100>=11 && n%100<=14)? 2 : 3);\n"
+"X-Generator: Poedit 3.0\n"
+
+#: .\accounts\apps.py:8
+msgid "Accounts"
+msgstr "Профили"
+
+#: .\accounts\forms.py:22
+msgid "Birthdate"
+msgstr "Дата рождения"
+
+#: .\accounts\forms.py:43
+msgid "Name"
+msgstr "Имя"
+
+#: .\accounts\forms.py:44
+msgid "Surname"
+msgstr "Фамилия"
+
+#: .\accounts\forms.py:45
+msgid "Avatar"
+msgstr "Аватарка"
+
+#: .\accounts\models.py:13
+msgid "Male"
+msgstr "Мужчина"
+
+#: .\accounts\models.py:14
+msgid "Female"
+msgstr "Женщина"
+
+#: .\accounts\models.py:21
+msgid "user"
+msgstr "пользователь"
+
+#: .\accounts\models.py:26 .\accounts\models.py:90
+msgid "first name"
+msgstr "имя"
+
+#: .\accounts\models.py:31 .\accounts\models.py:91
+msgid "last name"
+msgstr "фамилия"
+
+#: .\accounts\models.py:36 .\accounts\models.py:93
+msgid "phone number"
+msgstr "номер телефона"
+
+#: .\accounts\models.py:43 .\accounts\models.py:89
+msgid "birthdate"
+msgstr "дата рождения"
+
+#: .\accounts\models.py:48 .\accounts\models.py:94
+msgid "country"
+msgstr "страна"
+
+#: .\accounts\models.py:53 .\accounts\models.py:95
+msgid "town"
+msgstr "город"
+
+#: .\accounts\models.py:58 .\accounts\models.py:96
+msgid "about user"
+msgstr "о пользователе"
+
+#: .\accounts\models.py:64
+msgid "avatar"
+msgstr "аватарка"
+
+#: .\accounts\models.py:73 .\accounts\models.py:92
+msgid "gender"
+msgstr "пол"
+
+#: .\accounts\models.py:80 .\accounts\templates\accounts\info_view.html:20
+#: .\accounts\templates\accounts\profile.html:6
+msgid "Profile"
+msgstr "Профиль"
+
+#: .\accounts\models.py:81
+msgid "Profiles"
+msgstr "Профили"
+
+#: .\accounts\models.py:88
+msgid "with us since"
+msgstr "с нами с"
+
+#: .\accounts\templates\accounts\include\app_part_navbar.html:6
+msgid "Account"
+msgstr "Аккаунт"
+
+#: .\accounts\templates\accounts\include\app_part_navbar.html:11
+msgid "My profile"
+msgstr "Мой профиль"
+
+#: .\accounts\templates\accounts\include\app_part_navbar.html:16
+#: .\accounts\templates\accounts\include\current_user_card.html:15
+msgid "Edit my profile"
+msgstr "Редактировать мой профиль"
+
+#: .\accounts\templates\accounts\include\app_part_navbar.html:21
+#: .\accounts\templates\accounts\include\current_user_card.html:27
+#: .\accounts\templates\accounts\info_view.html:25
+msgid "Log out"
+msgstr "Выйти"
+
+#: .\accounts\templates\accounts\include\app_part_navbar.html:29
+#: .\accounts\templates\accounts\log_in_template.html:5
+#: .\accounts\templates\accounts\log_out_page.html:14
+msgid "Log in"
+msgstr "Войти"
+
+#: .\accounts\templates\accounts\include\current_user_card.html:21
+msgid "go to admin-panel"
+msgstr "перейти к админ панели"
+
+#: .\accounts\templates\accounts\include\pretty_user_picture.html:5
+msgid "user-picture"
+msgstr "аватарка"
+
+#: .\accounts\templates\accounts\info_view.html:15
+#: .\accounts\templates\accounts\log_out_page.html:10
+msgid "Go to main page"
+msgstr "На главную"
+
+#: .\accounts\templates\accounts\log_in_template.html:18
+msgid "I don't have an account"
+msgstr "У меня нет аккаунта"
+
+#: .\accounts\templates\accounts\log_out_page.html:5
+msgid "You have been logged out"
+msgstr "Вы вышли"
+
+#: .\accounts\templates\accounts\log_out_page.html:18
+msgid "Create an account"
+msgstr "Создать аккаунт"
+
+#: .\accounts\templates\accounts\password_change_template.html:5
+#: .\accounts\templates\accounts\update_profile.html:17
+msgid "Change password"
+msgstr "Изменить пароль"
+
+#: .\accounts\templates\accounts\registration.html:6
+msgid "Registration"
+msgstr "Регистрация"
+
+#: .\accounts\templates\accounts\update_profile.html:6
+msgid "Edit my profile."
+msgstr "Редактировать профиль."
+
+#: .\accounts\templates\accounts\update_profile.html:14
+#: .\core_app\templates\core_app\include\pretty_form.html:62
+msgid "Submit"
+msgstr "Подтвердить"
+
+#: .\accounts\validators.py:20 .\accounts\validators.py:27
+msgid "Please use an image that is"
+msgstr "Пожалуйста используйте изображение размера"
+
+#: .\accounts\validators.py:23
+msgid "or smaller."
+msgstr "или меньше."
+
+#: .\accounts\validators.py:30
+msgid "or bigger."
+msgstr "или больше."
+
+#: .\accounts\validators.py:38
+msgid "Expected file formats for uploads"
+msgstr "Принимаемые форматы файлов"
+
+#: .\accounts\validators.py:40
+msgid "Caught"
+msgstr "Получено"
+
+#: .\accounts\validators.py:48
+msgid "You cannot create an account if you are under 18"
+msgstr "Вы не можете создать аккаунт если вам меньше 18 лет"
+
+#: .\accounts\validators.py:53
+msgid "Expected an phone number in the format +99999999999 or 99999999999"
+msgstr "Ожидался номер в формате +99999999999 или 99999999999"
+
+#: .\accounts\views.py:62
+msgid "Your password was changed."
+msgstr "Ваш пароль был изменен."
+
+#: .\core_app\templates\core_app\about_us_template.html:6
+#: .\core_app\templates\core_app\base_template.html:97
+msgid "About us"
+msgstr "О нас"
+
+#: .\core_app\templates\core_app\about_us_template.html:13
+msgid "Contact information"
+msgstr "Контактная информация"
+
+#: .\core_app\templates\core_app\about_us_template.html:17
+msgid "Email"
+msgstr "Email"
+
+#: .\core_app\templates\core_app\about_us_template.html:20
+msgid "Phone number"
+msgstr "Номер телефона"
+
+#: .\core_app\templates\core_app\about_us_template.html:23
+msgid "Address"
+msgstr "Адресс"
+
+#: .\core_app\templates\core_app\base_template.html:78
+msgid "Choose your language"
+msgstr "Выбрать язык"
+
+#: .\core_app\templates\core_app\include\paginator.html:14
+#: .\core_app\templates\core_app\include\paginator.html:35
+msgid "Previous"
+msgstr "Предыдущая"
+
+#: .\core_app\templates\core_app\include\paginator.html:18
+#: .\core_app\templates\core_app\include\paginator.html:39
+msgid "Page"
+msgstr "Страница"
+
+#: .\core_app\templates\core_app\include\paginator.html:22
+#: .\core_app\templates\core_app\include\paginator.html:43
+msgid "Next"
+msgstr "Следующая"
+
+#: .\core_app\templates\core_app\main_page.html:8
+msgid "Main page"
+msgstr "Главная страница"

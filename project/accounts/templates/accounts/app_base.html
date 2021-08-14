@@ -1,0 +1,8 @@
+{% extends 'core_app/base_template.html' %}
+{% load i18n %}
+
+{% block main_left_block %}
+  {% include 'accounts/include/current_user_card.html' with user=user %}
+  {% block main_left_card %}
+  {% endblock %}
+{% endblock %}

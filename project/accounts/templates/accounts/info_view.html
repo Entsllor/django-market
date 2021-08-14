@@ -1,0 +1,29 @@
+{% extends 'accounts/app_base.html' %}
+{% load i18n %}
+{% block main_center_card %}
+  <div class="card-header content-title">
+    {{ title }}
+  </div>
+  <div class="card-body">
+  <p>
+    {{ message }}
+  </p>
+  </div>
+  <ul class="list-group list-group-flush">
+    <li class="list-group-item">
+      <a href="/">
+        {% trans 'Go to main page' %}
+      </a>
+    </li>
+    <li class="list-group-item">
+      <a href="{% url 'accounts:profile' %}">
+        {% trans 'Profile' %}
+      </a>
+    </li>
+    <li class="list-group-item">
+      <a href="{% url 'accounts:log_out' %}">
+        {% trans 'Log out' %}
+      </a>
+    </li>
+  </ul>
+{% endblock %}

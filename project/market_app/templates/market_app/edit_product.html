@@ -1,0 +1,53 @@
+{% extends 'market_app/form_block.html' %}
+
+{% load i18n %}
+
+{% block card-title %}
+  {% trans 'Edit product' %}
+{% endblock %}
+
+{% block form_block %}
+  <form action="{% url 'market_app:edit_product' pk=product.pk %}" method="post" enctype="multipart/form-data">
+    {% include 'core_app/include/pretty_form.html' with form=form %}
+    {% csrf_token %}
+  </form>
+
+  <div class="overflow-auto">
+    <table class="table w-100 text-center table-striped">
+      <thead>
+      <tr>
+        <th scope="col">
+          count
+        </th>
+        {% for attribute in product.get_attributes %}
+          <th scope="col">{{ attribute }}</th>
+        {% endfor %}
+        <th>Edit</th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for product_type in product.product_types.all %}
+        <tr>
+          <th>{{ product_type.units_count }}</th>
+          {% for value in product_type.dict_attributes.values %}
+            <td>
+              {{ value }}
+            </td>
+          {% endfor %}
+          <td>
+            <a href="{% url 'market_app:edit_type' product_type.pk %}">
+              edit
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="text-center">
+    <a class="btn btn-primary" href="{% url 'market_app:create_type' pk=product.pk %}">
+      create type
+    </a>
+  </div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-dismissible fade show my-2
+    {#  choose message-block color  #}
+    {% if message.level <= 10 %}
+      alert-secondary
+    {% elif message.level <= 20 %}
+      alert-info
+    {% elif message.level <= 25 %}
+      alert-success
+    {% elif message.level <= 30 %}
+      alert-warning
+    {% else %}
+      alert-danger
+    {% endif %}" role="alert">
+      {#   Possible needs to display tags and tags l10n   #}
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endfor %}
+
+{% endif %}

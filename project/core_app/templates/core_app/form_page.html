@@ -1,0 +1,27 @@
+{% extends 'core_app/meta_base_template.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block body %}
+  <section class="min-vh-100 bg-secondary">
+    <div class="container py-5 h-100">
+      <div class="row d-flex justify-content-center align-items-center h-100">
+        <div class="col-sm-12 col-md-8 col-lg-6 col-xl-5">
+          <div class="card mb-3 border-dark">
+            <h3 class="card-header text-center text-light bg-dark">
+              {% block page_title %}
+              {% endblock %}
+            </h3>
+            <div class="card-body">
+
+              {% block form_block %}
+              {% endblock %}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+{% endblock %}

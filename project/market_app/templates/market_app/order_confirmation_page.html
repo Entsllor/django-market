@@ -1,0 +1,10 @@
+{% extends 'market_app/app_base.html' %}
+{% block main_center_block %}
+<div class="alert alert-dismissible fade show my-2 alert-success" role="alert">
+      {#   Possible needs to display tags and tags l10n   #}
+      Thank you for your order
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+  {% include 'market_app/include/catalogue.html' with products=products %}
+{% endblock %}

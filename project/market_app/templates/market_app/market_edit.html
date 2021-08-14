@@ -1,0 +1,20 @@
+{% extends 'market_app/form_block.html' %}
+{% load i18n %}
+
+{% block card-title %}
+  {% trans 'Market edit' %}
+{% endblock %}
+
+{% block form_block %}
+  <form action="{% url 'market_app:edit_market' pk=view.kwargs.pk %}" method="post" enctype="multipart/form-data">
+    {% include 'core_app/include/pretty_form.html' with form=form without_button=True %}
+    {% csrf_token %}
+    <div class="d-flex justify-content-end gap-1">
+      <a href="{{ market.get_absolute_url }}"
+      class="btn btn-danger ms-1">{% trans 'Cancel' %}</a>
+      <button type="submit" class="btn btn-primary">
+        {% trans 'Submit' %}
+      </button>
+    </div>
+  </form>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% load i18n %}
+{% if user.is_authenticated %}
+  <div class="d-md-none p-2">
+    {% include 'accounts/include/pretty_user_picture.html' with user=user as_avatar=True rounded=True %}
+  </div>
+
+  <div class="card my-2 border-0">
+    <div class="d-none d-md-inline-block rounded-top">
+      {% include 'accounts/include/pretty_user_picture.html' with user=user %}
+    </div>
+
+    <ul class="list-group list-group-flush text-center">
+      <li class="list-group-item">
+        <a href="{% url 'accounts:update_profile' %}" class="card-link">
+          {% trans 'Edit my profile' %}
+        </a>
+      </li>
+      {% if request.user.is_superuser %}
+        <li class="list-group-item">
+          <a href="{% url 'admin:index' %}" class="card-link">
+            {% trans 'go to admin-panel' %}
+          </a>
+        </li>
+      {% endif %}
+      <li class="list-group-item">
+        <a href="{% url 'accounts:log_out' %}" class="card-link">
+          {% trans 'Log out' %}
+        </a>
+      </li>
+    </ul>
+  </div>
+{% endif %}

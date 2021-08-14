@@ -1,0 +1,89 @@
+{% extends 'core_app/meta_base_template.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block header %}
+  <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+    <div class="container-lg">
+      <a class="navbar-brand text-wrap text-center" href="/">
+        {% block brand %}
+          <img src="{% static 'core_app/favicon.ico' %}" width="30" alt="icon"> MySite
+        {% endblock %}
+      </a>
+
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'accounts:profile' %}">Profile</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+{% endblock %}
+{% block main %}
+
+  <div style="background-color: #dedede">
+    <div class="container-lg min-vh-100 px-0 px-md-2">
+
+      {% block main_container %}
+        <div class="row g-0 g-md-2">
+          <div class="col-md-2 order-0">
+            {% block main_left_block %}
+              {#       WARNING! DON'T MAKE SPACE BETWEEN CARD DIV ELSE DIV WILL BE NOT EMPTY       #}
+              <div class="card my-2 border-0 sticky-top">{% block main_left_card %}{% endblock %}</div>
+            {% endblock main_left_block %}
+          </div>
+          <div class="col-md-8 order-2 order-md-1">
+            {% block messages %}
+              {% include 'core_app/messages_block.html' %}
+            {% endblock %}
+            {% block main_center_block %}
+              {#       WARNING! DON'T MAKE SPACE BETWEEN CARD DIV ELSE DIV WILL BE NOT EMPTY       #}
+              <div class="card my-2 border-0">{% block main_center_card %}{% endblock %}</div>
+            {% endblock main_center_block %}
+          </div>
+
+          <div class="col-md-2 order-1 order-md-2">
+            {% block main_right_block %}
+              {#       WARNING! DON'T MAKE SPACE BETWEEN CARD DIV ELSE DIV WILL BE NOT EMPTY       #}
+              <div class="card my-2 border-0">{% block main_right_card %}{% endblock %}</div>
+            {% endblock main_right_block %}
+          </div>
+        </div>
+      {% endblock main_container %}
+      <br>
+    </div>
+  </div>
+{% endblock %}
+
+{% block footer %}
+  <div class="container p-1">
+
+    <section>
+      <form action="{% url 'set_language' %}" method="post" name="set_language_form">
+        {% csrf_token %}
+        <input name="next" type="hidden" value="{{ redirect_to }}">
+        <label> {% trans 'Choose your language' %}
+          <select name="language" class='form-select' onchange="document.forms.set_language_form.submit()">
+            {% get_current_language as LANGUAGE_CODE %}
+            {% get_available_languages as LANGUAGES %}
+            {% get_language_info_list for LANGUAGES as languages %}
+            {% for language in languages %}
+              <option value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} selected{% endif %}>
+                {{ language.name_local }} ({{ language.code }})
+              </option>
+            {% endfor %}
+          </select>
+        </label>
+        {#    set if need to display submit button    #}
+        {#    <input type="submit" value="{% trans '' %}" style="display: inline">    #}
+      </form>
+    </section>
+
+    <div class="text-center p-1">
+      <a href="{% url 'core_app:about_us' %}" class="link-light">
+        {% trans 'About us' %}
+      </a>
+    </div>
+  </div>
+{% endblock %}

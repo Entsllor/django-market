@@ -1,0 +1,51 @@
+{% extends 'core_app/base_template.html' %}
+{% load i18n %}
+
+{# need to update #}
+
+{% block main_content %}
+  {% block top_content %}
+  {% endblock %}
+
+  {% if is_paginated %}
+    <p class="paginator">
+      {% if page_obj.has_previous %}
+        <span><a href="?page={{ page_obj.previous_page_number }}">
+          {% trans 'Previous' %}
+        </a></span>
+      {% endif %}
+      <span>
+        {% trans 'Page' %} {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+      </span>
+      {% if page_obj.has_next %}
+        <span><a href="?page={{ page_obj.next_page_number }}">
+          {% trans 'Next' %}
+        </a></span>
+      {% endif %}
+    </p>
+  {% endif %}
+
+  {% block center_content %}
+  {% endblock %}
+
+  {% if is_paginated %}
+    <p class="paginator">
+      {% if page_obj.has_previous %}
+        <span><a href="?page={{ page_obj.previous_page_number }}">
+          {% trans 'Previous' %}
+        </a></span>
+      {% endif %}
+      <span>
+        {% trans 'Page' %} {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+      </span>
+      {% if page_obj.has_next %}
+        <span><a href="?page={{ page_obj.next_page_number }}">
+          {% trans 'Next' %}
+        </a></span>
+      {% endif %}
+    </p>
+  {% endif %}
+
+  {% block bottom_content %}
+  {% endblock %}
+{% endblock main_content %}

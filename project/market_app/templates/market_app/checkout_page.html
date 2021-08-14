@@ -1,0 +1,19 @@
+{% extends 'market_app/form_block.html' %}
+
+{% block card-title %}
+  Check out
+{% endblock %}
+
+{% block form_block %}
+  <p>
+    total price: {{ user.shopping_account.total_price }}
+  </p>
+  <p>
+    balance: {{ user.shopping_account.balance }}
+  </p>
+
+  <form action="{% url 'market_app:checkout' %}" method="post">
+    {% csrf_token %}
+    {% include 'core_app/include/pretty_form.html' with form=form %}
+  </form>
+{% endblock %}

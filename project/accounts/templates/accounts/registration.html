@@ -1,0 +1,15 @@
+{% extends 'accounts/app_base.html' %}
+{% load i18n %}
+
+{% block main_center_card %}
+  <h2 class="card-header content-title">
+    {% trans 'Registration' %}
+  </h2>
+  <div class="card-body">
+    <form method="post" action="{% url 'accounts:registration' %}">
+      {% csrf_token %}
+      {% include 'core_app/include/pretty_form.html' with form=form %}
+    </form>
+  </div>
+
+{% endblock %}
