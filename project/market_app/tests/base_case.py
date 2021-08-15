@@ -36,6 +36,14 @@ class BaseMarketTestCase(TestCase):
         self.category = self.create_category()
         self.market = self.create_market(owner=self.seller)
 
+    @property
+    def shopping_account(self) -> ShoppingAccount:
+        return ShoppingAccount.objects.get(user=self.user)
+
+    @property
+    def balance(self):
+        return self.shopping_account.balance
+
     def log_in_as_customer(self):
         self._log_in(self.customer)
 
@@ -167,10 +175,6 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
     @property
     def product_types(self):
         return ProductType.objects.all()
-
-    @property
-    def shopping_account(self) -> ShoppingAccount:
-        return ShoppingAccount.objects.get(user=self.user)
 
     def fill_cart(self, types_to_add):
         for product_type_id, units_count in types_to_add.items():

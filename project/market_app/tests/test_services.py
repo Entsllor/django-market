@@ -8,15 +8,7 @@ from ..services import top_up_balance, make_purchase, withdraw_money, NotEnoughM
 class ChangeBalanceTest(BaseMarketTestCase):
     def setUp(self) -> None:
         self.customer = self.create_customer()
-
-    @property
-    def shopping_account(self):
-        self.customer.refresh_from_db()
-        return self.customer.shopping_account
-
-    @property
-    def balance(self):
-        return self.shopping_account.balance
+        self.log_in_as_customer()
 
     def check_data_to_compare(self):
         return self.balance
@@ -66,14 +58,6 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
     @property
     def sellers_balance(self):
         return {seller.pk: seller.shopping_account.balance for seller in self.sellers}
-
-    @property
-    def shopping_account(self):
-        return ShoppingAccount.objects.get(user=self.customer)
-
-    @property
-    def balance(self):
-        return self.shopping_account.balance
 
     # check total sum of user's money
     def check_data_to_compare(self):
@@ -146,14 +130,6 @@ class CouponTest(TestBaseWithFilledCatalogue):
     def sellers_balance(self):
         return {seller.pk: seller.shopping_account.balance for seller in self.sellers}
 
-    @property
-    def shopping_account(self):
-        return ShoppingAccount.objects.get(user=self.customer)
-
-    @property
-    def balance(self):
-        return self.shopping_account.balance
-
     def test_unlink_activated_coupon_after_buying(self):
         activated_coupon = Coupon.objects.create(discount_percent=10)
         activated_coupon.customers.add(self.shopping_account)
@@ -163,4 +139,3 @@ class CouponTest(TestBaseWithFilledCatalogue):
         make_purchase(self.shopping_account)
         self.assertIsNone(self.shopping_account.activated_coupon)
         self.assertFalse(self.shopping_account.coupon_set.filter(pk=activated_coupon.pk).exists())
-
