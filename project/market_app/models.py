@@ -1,11 +1,12 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models import F, QuerySet
 from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 
 User = get_user_model()
-from django.conf import settings
 
 
 class ProductCategory(models.Model):
@@ -197,12 +198,21 @@ class ShoppingAccount(models.Model):
 
     order = models.JSONField('order', default=dict, blank=True)
 
+    activated_coupon = models.ForeignKey(
+        'Coupon',
+        verbose_name=_('activated coupon'),
+        on_delete=models.SET_NULL,
+        null=True, blank=True
+    )
+
     def set_units_count_to_order(self, product_type_pk, quantity: int) -> int:
         """Try to set quantity of product-type's units.
         Return the number of units after setting"""
         if not isinstance(quantity, int) or quantity < 0:
             raise ValueError(f'Expected a natural number, got {quantity} instead')
         product_type = ProductType.objects.only('id').get(pk=product_type_pk)
+        if product_type.product.market.owner == self.user:
+            raise PermissionError(f'Cannot add your own product to your order.')
         product_type_pk = str(product_type_pk)
         units_count_at_start = self.order.get(product_type_pk, 0)
         difference = quantity - units_count_at_start
@@ -239,6 +249,13 @@ class ShoppingAccount(models.Model):
         total_price = 0
         for item in self.get_order_list('id'):
             total_price += item.sale_price * item.units_on_cart
+        if self.activated_coupon:
+            coupon = self.activated_coupon
+            coupon_discount_percent = coupon.discount_percent / 100
+            coupon_discount = total_price * coupon_discount_percent
+            if coupon.max_discount:
+                coupon_discount = min(coupon_discount, coupon.max_discount)
+            total_price -= coupon_discount
         return total_price
 
 
@@ -259,16 +276,23 @@ class ShoppingReceipt(models.Model):
 
 
 class Coupon(models.Model):
-    customer = models.ForeignKey(ShoppingAccount, verbose_name=_('customer'), on_delete=models.CASCADE)
-    category = models.ForeignKey(
-        ProductCategory,
-        verbose_name=_('category coupon'),
-        on_delete=models.CASCADE,
+    customers = models.ManyToManyField(
+        ShoppingAccount, verbose_name=_('customer')
+    )
+    description = models.TextField(verbose_name=_('description'), blank=True)
+    max_discount = models.DecimalField(
+        verbose_name=_('max discount'), blank=True, null=True,
+        max_digits=15, decimal_places=2
     )
     discount_percent = models.DecimalField(
         verbose_name=_('discount percent'),
         max_digits=5,
         decimal_places=2,
         default=0,
-        blank=True
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
+
+    def __str__(self):
+        str_class = _('Coupon')
+        return f'{str_class}: {self.description}'

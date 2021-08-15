@@ -10,14 +10,14 @@
     <ul class="list-group list-group-flush">
       {% for order_item in shopping_account.get_order_list %}
         <li class="list-group-item">
-            <h3>{{ order_item.product.name }}</h3>
-            <p>{{ order_item.str_attributes }}</p>
-            <div>
-              <label for="id_counter">
-                Number of units:
-              </label>
-              <input id="id_counter" type="number" disabled class="form-control" value="{{ order_item.units_on_cart }}">
-            </div>
+          <h3>{{ order_item.product.name }}</h3>
+          <p>{{ order_item.str_attributes }}</p>
+          <div>
+            <label for="id_counter">
+              Number of units:
+            </label>
+            <input id="id_counter" type="number" disabled class="form-control" value="{{ order_item.units_on_cart }}">
+          </div>
           <p>
             Unit price: {{ order_item.sale_price }}
             {% if order_item.product.discount_percent %}
@@ -28,13 +28,15 @@
         </li>
       {% endfor %}
     </ul>
-
     <div class="card-body">
       <p>
         Your balance: <a href="{% url 'market_app:top_up' %}">{{ shopping_account.balance }}</a> <br>
         total price: {{ shopping_account.total_price }}
       </p>
-
+      <form method="post" action="{% url 'market_app:cart' %}" name="select_coupon">
+        {% include 'core_app/include/pretty_form.html' with form=form without_button=True %}
+        {% csrf_token %}
+      </form>
     </div>
     <div class="card-footer text-end">
       <a class="btn btn-primary" href="{% url 'market_app:checkout' %}">

@@ -20,6 +20,11 @@ class ProductUnitAdmin(admin.ModelAdmin):
     list_display = ['product', 'id']
 
 
+class CouponAdmin(admin.ModelAdmin):
+    list_display = ['id', 'discount_percent']
+
+
 admin.site.register(ProductCategory, CategoryAdmin)
 admin.site.register(Market, MarketAdmin)
 admin.site.register(Product, ProductAdmin)
+admin.site.register(Coupon, CouponAdmin)

@@ -53,24 +53,25 @@ def get_debt_to_sellers(order_items) -> dict:
 def make_purchase(shopping_account: ShoppingAccount) -> ShoppingReceipt:
     items: Iterable[ProductType] = shopping_account.get_order_list('id')
     debt_to_sellers = get_debt_to_sellers(items)
-    customer_balance = shopping_account.balance
     total_debt = sum(debt_to_sellers.values())
+    customer_balance = shopping_account.balance
     if customer_balance < total_debt:
         raise NotEnoughMoneyError(
             f"{shopping_account.user} doesn't have enough money to the transaction."
         )
     else:
-        ShoppingAccount.objects.filter(pk=shopping_account.pk).update(balance=F('balance') - total_debt)
+        ShoppingAccount.objects.filter(
+            pk=shopping_account.pk).update(balance=F('balance') - shopping_account.total_price)
+        shopping_account = ShoppingAccount.objects.get(pk=shopping_account.pk)
         logger.info(
-            f'User(id={shopping_account.user.pk}) sends money ({total_debt})'
-        )
-        shopping_account.refresh_from_db(fields=['balance'])
+            f'User(id={shopping_account.user.pk}) sends money ({shopping_account.total_price})')
     sellers_pks = debt_to_sellers.keys()
     sellers = ShoppingAccount.objects.only('id', 'balance').filter(user_id__in=sellers_pks)
     for seller in sellers:
         amount_of_money = debt_to_sellers[seller.pk]
         logger.info(
-            f'Transaction {amount_of_money} from User(id={shopping_account.user.pk}) to User(id={seller.user.pk})'
+            f'Transaction {amount_of_money} '
+            f'from ShoppingAccount(id={shopping_account.pk}) to ShoppingAccount(id={seller.pk})'
         )
         top_up_balance(seller, amount_of_money)
     receipt = create_shopping_receipt(shopping_account)
@@ -78,19 +79,17 @@ def make_purchase(shopping_account: ShoppingAccount) -> ShoppingReceipt:
     return receipt
 
 
-def withdraw_money(shopping_account: ShoppingAccount, amount_of_money):
+def withdraw_money(shopping_account, amount_of_money):
     valid_money_sum_number(amount_of_money)
     if shopping_account.balance < amount_of_money:
         raise NotEnoughMoneyError
-    shopping_account.balance = F('balance') - amount_of_money
-    logger.info(f'User(id={shopping_account.user.pk}) has withdrew {amount_of_money} money.')
-    shopping_account.save()
+    ShoppingAccount.objects.filter(pk=shopping_account.pk).update(balance=F('balance') - amount_of_money)
+    logger.info(f'Shopping_account(id={shopping_account.pk}) has withdrew {amount_of_money} money.')
 
 
 def top_up_balance(shopping_account: ShoppingAccount, amount_of_money):
     valid_money_sum_number(amount_of_money)
-    shopping_account.balance = F('balance') + amount_of_money
+    ShoppingAccount.objects.filter(pk=shopping_account.pk).update(balance=F('balance') + amount_of_money)
     logger.info(
-        f'User(id={shopping_account.user.pk})\'s balance has been topped up. +{amount_of_money}'
+        f'Shopping_account(id={shopping_account.pk})\'s balance has been topped up. +{amount_of_money}'
     )
-    shopping_account.save()

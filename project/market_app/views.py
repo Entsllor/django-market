@@ -6,7 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 
 from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, ProductTypeForm, CreditCardForm, \
-    CheckOutForm
+    CheckOutForm, SelectCouponForm
 from .models import Product, Market, ProductType, ShoppingAccount
 from .services import top_up_balance, make_purchase
 
@@ -117,11 +117,14 @@ class ProductPageView(generic.FormView):
 
     def form_valid(self, form):
         quantity = form.cleaned_data['quantity']
-        units_count = self.request.user.shopping_account.set_units_count_to_order(
+        if self.product.market.owner_id == self.request.user.id:
+            form.add_error('product_type', _('Cannot buy your own product.'))
+            return super(ProductPageView, self).form_invalid(form)
+        added_units_count = self.request.user.shopping_account.set_units_count_to_order(
             product_type_pk=form.cleaned_data['product_type'].pk,
             quantity=quantity
         )
-        if units_count == 0 and quantity != 0:
+        if added_units_count == 0 and quantity != 0:
             form.add_error('product_type', _('This type is old out'))
             return super(ProductPageView, self).form_invalid(form)
         return super(ProductPageView, self).form_valid(form)
@@ -149,13 +152,28 @@ class MarketEditView(MarketOwnerRequiredMixin, generic.UpdateView):
         return self.model.objects.get(pk=self.kwargs['pk']).owner.id
 
 
-class CartView(LoginRequiredMixin, generic.DetailView):
+class CartView(LoginRequiredMixin, generic.FormView):
     template_name = 'market_app/cart_page.html'
     model = ShoppingAccount
+    form_class = SelectCouponForm
     context_object_name = 'shopping_account'
+    success_url = reverse_lazy('market_app:cart')
 
-    def get_object(self, queryset=None):
-        return self.request.user.shopping_account
+    def form_valid(self, form):
+        activated_coupon = form.cleaned_data['activated_coupon']
+        self.request.user.shopping_account.activated_coupon = activated_coupon
+        self.request.user.shopping_account.save()
+        return super(CartView, self).form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super(CartView, self).get_context_data(**kwargs)
+        context['shopping_account'] = self.request.user.shopping_account
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super(CartView, self).get_form_kwargs()
+        kwargs['shopping_account'] = self.request.user.shopping_account
+        return kwargs
 
 
 class CheckOutView(LoginRequiredMixin, generic.FormView):

@@ -83,3 +83,18 @@ class CreditCardForm(forms.Form):
 
 class CheckOutForm(forms.Form):
     agreement = forms.BooleanField(label='Do you agree?', required=False)
+
+
+class SelectCouponForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        self.shopping_account = kwargs.pop('shopping_account')
+        self.coupons = self.shopping_account.coupon_set
+        super(SelectCouponForm, self).__init__(*args, **kwargs)
+        self.fields['activated_coupon'] = forms.ModelChoiceField(
+            label='Select a coupon',
+            initial=self.shopping_account.activated_coupon,
+            queryset=self.coupons,
+            required=False,
+            widget=forms.Select(
+                attrs={'onchange': "document.forms.select_coupon.submit();", 'style': 'white-space: normal'}),
+        )
