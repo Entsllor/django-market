@@ -16,8 +16,8 @@ class MarketOwnerRequiredMixin(PermissionRequiredMixin):
         return self.permission_denied_message or "Current user isn't the market owner"
 
     def has_permission(self):
-        is_current_user_the_market_owner = self.__getattribute__(
-            'request').user.id == self.get_current_market_owner_id()
+        is_current_user_the_market_owner = getattr(
+            self, 'request').user.id == self.get_current_market_owner_id()
         if self.permission_required is None:
             return is_current_user_the_market_owner
         return super(MarketOwnerRequiredMixin, self).has_permission() and is_current_user_the_market_owner
@@ -88,6 +88,7 @@ class CatalogueView(generic.ListView):
     model = Product
     template_name = 'market_app/catalogue.html'
     context_object_name = 'products'
+    paginate_by = 36
 
     def get_queryset(self):
         return self.model.objects.filter(available=True)
@@ -201,7 +202,19 @@ class UserMarketsView(LoginRequiredMixin, generic.TemplateView):
     template_name = 'market_app/user_markets.html'
 
 
-class MarketView(generic.DetailView):
+class MarketView(generic.detail.SingleObjectMixin, generic.ListView):
     template_name = 'market_app/market_page.html'
-    model = Market
     context_object_name = 'market'
+    paginate_by = 36
+
+    def get(self, request, *args, **kwargs):
+        self.object = Market.objects.get(pk=self.kwargs['pk'])
+        return super(MarketView, self).get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['market'] = self.object
+        return context
+
+    def get_queryset(self):
+        return self.object.product_set.all()
