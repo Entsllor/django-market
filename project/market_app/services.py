@@ -50,6 +50,13 @@ def get_debt_to_sellers(order_items) -> dict:
     return debt_to_sellers
 
 
+def unlink_activated_coupon(shopping_account: ShoppingAccount) -> None:
+    coupon = shopping_account.activated_coupon
+    if coupon:
+        coupon.customers.remove(shopping_account)
+        ShoppingAccount.objects.filter(pk=shopping_account.pk).update(activated_coupon=None)
+
+
 def make_purchase(shopping_account: ShoppingAccount) -> ShoppingReceipt:
     items: Iterable[ProductType] = shopping_account.get_order_list('id')
     debt_to_sellers = get_debt_to_sellers(items)
@@ -76,6 +83,7 @@ def make_purchase(shopping_account: ShoppingAccount) -> ShoppingReceipt:
         top_up_balance(seller, amount_of_money)
     receipt = create_shopping_receipt(shopping_account)
     shopping_account.clear_order()
+    unlink_activated_coupon(shopping_account)
     return receipt
 
 

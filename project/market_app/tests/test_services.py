@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from .base_case import TestBaseWithFilledCatalogue, BaseMarketTestCase, assert_difference
-from ..models import ShoppingAccount, ShoppingReceipt
+from ..models import ShoppingAccount, ShoppingReceipt, Coupon
 from ..services import top_up_balance, make_purchase, withdraw_money, NotEnoughMoneyError
 
 
@@ -135,3 +135,32 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
             self.assertIn(item.product.name, receipt.description)
             self.assertIn(str(item.units_on_cart), receipt.description)
             self.assertIn(str(item.sale_price), receipt.description)
+
+
+class CouponTest(TestBaseWithFilledCatalogue):
+    def setUp(self) -> None:
+        super(CouponTest, self).setUp()
+        self.log_in_as_customer()
+
+    @property
+    def sellers_balance(self):
+        return {seller.pk: seller.shopping_account.balance for seller in self.sellers}
+
+    @property
+    def shopping_account(self):
+        return ShoppingAccount.objects.get(user=self.customer)
+
+    @property
+    def balance(self):
+        return self.shopping_account.balance
+
+    def test_unlink_activated_coupon_after_buying(self):
+        activated_coupon = Coupon.objects.create(discount_percent=10)
+        activated_coupon.customers.add(self.shopping_account)
+        ShoppingAccount.objects.filter(pk=self.shopping_account.pk).update(activated_coupon=activated_coupon)
+        self.assertEqual(self.shopping_account.activated_coupon.pk, activated_coupon.pk)
+        self.assertTrue(self.shopping_account.coupon_set.filter(pk=activated_coupon.pk).exists())
+        make_purchase(self.shopping_account)
+        self.assertIsNone(self.shopping_account.activated_coupon)
+        self.assertFalse(self.shopping_account.coupon_set.filter(pk=activated_coupon.pk).exists())
+
