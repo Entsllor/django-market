@@ -3,7 +3,7 @@ from django.urls import reverse_lazy
 
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue
 from ..models import Market, Product, ProductCategory
-from ..services import top_up_balance
+from ..services import top_up_balance, DEFAULT_CURRENCY
 
 
 def prepare_product_data_to_post(data) -> dict:
@@ -91,7 +91,7 @@ class ProductEditTest(BaseMarketTestCase):
         self.assertEqual(self.product.name, self.old_data['name'])
         self.post_to_product_edit(self.product.id, self.new_data)
         for key in self.new_data:
-            self.assertEqual(self.product.__getattribute__(key), self.new_data[key])
+            self.assertEqual(getattr(self.product, key), self.new_data[key])
 
     def test_edit_product_if_user_is_not_owner(self):
         new_seller = self.create_seller(username='NewSeller')
@@ -100,7 +100,7 @@ class ProductEditTest(BaseMarketTestCase):
         response = self.post_to_product_edit(self.product.id, self.new_data)
         self.assertEqual(response.status_code, 403)
         for key in self.new_data:
-            self.assertEqual(self.product.__getattribute__(key), self.old_data[key])
+            self.assertEqual(getattr(self.product, key), self.old_data[key])
 
     def test_can_customer_edit_product(self):
         self.log_in_as_customer()
@@ -108,7 +108,7 @@ class ProductEditTest(BaseMarketTestCase):
         response = self.post_to_product_edit(self.product.id, self.new_data)
         self.assertEqual(response.status_code, 403)
         for key in self.new_data:
-            self.assertEqual(self.product.__getattribute__(key), self.old_data[key])
+            self.assertEqual(getattr(self.product, key), self.old_data[key])
 
 
 class MarketEditTest(BaseMarketTestCase):
@@ -345,7 +345,8 @@ class TopUpViewTest(BaseMarketTestCase):
         data = {
             'name_on_card': 'FULL NAME',
             'card_number': 9999999999999999,
-            'top_up_amount': 1000
+            'top_up_amount': 1000,
+            'currency_code': DEFAULT_CURRENCY
         }
         self.assertEqual(self.user.shopping_account.balance, 0)
         response = self.post_to_page(data=data)

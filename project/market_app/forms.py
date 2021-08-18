@@ -1,6 +1,8 @@
 from django import forms
-
+from .services import currencies, exchange_to, DEFAULT_CURRENCY
 from .models import Product, Market, ProductType
+
+CURRENCY_CHOICES = [(currency.code, currency.sym) for currency in currencies.values()]
 
 
 class ProductUpdateForm(forms.ModelForm):
@@ -79,6 +81,14 @@ class CreditCardForm(forms.Form):
         max_value=9999_9999_9999_9999
     )
     top_up_amount = forms.IntegerField(min_value=1, max_value=1000000)
+    currency_code = forms.ChoiceField(choices=CURRENCY_CHOICES)
+
+    def clean_top_up_amount(self):
+        return exchange_to(
+            DEFAULT_CURRENCY,
+            amount=int(self.data['top_up_amount']),
+            _from=self.data['currency_code']
+        )
 
 
 class CheckOutForm(forms.Form):
