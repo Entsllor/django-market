@@ -38,10 +38,10 @@ def get_currency(language_str: str):
 
 
 def exchange_to(currency_code, amount, _from=DEFAULT_CURRENCY):
-    if currency_code == _from:
-        return amount
     if isinstance(amount, str):
         amount = Decimal(amount)
+    if currency_code == _from:
+        return amount
     exchange_rate = currencies[currency_code].rate / currencies[_from].rate
     exchanged_amount = (amount * exchange_rate).quantize(Decimal('1.00'))
     return exchanged_amount
