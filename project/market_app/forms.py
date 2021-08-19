@@ -6,9 +6,19 @@ CURRENCY_CHOICES = [(currency.code, currency.sym) for currency in currencies.val
 
 
 class ProductUpdateForm(forms.ModelForm):
+    currency_code = forms.ChoiceField(choices=CURRENCY_CHOICES, initial=DEFAULT_CURRENCY)
+    field_order = ['name', 'description', 'currency_code', 'original_price']
+
     class Meta:
         model = Product
         exclude = ['market', 'created_at']
+
+    def clean_original_price(self):
+        return exchange_to(
+            DEFAULT_CURRENCY,
+            amount=self.data['original_price'],
+            _from=self.data['currency_code']
+        )
 
 
 class ProductForm(forms.ModelForm):
@@ -86,7 +96,7 @@ class CreditCardForm(forms.Form):
     def clean_top_up_amount(self):
         return exchange_to(
             DEFAULT_CURRENCY,
-            amount=int(self.data['top_up_amount']),
+            amount=self.data['top_up_amount'],
             _from=self.data['currency_code']
         )
 

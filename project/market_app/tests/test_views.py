@@ -3,7 +3,7 @@ from django.urls import reverse_lazy
 
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue
 from ..models import Market, Product, ProductCategory
-from ..services import top_up_balance, DEFAULT_CURRENCY
+from ..services import top_up_balance, DEFAULT_CURRENCY, exchange_to
 
 
 def prepare_product_data_to_post(data) -> dict:
@@ -80,11 +80,12 @@ class ProductEditTest(BaseMarketTestCase):
         self._product.refresh_from_db()
         return self._product
 
-    def post_to_product_edit(self, product_id: int, data_to_update: dict, **kwargs):
-        data_to_update = prepare_product_data_to_post(data_to_update)
+    def post_to_product_edit(self, product_id: int, data_to_update: dict, currency_code=DEFAULT_CURRENCY, **kwargs):
+        data_to_post = prepare_product_data_to_post(self.old_data.copy() | data_to_update)
+        data_to_post.update({'currency_code': currency_code})
         return self.post_data(
             reverse_lazy('market_app:edit_product', args=[product_id]),
-            data=self.old_data.copy() | data_to_update, **kwargs)
+            data=data_to_post, **kwargs)
 
     def test_can_edit_product(self):
         self.log_in_as_seller()
@@ -109,6 +110,23 @@ class ProductEditTest(BaseMarketTestCase):
         self.assertEqual(response.status_code, 403)
         for key in self.new_data:
             self.assertEqual(getattr(self.product, key), self.old_data[key])
+
+    def test_edit_price_in_default_currency(self):
+        expected_price = exchange_to(DEFAULT_CURRENCY, 1000)
+        self.assertNotEqual(expected_price, self.product.original_price)
+        self.log_in_as_seller()
+        self.post_to_product_edit(self.product.id, data_to_update={'original_price': 1000},
+                                  currency_code=DEFAULT_CURRENCY)
+        new_price = self.product.original_price
+        self.assertEqual(new_price, expected_price)
+
+    def test_edit_price_in_another_currency(self):
+        expected_price = exchange_to(DEFAULT_CURRENCY, 100, _from='RUB')
+        self.assertNotEqual(expected_price, self.product.original_price)
+        self.log_in_as_seller()
+        self.post_to_product_edit(self.product.id, data_to_update={'original_price': 100}, currency_code='RUB')
+        new_price = self.product.original_price
+        self.assertEqual(new_price, expected_price)
 
 
 class MarketEditTest(BaseMarketTestCase):
