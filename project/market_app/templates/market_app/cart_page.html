@@ -1,7 +1,9 @@
 {% extends 'market_app/app_base.html' %}
+{% load currencies %}
+{% load i18n %}
 
 {% block main_center_block %}
-
+  {% get_current_language as LANGUAGE %}
   <div class="card my-2">
     <div class="card-header content-title">
       My cart
@@ -19,19 +21,23 @@
             <input id="id_counter" type="number" disabled class="form-control" value="{{ order_item.units_on_cart }}">
           </div>
           <p>
-            Unit price: {{ order_item.sale_price }}
+            Unit price: {{ order_item.sale_price|currency_l10n:LANGUAGE }}
             {% if order_item.product.discount_percent %}
-              <s>{{ order_item.original_price }}</s>
+              <s>{{ order_item.original_price|currency_l10n:LANGUAGE }}</s>
             {% endif %}
-            <br>Total price: {% widthratio order_item.sale_price 1 order_item.units_on_cart %}
+            <br>
+            {% widthratio order_item.sale_price 1 order_item.units_on_cart as total_item_price %}
+            Total price: {{ total_item_price|currency_l10n:LANGUAGE }}
+
           </p>
         </li>
       {% endfor %}
     </ul>
     <div class="card-body">
       <p>
-        Your balance: <a href="{% url 'market_app:top_up' %}">{{ shopping_account.balance }}</a> <br>
-        total price: {{ shopping_account.total_price }}
+        Your balance: <a href="{% url 'market_app:top_up' %}">{{ shopping_account.balance|currency_l10n:LANGUAGE }}</a>
+        <br>
+        total price: {{ shopping_account.total_price|currency_l10n:LANGUAGE }}
       </p>
       <form method="post" action="{% url 'market_app:cart' %}" name="select_coupon">
         {% include 'core_app/include/pretty_form.html' with form=form without_button=True %}

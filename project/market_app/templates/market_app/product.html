@@ -1,7 +1,9 @@
 {% extends 'market_app/app_base.html' %}
 {% load i18n %}
+{% load currencies %}
 
 {% block main_center_card %}
+  {% get_current_language as LANGUAGE %}
   <div class="card-header content-title">
     {% trans 'Product' %}
   </div>
@@ -33,9 +35,10 @@
         {% csrf_token %}
         <div class="d-flex">
           {% if product.discount_percent %}
-            <span>price: <b>{{ product.sale_price }}</b> <s>{{ product.original_price }}</s></span>
+            <span>price: <b>{{ product.sale_price|currency_l10n:LANGUAGE }}</b>
+              <s>{{ product.original_price|currency_l10n:LANGUAGE }}</s></span>
           {% else %}
-            <span>price: {{ product.original_price }}</span>
+            <span>price: {{ product.original_price|currency_l10n:LANGUAGE }}</span>
           {% endif %}
 
           <div class="ms-auto">

@@ -1,4 +1,6 @@
 {% load i18n %}
+{% load currencies %}
+{% get_current_language as LANGUAGE %}
 
 <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-2 m-0">
   {% for product in products %}
@@ -14,11 +16,10 @@
           <div class="p-1">
             <div style="text-align: right">
               {% if product.discount_percent %}
-
-                <s>{{ product.original_price }}</s>
-                <b>{{ product.sale_price }}</b>
+                <s>{{ product.original_price|currency_l10n:LANGUAGE }}</s>
+                <b>{{ product.sale_price|currency_l10n:LANGUAGE }}</b>
               {% else %}
-                <p>{{ product.original_price }}</p>
+                <p>{{ product.original_price|currency_l10n:LANGUAGE }}</p>
               {% endif %}
             </div>
           </div>

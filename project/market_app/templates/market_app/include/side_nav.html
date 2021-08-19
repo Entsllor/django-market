@@ -1,4 +1,6 @@
 {% load i18n %}
+{% load currencies %}
+{% get_current_language as LANGUAGE %}
 <div class="card my-2 border-0 sticky-top">
   <div class="card-header content-title">
     {% trans 'Navigation' %}
@@ -33,7 +35,7 @@
     </li>
     <li class="list-group-item">
       <a href="{% url 'market_app:top_up' %}">
-        {% trans 'balance' %} {{ user.shopping_account.balance }}
+        {% trans 'balance' %} {{ user.shopping_account.balance|currency_l10n:LANGUAGE }}
       </a>
     </li>
   </ul>
