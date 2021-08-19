@@ -22,6 +22,9 @@ class ProductUpdateForm(forms.ModelForm):
 
 
 class ProductForm(forms.ModelForm):
+    currency_code = forms.ChoiceField(choices=CURRENCY_CHOICES, initial=DEFAULT_CURRENCY)
+    field_order = ['name', 'description', 'currency_code', 'original_price']
+
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user')
         super(ProductForm, self).__init__(*args, **kwargs)
@@ -31,6 +34,13 @@ class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = '__all__'
+
+    def clean_original_price(self):
+        return exchange_to(
+            DEFAULT_CURRENCY,
+            amount=self.data['original_price'],
+            _from=self.data['currency_code']
+        )
 
 
 class MarketForm(forms.ModelForm):

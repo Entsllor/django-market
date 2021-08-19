@@ -9,6 +9,10 @@ from django.test import TestCase
 from ..models import Product, Market, ProductCategory, ProductType, ShoppingAccount
 
 
+class FailedToCreateObject(Exception):
+    """raise if failed to create an object"""
+
+
 def assert_difference(expected_difference):
     def decorator(test_function):
         def wrapper(self, *args, **kwargs):

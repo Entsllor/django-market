@@ -1,7 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse_lazy
 
-from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue
+from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue, FailedToCreateObject
 from ..models import Market, Product, ProductCategory
 from ..services import top_up_balance, DEFAULT_CURRENCY, exchange_to
 
@@ -29,7 +29,9 @@ class ProductCreateTest(BaseMarketTestCase):
             'available': True, 'category': self.category
         }
 
-    def post_to_product_create(self, data: dict = None, extra_data: dict = None, check_unique=True, **kwargs):
+    def post_to_product_create(
+            self, data: dict = None, extra_data: dict = None,
+            check_unique=True, currency_code=DEFAULT_CURRENCY, **kwargs):
         if data is None:
             data = self.product_data
         data = data.copy()
@@ -38,26 +40,42 @@ class ProductCreateTest(BaseMarketTestCase):
         data = prepare_product_data_to_post(data)
         if check_unique:
             self.assertObjectDoesNotExist(Product.objects, name=data['name'])
-        response = self.post_data(self.product_create_url, data=data, **kwargs)
-        self.try_set_created_product(**data)
+        response = self.post_data(self.product_create_url, data=data | {'currency_code': currency_code}, **kwargs)
+        try:
+            self.try_to_set_created_product(name=data['name'])
+        except ObjectDoesNotExist:
+            raise FailedToCreateObject("Failed to create the product. Make sure the data is valid.")
         return response
 
-    def try_set_created_product(self, **data):
-        try:
-            self.created_product = Product.objects.get(**data)
-        except ObjectDoesNotExist:
-            self.created_product = None
+    def try_to_set_created_product(self, **data):
+        self.created_product = Product.objects.get(**data)
 
     def test_can_create_product(self):
         self.log_in_as_seller()
         self.post_to_product_create()
         for key in self.product_data:
-            self.assertEqual(self.created_product.__getattribute__(key), self.product_data[key])
+            self.assertEqual(getattr(self.created_product, key), self.product_data[key])
 
     def test_invalid_data(self):
         self.log_in_as_seller()
-        self.post_to_product_create(extra_data={'market': 71.2})
-        self.assertIsNone(self.created_product)
+        with self.assertRaises(FailedToCreateObject):
+            self.post_to_product_create(extra_data={'market': 71.2})
+
+    def test_create_in_default_currency(self):
+        self.log_in_as_seller()
+        expected_price = exchange_to(DEFAULT_CURRENCY, 1000)
+        self.assertNotEqual(expected_price, self.product_data['original_price'])
+        self.post_to_product_create(extra_data={'original_price': 1000}, currency_code=DEFAULT_CURRENCY)
+        real_price = self.created_product.original_price
+        self.assertEqual(expected_price, real_price)
+
+    def test_create_in_another_currency(self):
+        self.log_in_as_seller()
+        expected_price = exchange_to(DEFAULT_CURRENCY, 1000, _from='RUB')
+        self.assertNotEqual(expected_price, self.product_data['original_price'])
+        self.post_to_product_create(extra_data={'original_price': 1000}, currency_code='RUB')
+        real_price = self.created_product.original_price
+        self.assertEqual(expected_price, real_price)
 
 
 class ProductEditTest(BaseMarketTestCase):
@@ -150,13 +168,13 @@ class MarketEditTest(BaseMarketTestCase):
         self.log_in_as_seller()
         self.post_to_market_edit(market=self.market)
         for key in self.new_data:
-            self.assertEqual(self.market.__getattribute__(key), self.new_data[key])
+            self.assertEqual(getattr(self.market, (key)), self.new_data[key])
 
     def test_edit_market_as_customer(self):
         self.log_in_as_customer()
         response = self.post_to_market_edit(market=self.market)
         for key in self.new_data:
-            self.assertNotEqual(self.market.__getattribute__(key), self.new_data[key])
+            self.assertNotEqual(getattr(self.market, (key)), self.new_data[key])
         self.assertEqual(response.status_code, 403)
 
     def test_can_seller_edit_side_market(self):
@@ -165,7 +183,7 @@ class MarketEditTest(BaseMarketTestCase):
         another_market = self.create_market(owner=another_seller)
         response = self.post_to_market_edit(market=another_market)
         for key in self.new_data:
-            self.assertNotEqual(self.market.__getattribute__(key), self.new_data[key])
+            self.assertNotEqual(getattr(self.market, key), self.new_data[key])
         self.assertEqual(response.status_code, 403)
 
     def test_can_another_seller_edit_side_market(self):
