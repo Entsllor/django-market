@@ -3,7 +3,8 @@ from django.urls import reverse_lazy
 
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue, FailedToCreateObject
 from ..models import Market, Product, ProductCategory
-from ..services import top_up_balance, DEFAULT_CURRENCY, exchange_to
+from ..services import top_up_balance
+from ..currencies import DEFAULT_CURRENCY, exchange_to
 
 
 def prepare_product_data_to_post(data) -> dict:

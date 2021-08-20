@@ -1,4 +1,3 @@
-import dataclasses
 import logging
 from decimal import Decimal
 from typing import Iterable
@@ -8,43 +7,6 @@ from django.db.models import F
 from .models import ShoppingAccount, ProductType, ShoppingReceipt
 
 logger = logging.getLogger('market.transactions')
-
-
-@dataclasses.dataclass
-class Currency:
-    code: str
-    sym: str
-    rate: Decimal
-
-    def __str__(self):
-        return self.code
-
-
-DEFAULT_CURRENCY = 'USD'
-language_currency = {
-    'en-us': 'USD',
-    'ru': 'RUB'
-}
-
-currencies = {
-    'USD': Currency(code='USD', sym='$', rate=Decimal('1')),
-    'RUB': Currency(code='RUB', sym='₽', rate=Decimal('75.321'))
-}
-
-
-def get_currency(language_str: str):
-    currency_code = language_currency.get(language_str.lower(), DEFAULT_CURRENCY)
-    return currencies[currency_code]
-
-
-def exchange_to(currency_code, amount, _from=DEFAULT_CURRENCY):
-    if isinstance(amount, str):
-        amount = Decimal(amount)
-    if currency_code == _from:
-        return amount
-    exchange_rate = currencies[currency_code].rate / currencies[_from].rate
-    exchanged_amount = (amount * exchange_rate).quantize(Decimal('1.00'))
-    return exchanged_amount
 
 
 class NotEnoughMoneyError(Exception):

@@ -130,6 +130,13 @@ USE_L10N = True
 
 USE_TZ = True
 
+# Currencies
+DEFAULT_CURRENCY = 'USD'
+EXTRA_CURRENCIES = (
+    'RUB',
+)
+CURRENCIES = (DEFAULT_CURRENCY,) + EXTRA_CURRENCIES
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 

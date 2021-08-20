@@ -1,5 +1,5 @@
 from django import forms
-from .services import currencies, exchange_to, DEFAULT_CURRENCY
+from .currencies import currencies, exchange_to, DEFAULT_CURRENCY
 from .models import Product, Market, ProductType
 
 CURRENCY_CHOICES = [(currency.code, currency.sym) for currency in currencies.values()]

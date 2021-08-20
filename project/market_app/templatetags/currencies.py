@@ -1,5 +1,5 @@
 from django import template
-from ..services import get_currency, exchange_to
+from ..currencies import get_currency, exchange_to
 register = template.Library()
 
 
