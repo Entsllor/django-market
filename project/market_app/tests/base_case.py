@@ -7,6 +7,7 @@ from django.db.models.signals import post_save
 from django.test import TestCase
 
 from ..models import Product, Market, ProductCategory, ProductType, ShoppingAccount
+from currencies.services import create_currencies_from_settings
 
 
 class FailedToCreateObject(Exception):
@@ -35,6 +36,7 @@ class BaseMarketTestCase(TestCase):
     password = 'SomePassword123/'  # password for all accounts
 
     def setUp(self) -> None:
+        create_currencies_from_settings()
         self.customer = self.create_customer()
         self.seller = self.create_seller()
         self.category = self.create_category()
@@ -119,6 +121,7 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
     }
 
     def setUp(self) -> None:
+        create_currencies_from_settings()
         assert not User.objects.exists()
         assert not ProductType.objects.exists()
         assert not Product.objects.exists()

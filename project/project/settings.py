@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'core_app',
     'accounts',
     'market_app',
+    'currencies',
 ]
 
 
@@ -135,6 +136,10 @@ DEFAULT_CURRENCY = 'USD'
 EXTRA_CURRENCIES = (
     'RUB',
 )
+CURRENCIES_SYMBOLS = {
+    'USD': '$',
+    'RUB': '₽'
+}
 CURRENCIES = (DEFAULT_CURRENCY,) + EXTRA_CURRENCIES
 
 # Static files (CSS, JavaScript, Images)

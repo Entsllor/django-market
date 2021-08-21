@@ -1,12 +1,19 @@
 from django import forms
-from .currencies import currencies, exchange_to, DEFAULT_CURRENCY
+
+from currencies.models import Currency
+from currencies.services import exchange_to
+from django.conf import settings
 from .models import Product, Market, ProductType
 
-CURRENCY_CHOICES = [(currency.code, currency.sym) for currency in currencies.values()]
+DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY
+
+
+def get_currency_choices():
+    return [(currency.code, currency.sym) for currency in Currency.objects.filter(code__in=settings.CURRENCIES)]
 
 
 class ProductUpdateForm(forms.ModelForm):
-    currency_code = forms.ChoiceField(choices=CURRENCY_CHOICES, initial=DEFAULT_CURRENCY)
+    currency_code = forms.ChoiceField(choices=get_currency_choices, initial=DEFAULT_CURRENCY)
     field_order = ['name', 'description', 'currency_code', 'original_price']
 
     class Meta:
@@ -22,7 +29,7 @@ class ProductUpdateForm(forms.ModelForm):
 
 
 class ProductForm(forms.ModelForm):
-    currency_code = forms.ChoiceField(choices=CURRENCY_CHOICES, initial=DEFAULT_CURRENCY)
+    currency_code = forms.ChoiceField(choices=get_currency_choices, initial=DEFAULT_CURRENCY)
     field_order = ['name', 'description', 'currency_code', 'original_price']
 
     def __init__(self, *args, **kwargs):
@@ -101,7 +108,7 @@ class CreditCardForm(forms.Form):
         max_value=9999_9999_9999_9999
     )
     top_up_amount = forms.IntegerField(min_value=1, max_value=1000000)
-    currency_code = forms.ChoiceField(choices=CURRENCY_CHOICES)
+    currency_code = forms.ChoiceField(choices=get_currency_choices)
 
     def clean_top_up_amount(self):
         return exchange_to(
