@@ -27,7 +27,6 @@ def create_currencies_from_settings():
 
 
 def get_currency_by_code(code: str):
-    print('Try to get code')
     return Currency.objects.get(code=code)
 
 
@@ -43,6 +42,10 @@ def update_rates(*codes):
 
 
 def _exchange(amount, exchange_rate):
+    if isinstance(amount, str):
+        amount = Decimal(amount)
+    if exchange_rate == 1:
+        return amount
     return (amount * exchange_rate).quantize(Decimal('1.00'))
 
 
@@ -54,10 +57,6 @@ def _get_exchange_rate(to_currency, from_currency=DEFAULT_CURRENCY):
 
 
 def exchange_to(currency_code, amount, _from=DEFAULT_CURRENCY):
-    if isinstance(amount, str):
-        amount = Decimal(amount)
-    if currency_code == _from:
-        return amount
     exchange_rate = _get_exchange_rate(currency_code, _from)
     exchanged_amount = _exchange(amount, exchange_rate)
     return exchanged_amount
