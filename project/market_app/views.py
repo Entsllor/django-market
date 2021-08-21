@@ -91,7 +91,8 @@ class CatalogueView(generic.ListView):
     paginate_by = 36
 
     def get_queryset(self):
-        return self.model.objects.filter(available=True)
+        queryset = self.model.objects.filter(available=True, product_types__isnull=False)
+        return queryset
 
 
 class ProductPageView(generic.FormView):
