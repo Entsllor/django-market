@@ -6,10 +6,14 @@ from .models import Currency, get_rates
 
 DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY
 
-language_currency = {
+ASSOCIATED_CURRENCY = {
     'en-us': 'USD',
     'ru': 'RUB'
 }
+
+
+def get_currency_choices():
+    return [(currency.code, currency.sym) for currency in Currency.objects.filter(code__in=settings.CURRENCIES)]
 
 
 def create_currencies_from_settings():
@@ -27,7 +31,7 @@ def get_currency_by_code(code: str):
 
 
 def get_currency_by_language(language_str: str):
-    currency_code = language_currency.get(language_str.lower(), DEFAULT_CURRENCY)
+    currency_code = ASSOCIATED_CURRENCY.get(language_str.lower(), DEFAULT_CURRENCY)
     return get_currency_by_code(currency_code)
 
 

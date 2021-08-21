@@ -4,7 +4,7 @@ from django.conf import settings
 from django.test import TestCase
 
 from currencies.services import (
-    get_currency_by_language, exchange_to, language_currency, Currency, create_currencies_from_settings
+    get_currency_by_language, exchange_to, ASSOCIATED_CURRENCY, Currency, create_currencies_from_settings
 )
 
 
@@ -18,7 +18,7 @@ class CurrencyTest(TestCase):
         create_currencies_from_settings()
 
     def test_get_currency(self):
-        for language_code, currency_code in language_currency.items():
+        for language_code, currency_code in ASSOCIATED_CURRENCY.items():
             currency = get_currency_by_language(language_code)
             self.assertEqual(currency.code, currency_code)
 

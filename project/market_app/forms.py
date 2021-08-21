@@ -1,15 +1,10 @@
 from django import forms
-
-from currencies.models import Currency
-from currencies.services import exchange_to
 from django.conf import settings
+
+from currencies.services import exchange_to, get_currency_choices
 from .models import Product, Market, ProductType
 
 DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY
-
-
-def get_currency_choices():
-    return [(currency.code, currency.sym) for currency in Currency.objects.filter(code__in=settings.CURRENCIES)]
 
 
 class ProductUpdateForm(forms.ModelForm):
