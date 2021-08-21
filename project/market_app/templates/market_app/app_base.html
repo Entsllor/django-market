@@ -1,12 +1,14 @@
 {% extends 'core_app/base_template.html' %}
+{% load i18n %}
+{% get_current_language as LANGUAGE %}
 
 {% block main_container %}
   <div class="row g-0 g-md-2">
     <div class="col-md-3 order-1">
       {% block main_left_block %}
-      {% block left_block_over_side_bar %}{% endblock %}
+        {% block left_block_over_side_bar %}{% endblock %}
         {% block side_navbar %}
-            {% include 'market_app/include/side_nav.html' %}
+          {% include 'market_app/include/side_nav.html' %}
         {% endblock %}
       {% endblock main_left_block %}
       {% block left_block_under_side_bar %}{% endblock %}

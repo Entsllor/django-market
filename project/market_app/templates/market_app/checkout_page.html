@@ -1,15 +1,18 @@
 {% extends 'market_app/form_block.html' %}
 
+{% load currencies %}
+{% get_currency_l10n_filter LANGUAGE as to_local_currency %}
+
 {% block card-title %}
   Check out
 {% endblock %}
 
 {% block form_block %}
   <p>
-    total price: {{ user.shopping_account.total_price }}
+    total price: {{ user.shopping_account.total_price|to_local_currency }}
   </p>
   <p>
-    balance: {{ user.shopping_account.balance }}
+    balance: {{ user.shopping_account.balance|to_local_currency }}
   </p>
 
   <form action="{% url 'market_app:checkout' %}" method="post">
