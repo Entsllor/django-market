@@ -7,8 +7,18 @@ from .models import Product, Market, ProductType
 DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY
 
 
-class ProductUpdateForm(forms.ModelForm):
+class MoneyExchangerMixin(forms.Form):
     currency_code = forms.ChoiceField(choices=get_currency_choices, initial=DEFAULT_CURRENCY)
+
+    def _clean_field_with_money_exchanging(self, field_name):
+        return exchange_to(
+            DEFAULT_CURRENCY,
+            amount=self.data[field_name],
+            _from=self.data['currency_code']
+        )
+
+
+class ProductUpdateForm(MoneyExchangerMixin, forms.ModelForm):
     field_order = ['name', 'description', 'currency_code', 'original_price']
 
     class Meta:
@@ -16,15 +26,10 @@ class ProductUpdateForm(forms.ModelForm):
         exclude = ['market', 'created_at']
 
     def clean_original_price(self):
-        return exchange_to(
-            DEFAULT_CURRENCY,
-            amount=self.data['original_price'],
-            _from=self.data['currency_code']
-        )
+        return self._clean_field_with_money_exchanging('original_price')
 
 
-class ProductForm(forms.ModelForm):
-    currency_code = forms.ChoiceField(choices=get_currency_choices, initial=DEFAULT_CURRENCY)
+class ProductForm(MoneyExchangerMixin, forms.ModelForm):
     field_order = ['name', 'description', 'currency_code', 'original_price']
 
     def __init__(self, *args, **kwargs):
@@ -38,11 +43,7 @@ class ProductForm(forms.ModelForm):
         fields = '__all__'
 
     def clean_original_price(self):
-        return exchange_to(
-            DEFAULT_CURRENCY,
-            amount=self.data['original_price'],
-            _from=self.data['currency_code']
-        )
+        return self._clean_field_with_money_exchanging('original_price')
 
 
 class MarketForm(forms.ModelForm):
@@ -96,21 +97,16 @@ class AddToCartForm(forms.Form):
         self.fields['product_type'].queryset = self.types
 
 
-class CreditCardForm(forms.Form):
+class CreditCardForm(MoneyExchangerMixin, forms.Form):
     name_on_card = forms.CharField(max_length=63)
     card_number = forms.IntegerField(
         min_value=1000_0000_0000_0000,
         max_value=9999_9999_9999_9999
     )
     top_up_amount = forms.IntegerField(min_value=1, max_value=1000000)
-    currency_code = forms.ChoiceField(choices=get_currency_choices)
 
     def clean_top_up_amount(self):
-        return exchange_to(
-            DEFAULT_CURRENCY,
-            amount=self.data['top_up_amount'],
-            _from=self.data['currency_code']
-        )
+        return self._clean_field_with_money_exchanging('top_up_amount')
 
 
 class CheckOutForm(forms.Form):
