@@ -1,10 +1,10 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse_lazy
 
+from currencies.services import DEFAULT_CURRENCY, exchange_to
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue, FailedToCreateObject
 from ..models import Market, Product, ProductCategory
 from ..services import top_up_balance
-from currencies.services import DEFAULT_CURRENCY, exchange_to, create_currencies_from_settings
 
 
 def prepare_product_data_to_post(data) -> dict:
@@ -22,6 +22,7 @@ class ProductCreateTest(BaseMarketTestCase):
     product_create_url = reverse_lazy('market_app:create_product')
 
     def setUp(self) -> None:
+        self.create_currencies()
         super(ProductCreateTest, self).setUp()
         self.market = self.create_market(owner=self.seller)
         self.product_data = {
@@ -81,6 +82,7 @@ class ProductCreateTest(BaseMarketTestCase):
 
 class ProductEditTest(BaseMarketTestCase):
     def setUp(self) -> None:
+        self.create_currencies()
         super(ProductEditTest, self).setUp()
         self.new_category = self.create_category()
         self.old_data = {
@@ -366,6 +368,10 @@ class CheckOutPage(TestBaseWithFilledCatalogue):
 class TopUpViewTest(BaseMarketTestCase):
     top_up_page_url = reverse_lazy('market_app:top_up')
     cart_page_url = reverse_lazy('market_app:cart')
+
+    def setUp(self) -> None:
+        self.create_currencies()
+        super(TopUpViewTest, self).setUp()
 
     def get_from_page(self, **kwargs):
         return self.client.get(path=self.top_up_page_url, **kwargs)
