@@ -1,12 +1,13 @@
 {% load i18n %}
 {% load currencies %}
+{% load market_app_utils %}
 {% get_current_language as LANGUAGE %}
 {% get_currency_l10n_filter LANGUAGE as to_local_currency %}
 
 <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-2 m-0">
   {% for product in products %}
     <div class="col">
-      <a class="text-decoration-none text-dark" href="{% url 'market_app:product' product.pk %}">
+      <a class="text-decoration-none text-dark" href="{{ product.get_absolute_url }}">
 
         <div class="card h-100">
           <img class="card-img-top"
@@ -37,12 +38,12 @@
     <ul class="pagination justify-content-center my-2">
       {% if page_obj.has_previous %}
         <li class="page-item">
-          <a class="page-link" href="?page=1">
+          <a class="page-link" href="?{% url_replace 'page' 1 %}">
             <span aria-hidden="true">&laquo;&laquo;</span>
           </a>
         </li>
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+          <a class="page-link" href="?{% url_replace 'page' page_obj.previous_page_number %}">
             <span aria-hidden="true">&laquo;</span>
           </a>
         </li>
@@ -52,12 +53,12 @@
       </li>
       {% if page_obj.has_next %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+          <a class="page-link" href="?{% url_replace 'page' page_obj.next_page_number %}">
             <span aria-hidden="true">&raquo;</span>
           </a>
         </li>
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+          <a class="page-link" href="?{% url_replace 'page' page_obj.paginator.num_pages %}">
             <span aria-hidden="true">&raquo;&raquo;</span>
           </a>
         </li>
