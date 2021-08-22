@@ -1,10 +1,15 @@
 from django import forms
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
 
 from currencies.services import exchange_to, get_currency_choices
 from .models import Product, Market, ProductType
 
 DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY
+product_attributes_placeholder = _(
+    'Enter product attributes separated by newline here. \nFor example:\nheight\ncolor\nmaterial\n\n'
+    'You will set value to these attributes while creating new product types.'
+)
 
 
 class MoneyExchangerMixin(forms.Form):
@@ -21,6 +26,13 @@ class MoneyExchangerMixin(forms.Form):
 class ProductUpdateForm(MoneyExchangerMixin, forms.ModelForm):
     field_order = ['name', 'description', 'currency_code', 'original_price']
 
+    def __init__(self, *args, **kwargs):
+        super(ProductUpdateForm, self).__init__(*args, **kwargs)
+        self.fields['attributes'].widget.attrs = {
+            'placeholder': product_attributes_placeholder,
+            'rows': 10, 'cols': 40
+        }
+
     class Meta:
         model = Product
         exclude = ['market', 'created_at']
@@ -29,9 +41,7 @@ class ProductUpdateForm(MoneyExchangerMixin, forms.ModelForm):
         return self._clean_field_with_money_exchanging('original_price')
 
 
-class ProductForm(MoneyExchangerMixin, forms.ModelForm):
-    field_order = ['name', 'description', 'currency_code', 'original_price']
-
+class ProductForm(ProductUpdateForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user')
         super(ProductForm, self).__init__(*args, **kwargs)
@@ -41,9 +51,6 @@ class ProductForm(MoneyExchangerMixin, forms.ModelForm):
     class Meta:
         model = Product
         fields = '__all__'
-
-    def clean_original_price(self):
-        return self._clean_field_with_money_exchanging('original_price')
 
 
 class MarketForm(forms.ModelForm):
