@@ -1,0 +1,12 @@
+{% load static %}
+{% load i18n %}
+<form action="{% url 'market_app:search_products' %}">
+  <div class="input-group my-2">
+    <input type="search" class="form-control"
+           name="q"
+           placeholder="{% trans 'Search' %}"/>
+    <button type="submit" class="btn btn-dark">
+      <i class="bi bi-search"></i>
+    </button>
+  </div>
+</form>

@@ -7,6 +7,9 @@
     <div class="col-md-3 order-1">
       {% block main_left_block %}
         {% block left_block_over_side_bar %}{% endblock %}
+        {% block search_form_block %}
+          {% include 'market_app/include/search.html' %}
+        {% endblock %}
         {% block side_navbar %}
           {% include 'market_app/include/side_nav.html' %}
         {% endblock %}
