@@ -1,5 +1,9 @@
+import re
+from decimal import Decimal
+
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
+from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
@@ -237,3 +241,38 @@ class MarketView(generic.detail.SingleObjectMixin, generic.ListView):
 
     def get_queryset(self):
         return self.object.product_set.all()
+
+
+class SearchProducts(CatalogueView):
+    template_name = 'market_app/catalogue.html'
+    success_url = reverse_lazy('market_app:catalogue')
+
+    def get_queryset(self):
+        query_params = {'available': True}
+
+        show_if_sold_out = self.request.GET.get('show_if_sold_out')
+        if not show_if_sold_out or show_if_sold_out in ('0', 'False', 'false'):
+            query_params['product_types__isnull'] = False
+
+        market = self.request.GET.get('market')
+        if market:
+            query_params['market__name'] = market
+
+        min_price = self.request.GET.get('min_price')
+        if min_price and re.fullmatch(r'[0-9]+(\.[0-9]{1,2})?', min_price):
+            query_params['original_price__gte'] = min_price
+
+        max_price = self.request.GET.get('max_price')
+        if max_price and re.fullmatch(r'[0-9]+(\.[0-9]{1,2})?', max_price):
+            query_params['original_price__lte'] = max_price
+        query_set = Product.objects.filter(**query_params)
+
+        exclude_market = self.request.GET.get('-market') or self.request.GET.get('market!')
+        if exclude_market:
+            query_set = query_set.exclude(market__name__iexact=exclude_market)
+        text_from_search_field = self.request.GET.get('q')
+        if text_from_search_field:
+            query_set = query_set.filter(
+                Q(name__icontains=text_from_search_field) |
+                Q(description__icontains=text_from_search_field))
+        return query_set
