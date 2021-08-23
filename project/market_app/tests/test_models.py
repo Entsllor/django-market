@@ -139,14 +139,14 @@ class ShoppingAccountTest(TestBaseWithFilledCatalogue):
             product_type.refresh_from_db()
             self.assertEqual(product_type.units_count, count_at_start - num_to_set)
 
-    def test_can_clean_order(self):
+    def test_can_cancel_order(self):
         units_to_buy = {'1': 5, '7': 5, '11': 1}
         total_units_count_at_start = {
             i_type.pk: i_type.units_count for i_type in ProductType.objects.filter(id__in=units_to_buy.keys())
         }
         self.fill_cart(units_to_buy)
         self.assertEqual(self.shopping_account.order, units_to_buy)
-        self.shopping_account.clear_order()
+        self.shopping_account.cancel_order()
         self.assertEqual(self.shopping_account.order, {})
         total_units_count_at_end = {
             i_type.pk: i_type.units_count for i_type in ProductType.objects.filter(id__in=units_to_buy.keys())
@@ -159,13 +159,13 @@ class ShoppingAccountTest(TestBaseWithFilledCatalogue):
             i_type.pk: i_type.units_count for i_type in ProductType.objects.filter(**kwargs)
         }
 
-    def test_return_units_from_order_to_db_after_order_clearing(self):
+    def test_return_units_from_order_to_db_after_order_canceling(self):
         units_to_buy = {'1': 5, '7': 5, '11': 1}
         total_units_count_at_start = self.get_total_units_count_from_db(id__in=units_to_buy.keys())
         self.fill_cart(units_to_buy)
         total_units_count = self.get_total_units_count_from_db(id__in=units_to_buy.keys())
         self.assertEqual(total_units_count, {1: 5, 7: 0, 11: 0})
         self.assertNotEqual(total_units_count, total_units_count_at_start)
-        self.shopping_account.clear_order()
+        self.shopping_account.cancel_order()
         total_units_count = self.get_total_units_count_from_db(id__in=units_to_buy.keys())
         self.assertEqual(total_units_count, total_units_count_at_start)

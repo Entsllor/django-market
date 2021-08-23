@@ -196,7 +196,8 @@ class ShoppingAccount(models.Model):
         default=0
     )
 
-    order = models.JSONField('order', default=dict, blank=True)
+    _default_order_value = dict
+    order = models.JSONField('order', default=_default_order_value, blank=True)
 
     activated_coupon = models.ForeignKey(
         'Coupon',
@@ -240,9 +241,16 @@ class ShoppingAccount(models.Model):
             result.append(i_type)
         return result
 
-    def clear_order(self):
+    def cancel_order(self):
+        """Remove all order units from order and return them to DB."""
         for type_pk in self.order.copy():
             self.set_units_count_to_order(type_pk, 0)
+
+    def set_default_value_to_order(self):
+        """Set default value to the user order.
+        Irrevocably del all non-default values in the order."""
+        self.order = self._default_order_value()
+        self.save(update_fields=['order'])
 
     @property
     def total_price(self):

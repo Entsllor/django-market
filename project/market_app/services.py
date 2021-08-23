@@ -82,7 +82,7 @@ def make_purchase(shopping_account: ShoppingAccount) -> ShoppingReceipt:
         )
         top_up_balance(seller, amount_of_money)
     receipt = create_shopping_receipt(shopping_account)
-    shopping_account.clear_order()
+    shopping_account.set_default_value_to_order()
     unlink_activated_coupon(shopping_account)
     return receipt
 

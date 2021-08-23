@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from .base_case import TestBaseWithFilledCatalogue, BaseMarketTestCase, assert_difference
-from ..models import ShoppingAccount, ShoppingReceipt, Coupon
+from ..models import ShoppingAccount, ShoppingReceipt, Coupon, ProductType
 from ..services import (
     top_up_balance, make_purchase, withdraw_money, NotEnoughMoneyError
 )
@@ -89,6 +89,16 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         self.assertNotEqual(self.shopping_account.order, {})
         make_purchase(self.shopping_account)
         self.assertEqual(self.shopping_account.order, {})
+
+    def test_reduce_total_units_count_after_purchasing(self):
+        top_up_balance(self.shopping_account, 2000)
+        self.assertEqual(self.shopping_account.order, {})
+        units_to_buy = {'1': 5}
+        units_at_start = ProductType.objects.get(pk=1).units_count
+        self.fill_cart(units_to_buy)
+        self.assertEqual(ProductType.objects.get(pk=1).units_count, units_at_start - 5)
+        make_purchase(self.shopping_account)
+        self.assertEqual(ProductType.objects.get(pk=1).units_count, units_at_start - 5)
 
     @assert_difference(500)
     def test_user_has_not_enough_money_to_purchase(self):
