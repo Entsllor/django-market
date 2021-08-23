@@ -12,7 +12,9 @@
     <ul class="list-group list-group-flush">
       {% for order_item in shopping_account.get_order_list %}
         <li class="list-group-item">
-          <h3>{{ order_item.product.name }}</h3>
+          <a href="{{ order_item.product.get_absolute_url }}">
+            <h3>{{ order_item.product.name }}</h3>
+          </a>
           <p>{{ order_item.str_attributes }}</p>
           <div>
             <label for="id_counter">
