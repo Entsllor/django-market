@@ -94,7 +94,8 @@ class CatalogueView(generic.ListView):
     paginate_by = 36
 
     def get_queryset(self):
-        queryset = self.model.objects.filter(available=True, product_types__isnull=False)
+        fields = ('image', 'original_price', 'discount_percent', 'name')
+        queryset = self.model.objects.distinct().only(*fields).filter(available=True, product_types__isnull=False)
         return queryset
 
 
@@ -247,6 +248,7 @@ class SearchProducts(CatalogueView):
     success_url = reverse_lazy('market_app:catalogue')
 
     def get_queryset(self):
+        fields = ('image', 'original_price', 'discount_percent', 'name')
         query_params = {'available': True}
 
         show_if_sold_out = self.request.GET.get('show_if_sold_out')
@@ -264,7 +266,7 @@ class SearchProducts(CatalogueView):
         max_price = self.request.GET.get('max_price')
         if max_price and re.fullmatch(r'[0-9]+(\.[0-9]{1,2})?', max_price):
             query_params['original_price__lte'] = max_price
-        query_set = Product.objects.filter(**query_params)
+        query_set = Product.objects.distinct().only(*fields).filter(**query_params)
 
         exclude_market = self.request.GET.get('-market') or self.request.GET.get('market!')
         if exclude_market:
