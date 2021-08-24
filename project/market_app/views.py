@@ -256,6 +256,15 @@ class SearchProducts(CatalogueView, generic.edit.FormMixin):
         kwargs['currency_code'] = currency_code
         return kwargs
 
+    def get_form(self, form_class=AdvancedSearchForm):
+        form = super(SearchProducts, self).get_form(form_class)
+        visible_field_names = tuple(field.name for field in form.visible_fields())
+        initials = {key: value for key, value in self.request.GET.items()
+                    if key in visible_field_names}
+        initials.update(form.initial)
+        form.initial = initials
+        return form
+
     def get_queryset(self):
         fields = ('image', 'original_price', 'discount_percent', 'name')
         query_params = {'available': True}
