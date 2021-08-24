@@ -13,6 +13,7 @@ urlpatterns = [
     path('create_market/', views.MarketCreateView.as_view(), name='create_market'),
     path('edit_market/<int:pk>', views.MarketEditView.as_view(), name='edit_market'),
     path('my_cart/', views.CartView.as_view(), name='cart'),
+    path('markets/', views.MarketsList.as_view(), name='market_list'),
     path('my_markets/', views.UserMarketsView.as_view(), name='my_markets'),
     path('market/<int:pk>', views.MarketView.as_view(), name='market'),
     path('check_out/', views.CheckOutView.as_view(), name='checkout'),

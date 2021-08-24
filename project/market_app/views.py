@@ -227,6 +227,13 @@ class UserMarketsView(LoginRequiredMixin, generic.TemplateView):
     template_name = 'market_app/user_markets.html'
 
 
+class MarketsList(generic.ListView):
+    template_name = 'market_app/markets_list.html'
+    model = Market
+    context_object_name = 'markets'
+    paginate_by = 18
+
+
 class MarketView(generic.detail.SingleObjectMixin, generic.ListView):
     template_name = 'market_app/market_page.html'
     context_object_name = 'market'
