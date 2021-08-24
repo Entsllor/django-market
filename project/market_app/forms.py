@@ -3,7 +3,7 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from currencies.services import exchange_to, get_currency_choices
-from .models import Product, Market, ProductType
+from .models import Product, Market, ProductType, ProductCategory
 
 DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY
 product_attributes_placeholder = _(
@@ -147,4 +147,5 @@ class AdvancedSearchForm(forms.Form):
     q = forms.CharField(label='Query', max_length=63, required=False)
     min_price = forms.IntegerField(min_value=0, max_value=1000000000, required=False)
     max_price = forms.IntegerField(min_value=0, max_value=1000000000, required=False)
+    category = forms.ModelChoiceField(queryset=ProductCategory.objects.all(), required=False)
     show_if_sold_out = forms.BooleanField(required=False)

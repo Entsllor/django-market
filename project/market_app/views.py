@@ -268,6 +268,10 @@ class SearchProducts(CatalogueView, generic.edit.FormMixin):
         if market:
             query_params['market__name'] = market
 
+        category = self.request.GET.get('category')
+        if category:
+            query_params['category'] = category
+
         currency_code = self.request.GET.get('currency_code', DEFAULT_CURRENCY)
         exchange_to_default = get_exchanger(to=DEFAULT_CURRENCY, _from=currency_code)
         min_price = self.request.GET.get('min_price')

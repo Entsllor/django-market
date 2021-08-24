@@ -1,5 +1,12 @@
 {% extends 'market_app/app_base.html' %}
+{% load i18n %}
 
 {% block main_center_block %}
-  {% include 'market_app/include/catalogue.html' with products=products %}
+  {% if not products %}
+    <div class="display-5 text-center">
+      {% trans 'There are no products' %}.
+    </div>
+  {% else %}
+    {% include 'market_app/include/catalogue.html' with products=products %}
+  {% endif %}
 {% endblock %}
