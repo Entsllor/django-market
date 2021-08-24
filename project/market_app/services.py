@@ -93,6 +93,10 @@ def withdraw_money(shopping_account, amount_of_money):
         raise NotEnoughMoneyError
     ShoppingAccount.objects.filter(pk=shopping_account.pk).update(balance=F('balance') - amount_of_money)
     logger.info(f'Shopping_account(id={shopping_account.pk}) has withdrew {amount_of_money} money.')
+    return Operation.objects.create(
+        shopping_account=shopping_account,
+        amount=-amount_of_money,
+    )
 
 
 def top_up_balance(shopping_account: ShoppingAccount, amount_of_money):
@@ -100,4 +104,8 @@ def top_up_balance(shopping_account: ShoppingAccount, amount_of_money):
     ShoppingAccount.objects.filter(pk=shopping_account.pk).update(balance=F('balance') + amount_of_money)
     logger.info(
         f'Shopping_account(id={shopping_account.pk})\'s balance has been topped up. +{amount_of_money}'
+    )
+    return Operation.objects.create(
+        shopping_account=shopping_account,
+        amount=amount_of_money,
     )

@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from .base_case import TestBaseWithFilledCatalogue, BaseMarketTestCase, assert_difference
-from ..models import ShoppingAccount, ShoppingReceipt, Coupon, ProductType
+from ..models import ShoppingAccount, ShoppingReceipt, Coupon, ProductType, Operation
 from ..services import (
     top_up_balance, make_purchase, withdraw_money, NotEnoughMoneyError
 )
@@ -20,9 +20,20 @@ class ChangeBalanceTest(BaseMarketTestCase):
         top_up_balance(self.shopping_account, 100)
 
     @assert_difference(200)
-    def test_can_top_up(self):
+    def test_can_top_up_twice(self):
         top_up_balance(self.shopping_account, 100)
         top_up_balance(self.shopping_account, 100)
+
+    def test_get_operation_object_if_topped_up(self):
+        operation = top_up_balance(self.shopping_account, 100)
+        self.assertIsInstance(operation, Operation)
+        self.assertEqual(operation.shopping_account_id, self.shopping_account.id)
+
+    def test_operation_amount_is_equal_top_up_amount(self):
+        operation = top_up_balance(self.shopping_account, 100)
+        self.assertEqual(operation.amount, 100)
+        operation = top_up_balance(self.shopping_account, 50)
+        self.assertEqual(operation.amount, 50)
 
     @assert_difference(0)
     def test_get_invalid_value(self):
@@ -46,10 +57,23 @@ class ChangeBalanceTest(BaseMarketTestCase):
         withdraw_money(self.shopping_account, 50)
 
     @assert_difference(0)
-    def test_withdraw_all__money(self):
+    def test_withdraw_all_money(self):
         top_up_balance(self.shopping_account, 100)
         withdraw_money(self.shopping_account, 50)
         withdraw_money(self.shopping_account, 50)
+
+    def test_get_operation_object_if_withdrew(self):
+        top_up_balance(self.shopping_account, 200)
+        operation = withdraw_money(self.shopping_account, 100)
+        self.assertIsInstance(operation, Operation)
+        self.assertEqual(operation.shopping_account_id, self.shopping_account.id)
+
+    def test_operation_amount_is_negative_withdraw_amount(self):
+        top_up_balance(self.shopping_account, 200)
+        operation = withdraw_money(self.shopping_account, 100)
+        self.assertEqual(operation.amount, -100)
+        operation = withdraw_money(self.shopping_account, 50)
+        self.assertEqual(operation.amount, -50)
 
 
 class MakePurchaseTest(TestBaseWithFilledCatalogue):
