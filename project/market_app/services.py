@@ -4,7 +4,7 @@ from typing import Iterable
 
 from django.db.models import F
 
-from .models import ShoppingAccount, ProductType, ShoppingReceipt
+from .models import ShoppingAccount, ProductType, ShoppingReceipt, Operation
 
 logger = logging.getLogger('market.transactions')
 
@@ -24,11 +24,11 @@ def create_shopping_receipt(shopping_account):
             f"total price: {units_count * item.sale_price} = {units_count} * {sale_price}\n"
             f"market owner id: {item.product.market.owner.id}\n"
         )
+    operation = Operation.objects.create(amount=-shopping_account.total_price, shopping_account=shopping_account)
     return ShoppingReceipt.objects.create(
-        shopping_account=shopping_account,
+        operation=operation,
         description=description_text,
         order_items=shopping_account.order.copy(),
-        total_price=shopping_account.total_price
     )
 
 

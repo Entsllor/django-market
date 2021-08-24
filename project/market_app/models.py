@@ -267,20 +267,30 @@ class ShoppingAccount(models.Model):
         return total_price
 
 
-class ShoppingReceipt(models.Model):
+class Operation(models.Model):
     shopping_account = models.ForeignKey(
         ShoppingAccount, verbose_name=_('customer account'),
         on_delete=models.SET_NULL,
         null=True,
         related_name='receipts'
     )
+    amount = models.DecimalField(verbose_name=_('amount'), max_digits=15, decimal_places=2)
     transaction_time = models.DateTimeField(
         verbose_name=_('transaction time'),
         auto_now=True
     )
+
+
+class ShoppingReceipt(models.Model):
+    operation = models.OneToOneField(
+        to=Operation,
+        verbose_name=_('customer account'),
+        on_delete=models.CASCADE,
+        null=True,
+        related_name='operation'
+    )
     description = models.TextField(blank=True)
     order_items = models.JSONField(verbose_name=_('order items'))
-    total_price = models.IntegerField(verbose_name=_('total price'))
 
 
 class Coupon(models.Model):

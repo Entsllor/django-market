@@ -118,7 +118,7 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         total_price = self.shopping_account.total_price
         receipt = make_purchase(self.shopping_account)
         self.assertIsInstance(receipt, ShoppingReceipt)
-        self.assertEqual(receipt.total_price, total_price)
+        self.assertEqual(receipt.operation.amount, -total_price)
         self.assertEqual(receipt.order_items, order_list)
 
     def test_check_receipt_description(self):
