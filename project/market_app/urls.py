@@ -1,4 +1,4 @@
-from django.urls import path, re_path
+from django.urls import path
 from . import views
 
 app_name = 'market_app'
@@ -19,6 +19,5 @@ urlpatterns = [
     path('check_out/', views.CheckOutView.as_view(), name='checkout'),
     path('top_up', views.TopUpView.as_view(), name='top_up'),
     path('order_confirmation/', views.OrderConfirmationView.as_view(), name='order_confirmation'),
-    path(r'search/', views.SearchProducts.as_view(), name='search_products'),
+    path('search/', views.SearchProducts.as_view(), name='search_products'),
 ]
-

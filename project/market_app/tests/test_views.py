@@ -171,13 +171,13 @@ class MarketEditTest(BaseMarketTestCase):
         self.log_in_as_seller()
         self.post_to_market_edit(market=self.market)
         for key in self.new_data:
-            self.assertEqual(getattr(self.market, (key)), self.new_data[key])
+            self.assertEqual(getattr(self.market, key), self.new_data[key])
 
     def test_edit_market_as_customer(self):
         self.log_in_as_customer()
         response = self.post_to_market_edit(market=self.market)
         for key in self.new_data:
-            self.assertNotEqual(getattr(self.market, (key)), self.new_data[key])
+            self.assertNotEqual(getattr(self.market, key), self.new_data[key])
         self.assertEqual(response.status_code, 403)
 
     def test_can_seller_edit_side_market(self):
