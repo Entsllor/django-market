@@ -30,8 +30,12 @@ def get_currency_by_code(code: str):
     return Currency.objects.get(code=code)
 
 
+def get_currency_code_by_language(language_str: str):
+    return ASSOCIATED_CURRENCY.get(language_str.lower(), DEFAULT_CURRENCY)
+
+
 def get_currency_by_language(language_str: str):
-    currency_code = ASSOCIATED_CURRENCY.get(language_str.lower(), DEFAULT_CURRENCY)
+    currency_code = get_currency_code_by_language(language_str)
     return get_currency_by_code(currency_code)
 
 
@@ -60,3 +64,16 @@ def exchange_to(currency_code, amount, _from=DEFAULT_CURRENCY):
     exchange_rate = _get_exchange_rate(currency_code, _from)
     exchanged_amount = _exchange(amount, exchange_rate)
     return exchanged_amount
+
+
+def get_exchanger(to: str, _from: str = DEFAULT_CURRENCY, by_language=False):
+    if by_language:
+        to = get_currency_code_by_language(to)
+        if _from != DEFAULT_CURRENCY:
+            _from = get_currency_code_by_language(_from)
+    exchange_rate = _get_exchange_rate(to, _from)
+
+    def exchanger(amount):
+        return _exchange(amount, exchange_rate)
+
+    return exchanger
