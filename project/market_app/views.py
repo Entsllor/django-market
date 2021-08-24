@@ -8,8 +8,10 @@ from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 
+from currencies.services import get_currency_code_by_language, DEFAULT_CURRENCY, \
+    get_exchanger
 from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, ProductTypeForm, CreditCardForm, \
-    CheckOutForm, SelectCouponForm
+    CheckOutForm, SelectCouponForm, AdvancedSearchForm
 from .models import Product, Market, ProductType, ShoppingAccount
 from .services import top_up_balance, make_purchase
 
@@ -243,9 +245,16 @@ class MarketView(generic.detail.SingleObjectMixin, generic.ListView):
         return self.object.product_set.all()
 
 
-class SearchProducts(CatalogueView):
-    template_name = 'market_app/catalogue.html'
+class SearchProducts(CatalogueView, generic.edit.FormMixin):
+    template_name = 'market_app/advanced_search.html'
     success_url = reverse_lazy('market_app:catalogue')
+    form_class = AdvancedSearchForm
+
+    def get_form_kwargs(self):
+        kwargs = super(SearchProducts, self).get_form_kwargs()
+        currency_code = get_currency_code_by_language(self.request.LANGUAGE_CODE)
+        kwargs['currency_code'] = currency_code
+        return kwargs
 
     def get_queryset(self):
         fields = ('image', 'original_price', 'discount_percent', 'name')
@@ -259,13 +268,15 @@ class SearchProducts(CatalogueView):
         if market:
             query_params['market__name'] = market
 
+        currency_code = self.request.GET.get('currency_code', DEFAULT_CURRENCY)
+        exchange_to_default = get_exchanger(to=DEFAULT_CURRENCY, _from=currency_code)
         min_price = self.request.GET.get('min_price')
         if min_price and re.fullmatch(r'[0-9]+(\.[0-9]{1,2})?', min_price):
-            query_params['original_price__gte'] = min_price
+            query_params['original_price__gte'] = exchange_to_default(min_price)
 
         max_price = self.request.GET.get('max_price')
         if max_price and re.fullmatch(r'[0-9]+(\.[0-9]{1,2})?', max_price):
-            query_params['original_price__lte'] = max_price
+            query_params['original_price__lte'] = exchange_to_default(max_price)
         query_set = Product.objects.distinct().only(*fields).filter(**query_params)
 
         exclude_market = self.request.GET.get('-market') or self.request.GET.get('market!')

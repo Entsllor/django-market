@@ -1,0 +1,18 @@
+{% extends 'market_app/catalogue.html' %}
+{% load i18n %}
+
+{% block search_form_block %}
+  <div class="card my-2">
+    <div class="card-header content-title">
+      {% trans 'Advanced search' %}
+    </div>
+    <div class="p-2">
+      <form method="get" action="{% url 'market_app:search_products' %}">
+        {% include 'core_app/include/pretty_form.html' with form=form without_button=True %}
+        <button type="submit" class="btn btn-dark d-block m-auto">
+          Search <i class="bi bi-search"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

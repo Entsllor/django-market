@@ -133,3 +133,18 @@ class SelectCouponForm(forms.Form):
             widget=forms.Select(
                 attrs={'onchange': "document.forms.select_coupon.submit();", 'style': 'white-space: normal'}),
         )
+
+
+class AdvancedSearchForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        self.currency_code = kwargs.pop('currency_code')
+        super(AdvancedSearchForm, self).__init__(*args, **kwargs)
+        self.fields['min_price'].label = _(f'Min price ({self.currency_code}):')
+        self.fields['max_price'].label = _(f'Max price ({self.currency_code}):')
+        self.fields['currency_code'] = forms.CharField(
+            max_length=3, initial=self.currency_code, widget=forms.HiddenInput())
+
+    q = forms.CharField(label='Query', max_length=63, required=False)
+    min_price = forms.IntegerField(min_value=0, max_value=1000000000, required=False)
+    max_price = forms.IntegerField(min_value=0, max_value=1000000000, required=False)
+    show_if_sold_out = forms.BooleanField(required=False)
