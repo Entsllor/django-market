@@ -145,16 +145,16 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         self.assertEqual(receipt.operation.amount, -total_price)
         self.assertEqual(receipt.order_items, order_list)
 
-    def test_check_receipt_description(self):
+    def test_check_operation_description(self):
         top_up_balance(self.shopping_account, 2000)
         units_to_buy = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(units_to_buy)
         items = self.shopping_account.get_order_list()
         receipt = make_purchase(self.shopping_account)
         for item in items:
-            self.assertIn(item.product.name, receipt.description)
-            self.assertIn(str(item.units_on_cart), receipt.description)
-            self.assertIn(str(item.sale_price), receipt.description)
+            self.assertIn(item.product.name, receipt.operation.description)
+            self.assertIn(str(item.units_on_cart), receipt.operation.description)
+            self.assertIn(str(item.sale_price), receipt.operation.description)
 
 
 class CouponTest(TestBaseWithFilledCatalogue):

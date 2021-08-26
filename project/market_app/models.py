@@ -292,6 +292,7 @@ class Operation(models.Model):
         verbose_name=_('amount'),
         max_digits=MAX_OPERATION_DIGITS_COUNT,
         decimal_places=MONEY_DECIMAL_PLACES)
+    description = models.TextField(blank=True)
     transaction_time = models.DateTimeField(
         verbose_name=_('transaction time'),
         auto_now=True
@@ -309,7 +310,6 @@ class ShoppingReceipt(models.Model):
         null=True,
         related_name='receipt'
     )
-    description = models.TextField(blank=True)
     order_items = models.JSONField(verbose_name=_('order items'))
 
 

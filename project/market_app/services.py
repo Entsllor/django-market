@@ -24,10 +24,10 @@ def create_shopping_receipt(shopping_account):
             f"total price: {units_count * item.sale_price} = {units_count} * {sale_price}\n"
             f"market owner id: {item.product.market.owner.id}\n"
         )
-    operation = Operation.objects.create(amount=-shopping_account.total_price, shopping_account=shopping_account)
+    operation = Operation.objects.create(
+        amount=-shopping_account.total_price, shopping_account=shopping_account, description=description_text)
     return ShoppingReceipt.objects.create(
         operation=operation,
-        description=description_text,
         order_items=shopping_account.order.copy(),
     )
 
