@@ -4,7 +4,7 @@ from django.urls import reverse_lazy
 from currencies.services import DEFAULT_CURRENCY, exchange_to
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue, FailedToCreateObject
 from ..models import Market, Product, ProductCategory
-from ..services import top_up_balance
+from ..services import top_up_balance, make_purchase
 
 
 def prepare_product_data_to_post(data) -> dict:
@@ -396,3 +396,26 @@ class TopUpViewTest(BaseMarketTestCase):
         self.user.shopping_account.refresh_from_db()
         self.assertEqual(self.user.shopping_account.balance, 1000)
         self.assertRedirects(response, self.cart_page_url)
+
+
+class OperationHistoryTest(TestBaseWithFilledCatalogue):
+    operation_history_url = reverse_lazy('market_app:operation_history')
+
+    def get_from_url(self):
+        return self.client.get(self.operation_history_url)
+
+    def setUp(self) -> None:
+        super(OperationHistoryTest, self).setUp()
+        self.log_in_as_customer()
+        top_up_balance(self.shopping_account, 10000)
+        self.fill_cart({'1': 2, '3': 1, '5': 1})
+        make_purchase(self.shopping_account)
+
+    def test_redirect_if_not_logged_in(self):
+        self.client.logout()
+        response = self.get_from_url()
+        self.assertRedirects(response, reverse_lazy('accounts:log_in') + '?next=' + self.operation_history_url)
+
+    def test_correct_template(self):
+        response = self.get_from_url()
+        self.assertTemplateUsed(response, 'market_app/operation_history.html')

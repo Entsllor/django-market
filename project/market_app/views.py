@@ -12,7 +12,7 @@ from currencies.services import get_currency_code_by_language, DEFAULT_CURRENCY,
     get_exchanger
 from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, ProductTypeForm, CreditCardForm, \
     CheckOutForm, SelectCouponForm, AdvancedSearchForm
-from .models import Product, Market, ProductType, ShoppingAccount
+from .models import Product, Market, ProductType, ShoppingAccount, Operation
 from .services import top_up_balance, make_purchase
 
 
@@ -308,3 +308,12 @@ class SearchProducts(CatalogueView, generic.edit.FormMixin):
                 Q(name__icontains=text_from_search_field) |
                 Q(description__icontains=text_from_search_field))
         return query_set
+
+
+class OperationHistoryView(LoginRequiredMixin, generic.ListView):
+    template_name = 'market_app/operation_history.html'
+    model = Operation
+
+    def get_queryset(self):
+        user_shopping_account_id = self.request.user.shopping_account.id
+        return Operation.objects.filter(shopping_account_id=user_shopping_account_id)

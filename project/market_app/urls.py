@@ -20,4 +20,5 @@ urlpatterns = [
     path('top_up', views.TopUpView.as_view(), name='top_up'),
     path('order_confirmation/', views.OrderConfirmationView.as_view(), name='order_confirmation'),
     path('search/', views.SearchProducts.as_view(), name='search_products'),
+    path('operations/', views.OperationHistoryView.as_view(), name='operation_history')
 ]
