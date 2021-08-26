@@ -9,6 +9,11 @@ from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 
 User = get_user_model()
+MAX_PRODUCT_PRICE_DIGITS_COUNT = settings.MAX_PRODUCT_PRICE_DIGITS_COUNT
+MAX_BALANCE_DIGITS_COUNT = settings.MAX_BALANCE_DIGITS_COUNT
+MONEY_DECIMAL_PLACES = settings.MONEY_DECIMAL_PLACES
+MONEY_DECIMAL_QUANTIZE = Decimal('1.' + '0' * MONEY_DECIMAL_PLACES)
+MAX_OPERATION_DIGITS_COUNT = MAX_BALANCE_DIGITS_COUNT
 
 
 class ProductCategory(models.Model):
@@ -56,7 +61,10 @@ class Product(models.Model):
     name = models.CharField(verbose_name=_('name'), max_length=63)
     description = models.TextField(verbose_name=_('description'), blank=True)
     market = models.ForeignKey(Market, verbose_name=_('market'), on_delete=models.CASCADE)
-    original_price = models.DecimalField(verbose_name=_('price'), max_digits=15, decimal_places=2)
+    original_price = models.DecimalField(
+        verbose_name=_('price'),
+        max_digits=MAX_PRODUCT_PRICE_DIGITS_COUNT,
+        decimal_places=MONEY_DECIMAL_PLACES)
     discount_percent = models.DecimalField(
         verbose_name=_('discount percent'),
         max_digits=5,
@@ -104,7 +112,7 @@ class Product(models.Model):
 
     @property
     def sale_price(self):
-        return round(self.original_price * ((100 - self.discount_percent) / 100), 2)
+        return round(self.original_price * ((100 - self.discount_percent) / 100), MONEY_DECIMAL_PLACES)
 
     @property
     def is_available_to_buy(self) -> bool:
@@ -142,11 +150,11 @@ class ProductType(models.Model):
 
     @property
     def original_price(self):
-        return round(self.product.original_price * (1 + (self.markup_percent / 100)), 2)
+        return round(self.product.original_price * (1 + (self.markup_percent / 100)), MONEY_DECIMAL_PLACES)
 
     @property
     def sale_price(self):
-        return round(self.product.sale_price * (1 + (self.markup_percent / 100)), 2)
+        return round(self.product.sale_price * (1 + (self.markup_percent / 100)), MONEY_DECIMAL_PLACES)
 
     @property
     def has_units(self) -> bool:
@@ -192,8 +200,8 @@ class ShoppingAccount(models.Model):
     )
     balance = models.DecimalField(
         verbose_name=_('balance'),
-        max_digits=15,
-        decimal_places=2,
+        max_digits=MAX_BALANCE_DIGITS_COUNT,
+        decimal_places=MONEY_DECIMAL_PLACES,
         blank=True,
         default=0
     )
@@ -280,7 +288,10 @@ class Operation(models.Model):
         null=True,
         related_name='operations'
     )
-    amount = models.DecimalField(verbose_name=_('amount'), max_digits=15, decimal_places=2)
+    amount = models.DecimalField(
+        verbose_name=_('amount'),
+        max_digits=MAX_OPERATION_DIGITS_COUNT,
+        decimal_places=MONEY_DECIMAL_PLACES)
     transaction_time = models.DateTimeField(
         verbose_name=_('transaction time'),
         auto_now=True
@@ -306,7 +317,7 @@ class Coupon(models.Model):
     description = models.TextField(verbose_name=_('description'), blank=True)
     max_discount = models.DecimalField(
         verbose_name=_('max discount'), blank=True, null=True,
-        max_digits=15, decimal_places=2
+        max_digits=15, decimal_places=MONEY_DECIMAL_PLACES
     )
     discount_percent = models.DecimalField(
         verbose_name=_('discount percent'),
