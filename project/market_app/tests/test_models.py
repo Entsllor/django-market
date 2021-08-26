@@ -1,5 +1,8 @@
+from decimal import Decimal
+
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue
 from ..models import ProductType
+from ..services import top_up_balance, withdraw_money
 
 
 class ProductTest(BaseMarketTestCase):
@@ -169,3 +172,24 @@ class ShoppingAccountTest(TestBaseWithFilledCatalogue):
         self.shopping_account.cancel_order()
         total_units_count = self.get_total_units_count_from_db(id__in=units_to_buy.keys())
         self.assertEqual(total_units_count, total_units_count_at_start)
+
+
+class ShoppingAccountBalanceTest(BaseMarketTestCase):
+    def setUp(self) -> None:
+        super(ShoppingAccountBalanceTest, self).setUp()
+        self.log_in_as_customer()
+
+    def test_balance_equals_amount_sum_of_user_operations(self):
+        self.assertEqual(self.shopping_account.get_operations_amount_sum(), 0)
+        top_up_balance(self.shopping_account, 100)
+        counted_sum = self.shopping_account.get_operations_amount_sum()
+        self.assertEqual(counted_sum, 100)
+        withdraw_money(self.shopping_account, 20)
+        counted_sum = self.shopping_account.get_operations_amount_sum()
+        self.assertEqual(counted_sum, 80)
+
+    def test_get_operations_amount_sum_if_decimal(self):
+        top_up_balance(self.shopping_account, Decimal('100.5'))
+        top_up_balance(self.shopping_account, Decimal('50.23'))
+        counted_sum = self.shopping_account.get_operations_amount_sum()
+        self.assertEqual(counted_sum, Decimal('150.73'))

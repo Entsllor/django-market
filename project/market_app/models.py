@@ -1,8 +1,10 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
-from django.db.models import F, QuerySet
+from django.db.models import F, QuerySet, Sum
 from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 
@@ -266,13 +268,17 @@ class ShoppingAccount(models.Model):
             total_price -= coupon_discount
         return total_price
 
+    def get_operations_amount_sum(self):
+        result = getattr(self, 'operations').aggregate(sum=Sum('amount'))['sum'] or Decimal('0.00')
+        return result.quantize(Decimal('1.00'))
+
 
 class Operation(models.Model):
     shopping_account = models.ForeignKey(
         ShoppingAccount, verbose_name=_('customer account'),
         on_delete=models.SET_NULL,
         null=True,
-        related_name='receipts'
+        related_name='operations'
     )
     amount = models.DecimalField(verbose_name=_('amount'), max_digits=15, decimal_places=2)
     transaction_time = models.DateTimeField(
