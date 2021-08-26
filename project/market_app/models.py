@@ -301,6 +301,9 @@ class Operation(models.Model):
     def get_absolute_url(self):
         return reverse_lazy('market_app:operation_detail', kwargs={'pk': self.pk})
 
+    def description_as_list(self):
+        return self.description.split('\n')
+
 
 class ShoppingReceipt(models.Model):
     operation = models.OneToOneField(

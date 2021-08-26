@@ -13,11 +13,12 @@
         <div class="list-group-item">
           <div class="row row-cols-1 row-cols-sm-3">
             <div class="col col-12 col-md-4">
-              {% if operation.amount < 0 %}
-                {% trans 'Purchase' %}
-              {% else %}
-                {% trans 'Top-up' %}
-              {% endif %}
+              <a href="{{ operation.get_absolute_url }}">
+                {% if operation.amount < 0 %}
+                  {% trans 'Purchase' %}
+                {% else %}
+                  {% trans 'Top-up' %}
+                {% endif %}</a>
             </div>
             <div class="col col-12 col-md-4">
               {{ operation.transaction_time }}

@@ -18,12 +18,12 @@ def create_shopping_receipt(shopping_account):
     for item in shopping_account.get_order_list():
         units_count = item.units_on_cart
         sale_price = item.sale_price
-        description_text += (
-            f"product: {item.product}, attributes: {item.str_attributes}\n"
-            f"count: {units_count}, sale price: {sale_price}\n"
-            f"total price: {units_count * item.sale_price} = {units_count} * {sale_price}\n"
-            f"market owner id: {item.product.market.owner.id}\n"
-        )
+        description_text += f"""product: {item.product},
+            attributes: {item.str_attributes},
+            market: {item.product.market},
+            count: {units_count},
+            sale price: {sale_price},
+            total price: {units_count} * {sale_price} = {units_count * item.sale_price}"""
     operation = Operation.objects.create(
         amount=-shopping_account.total_price, shopping_account=shopping_account, description=description_text)
     return ShoppingReceipt.objects.create(
