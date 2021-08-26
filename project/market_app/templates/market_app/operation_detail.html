@@ -1,0 +1,20 @@
+{% extends 'market_app/app_base.html' %}
+
+{% block main_center_block %}
+  <div class="card">
+    <div class="card-header content-title">
+      Operation
+    </div>
+    <div class="card-body">
+      <p>
+        User: {{ operation.shopping_account.user }}
+      </p>
+      <p>
+        Amount: {{ operation.amount }}
+      </p>
+      <p>
+        Time: {{ operation.transaction_time }}
+      </p>
+    </div>
+  </div>
+{% endblock %}

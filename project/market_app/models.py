@@ -297,6 +297,9 @@ class Operation(models.Model):
         auto_now=True
     )
 
+    def get_absolute_url(self):
+        return reverse_lazy('market_app:operation_detail', kwargs={'pk': self.pk})
+
 
 class ShoppingReceipt(models.Model):
     operation = models.OneToOneField(
@@ -304,7 +307,7 @@ class ShoppingReceipt(models.Model):
         verbose_name=_('customer account'),
         on_delete=models.CASCADE,
         null=True,
-        related_name='operation'
+        related_name='receipt'
     )
     description = models.TextField(blank=True)
     order_items = models.JSONField(verbose_name=_('order items'))

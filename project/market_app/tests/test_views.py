@@ -3,7 +3,7 @@ from django.urls import reverse_lazy
 
 from currencies.services import DEFAULT_CURRENCY, exchange_to
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue, FailedToCreateObject
-from ..models import Market, Product, ProductCategory
+from ..models import Market, Product, ProductCategory, Operation
 from ..services import top_up_balance, make_purchase
 
 
@@ -419,3 +419,39 @@ class OperationHistoryTest(TestBaseWithFilledCatalogue):
     def test_correct_template(self):
         response = self.get_from_url()
         self.assertTemplateUsed(response, 'market_app/operation_history.html')
+
+
+class OperationDetailTest(TestBaseWithFilledCatalogue):
+    def setUp(self) -> None:
+        super(OperationDetailTest, self).setUp()
+        self.log_in_as_customer()
+        top_up_balance(self.shopping_account, 10000)
+        self.fill_cart({'1': 2, '3': 1, '5': 1})
+        self.shopping_receipt = make_purchase(self.shopping_account)
+        self.operation = self.shopping_receipt.operation
+
+    def get_url(self, pk=None):
+        if pk is None:
+            return self.operation.get_absolute_url()
+        return Operation.objects.get(pk=pk).get_absolute_url()
+
+    def get_from_url(self):
+        return self.client.get(self.get_url())
+
+    def test_redirect_if_not_logged_in(self):
+        self.client.logout()
+        response = self.get_from_url()
+        self.assertRedirects(response, reverse_lazy('accounts:log_in') + '?next=' + self.get_url())
+
+    def test_correct_template(self):
+        response = self.get_from_url()
+        self.assertTemplateUsed(response, 'market_app/operation_detail.html')
+
+    def test_another_user_see_receipt_cant_see_details(self):
+        another_user_data = {'username': 'AnotherCustomer', 'password': self.password}
+        self.client.logout()
+        self.create_customer(**another_user_data)
+        self.client.login(**another_user_data)
+        response = self.get_from_url()
+        self.assertEqual(response.status_code, 403)
+

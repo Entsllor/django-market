@@ -317,3 +317,13 @@ class OperationHistoryView(LoginRequiredMixin, generic.ListView):
     def get_queryset(self):
         user_shopping_account_id = self.request.user.shopping_account.id
         return Operation.objects.filter(shopping_account_id=user_shopping_account_id)
+
+
+class OperationDetail(PermissionRequiredMixin, generic.DetailView):
+    template_name = 'market_app/operation_detail.html'
+    model = Operation
+
+    def has_permission(self):
+        user = self.request.user
+        return user.is_authenticated and user.shopping_account == self.get_object().shopping_account
+
