@@ -264,50 +264,6 @@ class ShoppingAccount(models.Model):
     )
 
     @property
-    def order(self):
-        return self.cart.items
-
-    def set_units_count_to_order(self, product_type_pk, quantity: int) -> int:
-        """Try to set quantity of product-type's units.
-        Return the number of units after setting"""
-        product_type = ProductType.objects.only('id').get(pk=product_type_pk)
-        self._validate_units_count_setting(product_type, quantity)
-        product_type_pk = str(product_type_pk)
-        units_count_at_start = self.order.get(product_type_pk, 0)
-        difference = quantity - units_count_at_start
-        # need to add
-        if difference > 0:
-            added_units_count = difference if difference < product_type.units_count else product_type.units_count
-            if added_units_count != 0 and product_type.remove_product_units(added_units_count):
-                self.order[product_type_pk] = units_count_at_start + added_units_count
-        # need to reduce
-        elif difference < 0:
-            product_type.create_product_units(-difference)
-            self.order[product_type_pk] = quantity
-        units_count_after_setting = self.order.get(product_type_pk, 0)
-        # don't keep order items if number of units to buy equals zero
-        if units_count_after_setting == 0 and product_type_pk in self.order:
-            del self.order[product_type_pk]
-        self.cart.save(update_fields=['items'])
-        return units_count_after_setting
-
-    def _validate_units_count_setting(self, product_type, quantity):
-        if not isinstance(quantity, int) or quantity < 0:
-            raise ValueError(f'Expected a natural number, got {quantity} instead')
-        if product_type.product.market.owner == self.user:
-            raise PermissionError(f'Cannot add your own product to your order.')
-
-    def cancel_order(self):
-        """Remove all order units from order and return them to DB."""
-        for type_pk in self.order.copy():
-            self.set_units_count_to_order(type_pk, 0)
-
-    def set_default_value_to_order(self):
-        """Set default value to the user order.
-        Irrevocably del all non-default values in the order."""
-        self.cart.clear()
-
-    @property
     def total_price(self):
         total_price = self.cart.total_price
         if self.activated_coupon:

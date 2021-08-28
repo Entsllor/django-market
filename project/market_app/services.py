@@ -84,8 +84,8 @@ def make_purchase(shopping_account: ShoppingAccount) -> ShoppingReceipt:
     purchase_operation = _change_balance_amount(shopping_account, SUBTRACT, total_debt)
     _send_money_to_sellers(shopping_account, debt_to_sellers)
     _set_operation_description(purchase_operation, _create_purchase_operation_description(items))
-    receipt = _create_shopping_receipt(purchase_operation.pk, shopping_account.order)
-    shopping_account.set_default_value_to_order()
+    receipt = _create_shopping_receipt(purchase_operation.pk, shopping_account.cart.items)
+    shopping_account.cart.clear()
     unlink_activated_coupon(shopping_account)
     return receipt
 

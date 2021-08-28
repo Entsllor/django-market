@@ -190,7 +190,7 @@ class CheckOutView(LoginRequiredMixin, generic.FormView):
 
     def get(self, request, *args, **kwargs):
         shopping_account = self.request.user.shopping_account
-        if not shopping_account.order:
+        if not shopping_account.cart.items:
             messages.warning(request=self.request, message='Your order is empty')
             return HttpResponseRedirect(reverse_lazy('market_app:cart'))
         if shopping_account.balance < shopping_account.total_price:

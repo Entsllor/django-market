@@ -191,4 +191,4 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
 
     def fill_cart(self, types_to_add):
         for product_type_id, units_count in types_to_add.items():
-            self.shopping_account.set_units_count_to_order(product_type_pk=product_type_id, quantity=units_count)
+            self.cart.set_item(product_type_pk=product_type_id, quantity=units_count)

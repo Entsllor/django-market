@@ -107,20 +107,19 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
 
     def test_will_order_be_cleaned_after_purchase(self):
         top_up_balance(self.shopping_account, 2000)
-        self.assertEqual(self.shopping_account.order, {})
+        self.assertEqual(self.shopping_account.cart.items, {})
         units_to_buy = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(units_to_buy)
-        self.assertNotEqual(self.shopping_account.order, {})
+        self.assertNotEqual(self.shopping_account.cart.items, {})
         make_purchase(self.shopping_account)
-        self.assertEqual(self.shopping_account.order, {})
+        self.assertEqual(self.shopping_account.cart.items, {})
 
     def test_reduce_total_units_count_after_purchasing(self):
         top_up_balance(self.shopping_account, 2000)
-        self.assertEqual(self.shopping_account.order, {})
+        self.assertEqual(self.shopping_account.cart.items, {})
         units_to_buy = {'1': 5}
         units_at_start = ProductType.objects.get(pk=1).units_count
         self.fill_cart(units_to_buy)
-        self.assertEqual(ProductType.objects.get(pk=1).units_count, units_at_start - 5)
         make_purchase(self.shopping_account)
         self.assertEqual(ProductType.objects.get(pk=1).units_count, units_at_start - 5)
 
@@ -138,12 +137,12 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         top_up_balance(self.shopping_account, 2000)
         units_to_buy = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(units_to_buy)
-        order_list = self.shopping_account.order
+        items_list = self.shopping_account.cart.items
         total_price = self.shopping_account.total_price
         receipt = make_purchase(self.shopping_account)
         self.assertIsInstance(receipt, ShoppingReceipt)
         self.assertEqual(receipt.operation.amount, -total_price)
-        self.assertEqual(receipt.order_items, order_list)
+        self.assertEqual(receipt.order_items, items_list)
 
     def test_check_operation_description(self):
         top_up_balance(self.shopping_account, 2000)

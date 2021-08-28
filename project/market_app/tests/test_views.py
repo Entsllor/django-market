@@ -359,10 +359,10 @@ class CheckOutPage(TestBaseWithFilledCatalogue):
         self.log_in_as_customer()
         top_up_balance(self.shopping_account, 10000)
         self.fill_cart({'1': 5, '4': 5})
-        self.assertNotEqual(self.shopping_account.order, {})
+        self.assertNotEqual(self.cart.items, {})
         self.assertEqual(self.shopping_account.balance, 10000)
         self.post_to_page(data={'agreement': True})
-        self.assertEqual(self.shopping_account.order, {})
+        self.assertEqual(self.cart.items, {})
 
 
 class TopUpViewTest(BaseMarketTestCase):
