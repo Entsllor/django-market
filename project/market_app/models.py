@@ -191,6 +191,35 @@ class ProductImage(models.Model):
         verbose_name_plural = _('products images')
 
 
+def _validate_units_quantity(quantity):
+    if not isinstance(quantity, int) or quantity < 0:
+        raise ValueError(f'Expected a natural number, got {quantity} instead')
+
+
+class Cart(models.Model):
+    _default_cart_value = dict
+    items = models.JSONField(verbose_name=_('items'), default=_default_cart_value)
+
+    def set_item(self, product_type_pk, quantity):
+        _validate_units_quantity(quantity)
+        product_type_pk = str(product_type_pk)
+        if quantity == 0:
+            if product_type_pk in self.items:
+                del self.items[product_type_pk]
+        elif product_type_pk not in self.items:
+            self.items[product_type_pk] = quantity
+        else:
+            self.items[product_type_pk] = quantity
+        self.save(update_fields=['items'])
+
+    def clear(self):
+        return Cart.objects.filter(pk=self.pk).update(items=self._default_cart_value())
+
+
+def _create_cart():
+    return Cart.objects.create()
+
+
 class ShoppingAccount(models.Model):
     user = models.OneToOneField(
         to=User,
@@ -206,8 +235,11 @@ class ShoppingAccount(models.Model):
         default=0
     )
 
-    _default_order_value = dict
-    order = models.JSONField('order', default=_default_order_value, blank=True)
+    cart = models.ForeignKey(
+        Cart,
+        verbose_name=_('cart'),
+        default=_create_cart,
+        on_delete=models.SET_DEFAULT)
 
     activated_coupon = models.ForeignKey(
         'Coupon',
@@ -215,6 +247,10 @@ class ShoppingAccount(models.Model):
         on_delete=models.SET_NULL,
         null=True, blank=True
     )
+
+    @property
+    def order(self):
+        return self.cart.items
 
     def set_units_count_to_order(self, product_type_pk, quantity: int) -> int:
         """Try to set quantity of product-type's units.
@@ -237,7 +273,7 @@ class ShoppingAccount(models.Model):
         # don't keep order items if number of units to buy equals zero
         if units_count_after_setting == 0 and product_type_pk in self.order:
             del self.order[product_type_pk]
-        self.save()
+        self.cart.save(update_fields=['items'])
         return units_count_after_setting
 
     def _validate_units_count_setting(self, product_type, quantity):
@@ -262,8 +298,7 @@ class ShoppingAccount(models.Model):
     def set_default_value_to_order(self):
         """Set default value to the user order.
         Irrevocably del all non-default values in the order."""
-        self.order = self._default_order_value()
-        self.save(update_fields=['order'])
+        self.cart.clear()
 
     @property
     def total_price(self):
