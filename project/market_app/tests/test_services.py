@@ -149,7 +149,7 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         top_up_balance(self.shopping_account, 2000)
         units_to_buy = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(units_to_buy)
-        items = self.shopping_account.get_order_list()
+        items = self.cart.get_order_list()
         receipt = make_purchase(self.shopping_account)
         for item in items:
             self.assertIn(item.product.name, receipt.operation.description)

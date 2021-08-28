@@ -200,6 +200,21 @@ class Cart(models.Model):
     _default_cart_value = dict
     items = models.JSONField(verbose_name=_('items'), default=_default_cart_value)
 
+    @property
+    def total_price(self):
+        total_price = 0
+        for item in self.get_order_list('id'):
+            total_price += item.sale_price * item.units_on_cart
+        return total_price
+
+    def get_order_list(self, *fields):
+        result = []
+        types = ProductType.objects.only(*fields).filter(id__in=self.items.keys())
+        for i_type in types:
+            i_type.units_on_cart = self.items[str(i_type.pk)]
+            result.append(i_type)
+        return result
+
     def set_item(self, product_type_pk, quantity):
         _validate_units_quantity(quantity)
         product_type_pk = str(product_type_pk)
@@ -282,14 +297,6 @@ class ShoppingAccount(models.Model):
         if product_type.product.market.owner == self.user:
             raise PermissionError(f'Cannot add your own product to your order.')
 
-    def get_order_list(self, *fields):
-        result = []
-        types = ProductType.objects.only(*fields).filter(id__in=self.order.keys())
-        for i_type in types:
-            i_type.units_on_cart = self.order[str(i_type.pk)]
-            result.append(i_type)
-        return result
-
     def cancel_order(self):
         """Remove all order units from order and return them to DB."""
         for type_pk in self.order.copy():
@@ -302,9 +309,7 @@ class ShoppingAccount(models.Model):
 
     @property
     def total_price(self):
-        total_price = 0
-        for item in self.get_order_list('id'):
-            total_price += item.sale_price * item.units_on_cart
+        total_price = self.cart.total_price
         if self.activated_coupon:
             coupon_discount = self._get_coupon_discount(total_price)
             total_price -= coupon_discount

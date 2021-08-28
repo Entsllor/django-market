@@ -120,7 +120,7 @@ class ShoppingAccountTest(TestBaseWithFilledCatalogue):
 
     def test_get_order_list(self):
         self.fill_cart({'1': 5, '7': 5, '11': 1})
-        order_list = self.shopping_account.get_order_list()
+        order_list = self.cart.get_order_list()
         for item in order_list:
             self.assertIn(str(item.pk), self.shopping_account.order.keys())
             self.assertEqual(item.product.id, ProductType.objects.get(pk=item.pk).product.id)
@@ -128,7 +128,7 @@ class ShoppingAccountTest(TestBaseWithFilledCatalogue):
 
     def test_len_of_order_list(self):
         self.fill_cart({'1': 5, '7': 5, '11': 1})
-        items_count = sum(item.units_on_cart for item in self.shopping_account.get_order_list())
+        items_count = sum(item.units_on_cart for item in self.cart.get_order_list())
         self.assertEqual(
             items_count,
             sum(self.shopping_account.order.values())

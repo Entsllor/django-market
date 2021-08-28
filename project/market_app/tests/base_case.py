@@ -46,6 +46,10 @@ class BaseMarketTestCase(TestCase):
         return ShoppingAccount.objects.get(user=self.user)
 
     @property
+    def cart(self):
+        return self.shopping_account.cart
+
+    @property
     def balance(self):
         return self.shopping_account.balance
 

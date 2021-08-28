@@ -78,7 +78,7 @@ def _send_money_to_sellers(shopping_account, debt_to_sellers):
 
 
 def make_purchase(shopping_account: ShoppingAccount) -> ShoppingReceipt:
-    items: Iterable[ProductType] = shopping_account.get_order_list('id')
+    items: Iterable[ProductType] = shopping_account.cart.get_order_list('id')
     debt_to_sellers = get_debt_to_sellers(items)
     total_debt = sum(debt_to_sellers.values())
     purchase_operation = _change_balance_amount(shopping_account, SUBTRACT, total_debt)
