@@ -219,11 +219,8 @@ class ShoppingAccount(models.Model):
     def set_units_count_to_order(self, product_type_pk, quantity: int) -> int:
         """Try to set quantity of product-type's units.
         Return the number of units after setting"""
-        if not isinstance(quantity, int) or quantity < 0:
-            raise ValueError(f'Expected a natural number, got {quantity} instead')
         product_type = ProductType.objects.only('id').get(pk=product_type_pk)
-        if product_type.product.market.owner == self.user:
-            raise PermissionError(f'Cannot add your own product to your order.')
+        self._validate_units_count_setting(product_type, quantity)
         product_type_pk = str(product_type_pk)
         units_count_at_start = self.order.get(product_type_pk, 0)
         difference = quantity - units_count_at_start
@@ -237,11 +234,17 @@ class ShoppingAccount(models.Model):
             product_type.create_product_units(-difference)
             self.order[product_type_pk] = quantity
         units_count_after_setting = self.order.get(product_type_pk, 0)
-        # don't keep order items if number of units to buy equal zero
+        # don't keep order items if number of units to buy equals zero
         if units_count_after_setting == 0 and product_type_pk in self.order:
             del self.order[product_type_pk]
         self.save()
         return units_count_after_setting
+
+    def _validate_units_count_setting(self, product_type, quantity):
+        if not isinstance(quantity, int) or quantity < 0:
+            raise ValueError(f'Expected a natural number, got {quantity} instead')
+        if product_type.product.market.owner == self.user:
+            raise PermissionError(f'Cannot add your own product to your order.')
 
     def get_order_list(self, *fields):
         result = []
@@ -268,13 +271,16 @@ class ShoppingAccount(models.Model):
         for item in self.get_order_list('id'):
             total_price += item.sale_price * item.units_on_cart
         if self.activated_coupon:
-            coupon = self.activated_coupon
-            coupon_discount_percent = coupon.discount_percent / 100
-            coupon_discount = total_price * coupon_discount_percent
-            if coupon.max_discount:
-                coupon_discount = min(coupon_discount, coupon.max_discount)
+            coupon_discount = self._get_coupon_discount(total_price)
             total_price -= coupon_discount
         return total_price
+
+    def _get_coupon_discount(self, total_price):
+        coupon = self.activated_coupon
+        coupon_discount = total_price * coupon.discount_percent / 100
+        if coupon.max_discount:
+            coupon_discount = min(coupon_discount, coupon.max_discount)
+        return coupon_discount
 
     def get_operations_amount_sum(self):
         result = getattr(self, 'operations').aggregate(sum=Sum('amount'))['sum'] or Decimal('0.00')
