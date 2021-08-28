@@ -172,6 +172,8 @@ class CouponTest(TestBaseWithFilledCatalogue):
         ShoppingAccount.objects.filter(pk=self.shopping_account.pk).update(activated_coupon=activated_coupon)
         self.assertEqual(self.shopping_account.activated_coupon.pk, activated_coupon.pk)
         self.assertTrue(self.shopping_account.coupon_set.filter(pk=activated_coupon.pk).exists())
+        top_up_balance(self.shopping_account, 1000)
+        self.fill_cart({'1': 1})
         make_purchase(self.shopping_account)
         self.assertIsNone(self.shopping_account.activated_coupon)
         self.assertFalse(self.shopping_account.coupon_set.filter(pk=activated_coupon.pk).exists())
