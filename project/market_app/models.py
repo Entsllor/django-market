@@ -230,6 +230,14 @@ class Cart(models.Model):
     def clear(self):
         return Cart.objects.filter(pk=self.pk).update(items=self._default_cart_value())
 
+    def remove_nonexistent_product_types(self):
+        old_pks = list(self.items.keys())
+        new_pks = ProductType.objects.values_list('pk', flat=True)
+        for pk in old_pks:
+            if int(pk) not in new_pks:
+                del self.items[str(pk)]
+        self.save(update_fields=['items'])
+
 
 def _create_cart():
     return Cart.objects.create()
@@ -307,7 +315,7 @@ class Operation(models.Model):
         return self.description.split('\n')
 
 
-class ShoppingReceipt(models.Model):
+class Order(models.Model):
     operation = models.OneToOneField(
         to=Operation,
         verbose_name=_('customer account'),

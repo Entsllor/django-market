@@ -1,9 +1,9 @@
 from decimal import Decimal
 
 from .base_case import TestBaseWithFilledCatalogue, BaseMarketTestCase, assert_difference
-from ..models import ShoppingAccount, ShoppingReceipt, Coupon, ProductType, Operation
+from ..models import ShoppingAccount, Order, Coupon, ProductType, Operation
 from ..services import (
-    top_up_balance, make_purchase, withdraw_money, NotEnoughMoneyError
+    top_up_balance, make_purchase, withdraw_money, NotEnoughMoneyError, _take_units_from_db, prepare_order
 )
 
 
@@ -140,7 +140,7 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         items_list = self.shopping_account.cart.items
         total_price = self.shopping_account.total_price
         receipt = make_purchase(self.shopping_account)
-        self.assertIsInstance(receipt, ShoppingReceipt)
+        self.assertIsInstance(receipt, Order)
         self.assertEqual(receipt.operation.amount, -total_price)
         self.assertEqual(receipt.order_items, items_list)
 
@@ -176,3 +176,54 @@ class CouponTest(TestBaseWithFilledCatalogue):
         make_purchase(self.shopping_account)
         self.assertIsNone(self.shopping_account.activated_coupon)
         self.assertFalse(self.shopping_account.coupon_set.filter(pk=activated_coupon.pk).exists())
+
+
+class TakeUnitsFromDBTest(TestBaseWithFilledCatalogue):
+    def setUp(self) -> None:
+        super(TakeUnitsFromDBTest, self).setUp()
+        self.log_in_as_customer()
+
+    def check_data_to_compare(self):
+        return {i_type.pk: i_type.units_count for i_type in self.product_types.only('units_count')}
+
+    @assert_difference({1: 0, 2: 2, 5: 6})
+    def test_take_units_from_db(self):
+        self.assertEqual(_take_units_from_db(1, 10), 10)
+        self.assertEqual(_take_units_from_db(2, 8), 8)
+        self.assertEqual(_take_units_from_db(5, 4), 4)
+
+    @assert_difference({1: 10})
+    def test_take_zero_units_from_db(self):
+        taken_count = _take_units_from_db(1, 0)
+        self.assertEqual(taken_count, 0)
+
+    @assert_difference({1: 10})
+    def test_try_take_negative_count_from_db(self):
+        taken_count = _take_units_from_db(1, -5)
+        self.assertEqual(taken_count, 0)
+
+    @assert_difference({1: 0})
+    def test_take_enable_counts_if_cant_take_expected_count(self):
+        start_count = self.product_types.get(pk=1).units_count
+        expected_count = 100
+        taken_count = _take_units_from_db(1, expected_count)
+        self.assertEqual(start_count, taken_count)
+        self.assertLess(taken_count, expected_count)
+
+
+class PrepareOrderTest(TestBaseWithFilledCatalogue):
+    def setUp(self) -> None:
+        super(PrepareOrderTest, self).setUp()
+        self.log_in_as_customer()
+
+    def test_return_order_object(self):
+        self.fill_cart({'1': 5, '2': 3, '4': 5})
+        order = prepare_order(self.cart)
+        self.assertIsInstance(order, Order)
+
+    def test_returned_order_items_equals_cart_items(self):
+        types_to_take = {'1': 5, '2': 3, '4': 5}
+        self.fill_cart(types_to_take)
+        order = prepare_order(self.cart)
+        for i_type, count in types_to_take.items():
+            self.assertEqual(order.order_items[i_type], count)

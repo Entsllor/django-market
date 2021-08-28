@@ -148,3 +148,10 @@ class CartTest(TestBaseWithFilledCatalogue):
         self.assertNotEqual(self.cart.items, {})
         self.cart.clear()
         self.assertEqual(self.cart.items, {})
+
+    def test_remove_nonexistent_product_types(self):
+        self.cart.set_item('2', 3)
+        self.cart.set_item('256', 1)
+        self.assertEqual(self.cart.items, {'2': 3, '256': 1})
+        self.cart.remove_nonexistent_product_types()
+        self.assertEqual(self.cart.items, {'2': 3})

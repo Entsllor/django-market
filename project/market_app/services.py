@@ -4,7 +4,7 @@ from typing import Iterable
 
 from django.db.models import F
 
-from .models import ShoppingAccount, ProductType, ShoppingReceipt, Operation
+from .models import ShoppingAccount, ProductType, Order, Operation, Cart
 
 logger = logging.getLogger('market.transactions')
 SUBTRACT = '-'
@@ -33,11 +33,36 @@ def _set_operation_description(operation_pk, description):
     return Operation.objects.filter(pk=operation_pk.pk).update(description=description)
 
 
-def _create_shopping_receipt(operation_pk, order):
-    return ShoppingReceipt.objects.create(
+def _create_shopping_receipt(operation_pk, items):
+    return Order.objects.create(
         operation_id=operation_pk,
-        order_items=order.copy(),
+        order_items=items.copy(),
     )
+
+
+def _take_units_from_db(product_type, expected_count):
+    if not isinstance(product_type, ProductType):
+        product_type = ProductType.objects.get(pk=product_type)
+    total_units = product_type.units_count
+    if expected_count < 1:
+        return 0
+    elif total_units < expected_count:
+        taken_units = total_units
+    else:
+        taken_units = expected_count
+    product_type.remove_product_units(taken_units)
+    return taken_units
+
+
+def prepare_order(cart: Cart):
+    cart.remove_nonexistent_product_types()
+    order_items = {}
+    product_types = cart.get_order_list('units_count')
+    for product_type in product_types:
+        units_on_cart = product_type.units_on_cart
+        taken_units = _take_units_from_db(product_type, units_on_cart)
+        order_items[str(product_type.pk)] = taken_units
+    return Order.objects.create(order_items=cart.items)
 
 
 def validate_money_amount(money_amount):
@@ -77,7 +102,7 @@ def _send_money_to_sellers(shopping_account, debt_to_sellers):
         top_up_balance(seller, amount_of_money)
 
 
-def make_purchase(shopping_account: ShoppingAccount) -> ShoppingReceipt:
+def make_purchase(shopping_account: ShoppingAccount) -> Order:
     items: Iterable[ProductType] = shopping_account.cart.get_order_list('id')
     debt_to_sellers = get_debt_to_sellers(items)
     total_debt = sum(debt_to_sellers.values())
