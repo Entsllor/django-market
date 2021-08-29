@@ -120,7 +120,7 @@ def _send_money_to_sellers(shopping_account, debt_to_sellers):
 
 def _pay_for_order(shopping_account: ShoppingAccount, order: Order) -> Operation:
     debt_to_sellers = get_debt_to_sellers(order.items)
-    purchase_operation = _change_balance_amount(shopping_account, SUBTRACT, shopping_account.total_price)
+    purchase_operation = _change_balance_amount(shopping_account, SUBTRACT, order.total_price)
     _send_money_to_sellers(shopping_account, debt_to_sellers)
     _set_order_operation(purchase_operation, order)
     return purchase_operation

@@ -95,6 +95,8 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         units_to_buy = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(units_to_buy)
         make_purchase(self.shopping_account)
+        self.assertEqual(self.sellers.get(pk=1).shopping_account.balance, 800)
+        self.assertEqual(self.sellers.get(pk=2).shopping_account.balance, 500)
         self.assertEqual(sum(self.sellers_balance.values()), 1300)
 
     @assert_difference(2000)
@@ -122,6 +124,17 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         self.fill_cart(units_to_buy)
         make_purchase(self.shopping_account)
         self.assertEqual(ProductType.objects.get(pk=1).units_count, units_at_start - 5)
+
+    def test_pay_only_for_enable_product_units(self):
+        top_up_balance(self.shopping_account, 5000)
+        self.assertEqual(self.shopping_account.cart.items, {})
+        units_to_buy = {'1': 5, '10': 10}
+        self.fill_cart(units_to_buy)
+        balance_before_purchase = self.balance
+        make_purchase(self.shopping_account)
+        balance_after_purchase = self.balance
+        self.assertEqual(balance_after_purchase, balance_before_purchase - 600)
+        self.assertEqual(self.sellers.get(pk=4).shopping_account.balance, 100)
 
     @assert_difference(500)
     def test_user_has_not_enough_money_to_purchase(self):

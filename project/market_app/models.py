@@ -321,6 +321,13 @@ class Order(models.Model):
     def get_absolute_url(self):
         return reverse_lazy('market_app:order_detail', kwargs={'pk': self.pk})
 
+    @property
+    def total_price(self):
+        total_price = 0
+        for item_data in self.items.values():
+            total_price += item_data['units_count'] * Decimal(item_data['sale_price'])
+        return total_price
+
 
 class Coupon(models.Model):
     customers = models.ManyToManyField(
