@@ -323,7 +323,7 @@ class Order(models.Model):
         null=True,
         related_name='receipt'
     )
-    order_items = models.JSONField(verbose_name=_('order items'))
+    items = models.JSONField(verbose_name=_('order items'))
 
 
 class Coupon(models.Model):

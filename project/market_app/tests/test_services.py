@@ -142,7 +142,7 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         receipt = make_purchase(self.shopping_account)
         self.assertIsInstance(receipt, Order)
         self.assertEqual(receipt.operation.amount, -total_price)
-        self.assertEqual(receipt.order_items, items_list)
+        self.assertEqual(receipt.items, items_list)
 
     def test_check_operation_description(self):
         top_up_balance(self.shopping_account, 2000)
@@ -218,12 +218,12 @@ class PrepareOrderTest(TestBaseWithFilledCatalogue):
 
     def test_return_order_object(self):
         self.fill_cart({'1': 5, '2': 3, '4': 5})
-        order = prepare_order(self.cart)
+        order = prepare_order(self.cart.get_order_list())
         self.assertIsInstance(order, Order)
 
     def test_returned_order_items_equals_cart_items(self):
         types_to_take = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(types_to_take)
-        order = prepare_order(self.cart)
+        order = prepare_order(self.cart.get_order_list())
         for i_type, count in types_to_take.items():
-            self.assertEqual(order.order_items[i_type], count)
+            self.assertEqual(order.items[i_type], count)

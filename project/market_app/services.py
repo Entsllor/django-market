@@ -1,6 +1,5 @@
 import logging
 from decimal import Decimal
-from typing import Iterable
 
 from django.db.models import F
 
@@ -33,11 +32,8 @@ def _set_operation_description(operation_pk, description):
     return Operation.objects.filter(pk=operation_pk.pk).update(description=description)
 
 
-def _create_shopping_receipt(operation_pk, items):
-    return Order.objects.create(
-        operation_id=operation_pk,
-        order_items=items.copy(),
-    )
+def _set_purchase_operation(operation: Operation, order: Order):
+    return Order.objects.filter(pk=order.pk).update(operation=operation)
 
 
 def _take_units_from_db(product_type, expected_count):
@@ -52,17 +48,6 @@ def _take_units_from_db(product_type, expected_count):
         taken_units = expected_count
     product_type.remove_product_units(taken_units)
     return taken_units
-
-
-def prepare_order(cart: Cart):
-    cart.remove_nonexistent_product_types()
-    order_items = {}
-    product_types = cart.get_order_list('units_count')
-    for product_type in product_types:
-        units_on_cart = product_type.units_on_cart
-        taken_units = _take_units_from_db(product_type, units_on_cart)
-        order_items[str(product_type.pk)] = taken_units
-    return Order.objects.create(order_items=cart.items)
 
 
 def validate_money_amount(money_amount):
@@ -81,6 +66,19 @@ def get_debt_to_sellers(order_items) -> dict:
         else:
             debt_to_sellers[seller_pk] = item.sale_price * item.units_on_cart
     return debt_to_sellers
+
+
+def _prepare_cart(cart: Cart):
+    cart.remove_nonexistent_product_types()
+
+
+def prepare_order(items):
+    order_items = {}
+    for product_type in items:
+        units_on_cart = product_type.units_on_cart
+        taken_units = _take_units_from_db(product_type, units_on_cart)
+        order_items[str(product_type.pk)] = taken_units
+    return Order.objects.create(items=order_items)
 
 
 def unlink_activated_coupon(shopping_account: ShoppingAccount) -> None:
@@ -103,16 +101,19 @@ def _send_money_to_sellers(shopping_account, debt_to_sellers):
 
 
 def make_purchase(shopping_account: ShoppingAccount) -> Order:
-    items: Iterable[ProductType] = shopping_account.cart.get_order_list('id')
+    _prepare_cart(shopping_account.cart)
+    order = prepare_order(shopping_account.cart.get_order_list())
+    items = Cart.get_order_list(order)
     debt_to_sellers = get_debt_to_sellers(items)
     total_debt = sum(debt_to_sellers.values())
     purchase_operation = _change_balance_amount(shopping_account, SUBTRACT, total_debt)
     _send_money_to_sellers(shopping_account, debt_to_sellers)
     _set_operation_description(purchase_operation, _create_purchase_operation_description(items))
-    receipt = _create_shopping_receipt(purchase_operation.pk, shopping_account.cart.items)
+    _set_purchase_operation(purchase_operation, order)
     shopping_account.cart.clear()
     unlink_activated_coupon(shopping_account)
-    return receipt
+    order.refresh_from_db()
+    return order
 
 
 def _change_balance_amount(shopping_account, operation_type, amount_of_money):
