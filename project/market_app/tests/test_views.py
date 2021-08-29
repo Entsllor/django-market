@@ -421,18 +421,17 @@ class OperationHistoryTest(TestBaseWithFilledCatalogue):
         self.assertTemplateUsed(response, 'market_app/operation_history.html')
 
 
-class OperationDetailTest(TestBaseWithFilledCatalogue):
+class OrderDetailTest(TestBaseWithFilledCatalogue):
     def setUp(self) -> None:
-        super(OperationDetailTest, self).setUp()
+        super(OrderDetailTest, self).setUp()
         self.log_in_as_customer()
         top_up_balance(self.shopping_account, 10000)
         self.fill_cart({'1': 2, '3': 1, '5': 1})
-        self.shopping_receipt = make_purchase(self.shopping_account)
-        self.operation = self.shopping_receipt.operation
+        self.order = make_purchase(self.shopping_account)
 
     def get_url(self, pk=None):
         if pk is None:
-            return self.operation.get_absolute_url()
+            return self.order.get_absolute_url()
         return Operation.objects.get(pk=pk).get_absolute_url()
 
     def get_from_url(self):
@@ -445,13 +444,12 @@ class OperationDetailTest(TestBaseWithFilledCatalogue):
 
     def test_correct_template(self):
         response = self.get_from_url()
-        self.assertTemplateUsed(response, 'market_app/operation_detail.html')
+        self.assertTemplateUsed(response, 'market_app/order_detail.html')
 
-    def test_another_user_see_receipt_cant_see_details(self):
+    def test_another_user_cant_see_details(self):
         another_user_data = {'username': 'AnotherCustomer', 'password': self.password}
         self.client.logout()
         self.create_customer(**another_user_data)
         self.client.login(**another_user_data)
         response = self.get_from_url()
         self.assertEqual(response.status_code, 403)
-

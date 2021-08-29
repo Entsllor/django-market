@@ -179,13 +179,16 @@ class CartView(LoginRequiredMixin, generic.FormView):
         return kwargs
 
 
-class OrderDetail(LoginRequiredMixin, generic.DetailView):
+class OrderDetail(PermissionRequiredMixin, generic.DetailView):
     template_name = 'market_app/order_detail.html'
     model = Order
 
+    def has_permission(self):
+        user = self.request.user
+        return user.id == self.get_object().operation.shopping_account.user_id
 
 
-class OrderListView(PermissionRequiredMixin, generic.ListView):
+class OrderListView(generic.ListView):
     template_name = 'market_app/orders_history.html'
     model = Order
 
