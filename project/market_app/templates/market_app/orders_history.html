@@ -1,0 +1,37 @@
+{% extends 'market_app/app_base.html' %}
+{% load i18n %}
+{% load currencies %}
+{% get_currency_l10n_filter LANGUAGE as to_local_currency %}
+
+{% block main_center_block %}
+  <div class="card">
+    <div class="card-header content-title">
+      {% trans 'Orders history' %}
+    </div>
+    <div class="list-group list-group-flush">
+      {% for order in order_list %}
+        <div class="list-group-item">
+          <div class="row row-cols-1 row-cols-sm-3 ">
+            <div class="col col-12 col-md-4">
+              <a href="{{ order.get_absolute_url }}">
+                Order №{{ order.id }}
+              </a>
+            </div>
+            <div class="col col-12 col-md-4 text-center">
+              {{ order.operation.transaction_time }}
+            </div>
+            <div class="col col-12 col-md-4 text-end">
+              {% if order.operation %}
+                <span class="text-success">{{ order.operation.amount|to_local_currency }}</span>
+              {% else %}
+                <span class="text-primary">
+                 Awaiting for payment
+                </span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

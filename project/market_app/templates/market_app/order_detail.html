@@ -1,0 +1,30 @@
+{% extends 'market_app/app_base.html' %}
+{% load i18n %}
+{% load currencies %}
+{% get_currency_l10n_filter LANGUAGE as to_local_currency %}
+
+{% block main_center_block %}
+  <div class="card my-2">
+
+    <div class="card-header content-title">
+      Order №{{ order.id }}
+    </div>
+    <ul class="list-group list-group-flush">
+      {% for pk, order_item in order.items.items %}
+        <div class="list-group-item">
+          <h4 class="text-center">
+            {{ order_item.product_name }}
+          </h4>
+          Count: {{ order_item.units_count }}<br class="p">
+          {% if order_item.sale_price %}
+            Sale price: {{ order_item.sale_price|to_local_currency }}<br>
+          {% endif %}
+          {% for prop, value in order_item.properties.items %}
+            {{ prop }}: {{ value }}<br>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </ul>
+  </div>
+
+{% endblock %}

@@ -21,5 +21,6 @@ urlpatterns = [
     path('order_confirmation/', views.OrderConfirmationView.as_view(), name='order_confirmation'),
     path('search/', views.SearchProducts.as_view(), name='search_products'),
     path('operations/', views.OperationHistoryView.as_view(), name='operation_history'),
-    path('operations/<int:pk>', views.OperationDetail.as_view(), name='operation_detail'),
+    path('order/<int:pk>', views.OrderDetail.as_view(), name='order_detail'),
+    path('orders/', views.OrdersHistory.as_view(), name='order_list')
 ]

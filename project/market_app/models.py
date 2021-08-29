@@ -321,6 +321,9 @@ class Order(models.Model):
     )
     items = models.JSONField(verbose_name=_('order items'))
 
+    def get_absolute_url(self):
+        return reverse_lazy('market_app:order_detail', kwargs={'pk': self.pk})
+
 
 class Coupon(models.Model):
     customers = models.ManyToManyField(

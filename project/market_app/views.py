@@ -12,7 +12,7 @@ from currencies.services import get_currency_code_by_language, DEFAULT_CURRENCY,
     get_exchanger
 from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, ProductTypeForm, CreditCardForm, \
     CheckOutForm, SelectCouponForm, AdvancedSearchForm
-from .models import Product, Market, ProductType, ShoppingAccount, Operation
+from .models import Product, Market, ProductType, ShoppingAccount, Operation, Order
 from .services import top_up_balance, make_purchase
 
 
@@ -179,6 +179,19 @@ class CartView(LoginRequiredMixin, generic.FormView):
         return kwargs
 
 
+class OrderDetail(LoginRequiredMixin, generic.DetailView):
+    template_name = 'market_app/order_detail.html'
+    model = Order
+
+
+class OrdersHistory(LoginRequiredMixin, generic.ListView):
+    template_name = 'market_app/orders_history.html'
+    model = Order
+
+    def get_queryset(self):
+        return Order.objects.filter(operation__shopping_account_id=self.request.user.shopping_account.id)
+
+
 class CheckOutView(LoginRequiredMixin, generic.FormView):
     template_name = 'market_app/checkout_page.html'
     success_url = reverse_lazy('market_app:order_confirmation')
@@ -313,13 +326,3 @@ class OperationHistoryView(LoginRequiredMixin, generic.ListView):
     def get_queryset(self):
         user_shopping_account_id = self.request.user.shopping_account.id
         return Operation.objects.filter(shopping_account_id=user_shopping_account_id)
-
-
-class OperationDetail(PermissionRequiredMixin, generic.DetailView):
-    template_name = 'market_app/operation_detail.html'
-    model = Operation
-
-    def has_permission(self):
-        user = self.request.user
-        return user.is_authenticated and user.shopping_account == self.get_object().shopping_account
-
