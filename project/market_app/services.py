@@ -32,7 +32,7 @@ def _set_operation_description(operation_pk, description):
     return Operation.objects.filter(pk=operation_pk.pk).update(description=description)
 
 
-def _set_purchase_operation(operation: Operation, order: Order):
+def _set_order_operation(operation: Operation, order: Order):
     return Order.objects.filter(pk=order.pk).update(operation=operation)
 
 
@@ -118,14 +118,18 @@ def _send_money_to_sellers(shopping_account, debt_to_sellers):
         top_up_balance(seller, amount_of_money)
 
 
+def _pay_for_order(shopping_account: ShoppingAccount, order: Order) -> Operation:
+    debt_to_sellers = get_debt_to_sellers(order.items)
+    purchase_operation = _change_balance_amount(shopping_account, SUBTRACT, shopping_account.total_price)
+    _send_money_to_sellers(shopping_account, debt_to_sellers)
+    _set_order_operation(purchase_operation, order)
+    return purchase_operation
+
+
 def make_purchase(shopping_account: ShoppingAccount) -> Order:
     _prepare_cart(shopping_account.cart)
     order = prepare_order(shopping_account.cart.get_order_list())
-    debt_to_sellers = get_debt_to_sellers(order.items)
-    total_debt = sum(debt_to_sellers.values())
-    purchase_operation = _change_balance_amount(shopping_account, SUBTRACT, total_debt)
-    _send_money_to_sellers(shopping_account, debt_to_sellers)
-    _set_purchase_operation(purchase_operation, order)
+    _pay_for_order(shopping_account, order)
     shopping_account.cart.clear()
     unlink_activated_coupon(shopping_account)
     order.refresh_from_db()
