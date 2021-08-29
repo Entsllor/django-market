@@ -184,7 +184,8 @@ class OrderDetail(LoginRequiredMixin, generic.DetailView):
     model = Order
 
 
-class OrdersHistory(LoginRequiredMixin, generic.ListView):
+
+class OrderListView(PermissionRequiredMixin, generic.ListView):
     template_name = 'market_app/orders_history.html'
     model = Order
 

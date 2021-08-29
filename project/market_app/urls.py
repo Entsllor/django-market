@@ -22,5 +22,5 @@ urlpatterns = [
     path('search/', views.SearchProducts.as_view(), name='search_products'),
     path('operations/', views.OperationHistoryView.as_view(), name='operation_history'),
     path('order/<int:pk>', views.OrderDetail.as_view(), name='order_detail'),
-    path('orders/', views.OrdersHistory.as_view(), name='order_list')
+    path('orders/', views.OrderListView.as_view(), name='orders')
 ]
