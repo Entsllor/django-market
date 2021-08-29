@@ -307,9 +307,6 @@ class Operation(models.Model):
         auto_now=True
     )
 
-    def get_absolute_url(self):
-        return reverse_lazy('market_app:operation_detail', kwargs={'pk': self.pk})
-
 
 class Order(models.Model):
     operation = models.OneToOneField(

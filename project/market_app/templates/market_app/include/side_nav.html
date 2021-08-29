@@ -9,19 +9,30 @@
   </div>
   <ul class="list-group list-group-flush text-center">
     <li class="list-group-item">
-      <a href="{% url 'market_app:catalogue' %}">
-        {% trans 'Main Page' %}
+      <a href="{% url 'market_app:cart' %}">
+        {% trans 'My cart' %}
       </a>
     </li>
-    {% if user.market_set %}
+    <li class="list-group-item">
+      <a href="{% url 'market_app:orders' %}">
+        {% trans 'My orders' %}
+      </a>
+    </li>
+    <li class="list-group-item">
+      <a href="{% url 'market_app:market_list' %}">
+        {% trans 'Markets' %}
+      </a>
+    </li>
+
+    <li class="list-group-item">
+      <a href="{% url 'market_app:create_market' %}">
+        {% trans 'Create market' %}
+      </a>
+    </li>
+    {% if user.market_set.exists %}
       <li class="list-group-item">
         <a href="{% url 'market_app:create_product' %}">
           {% trans 'Create product' %}
-        </a>
-      </li>
-      <li class="list-group-item">
-        <a href="{% url 'market_app:create_market' %}">
-          {% trans 'Create market' %}
         </a>
       </li>
       <li class="list-group-item">
@@ -30,19 +41,9 @@
         </a>
       </li>
     {% endif %}
-    <li class="list-group-item">
-      <a href="{% url 'market_app:market_list' %}">
-        {% trans 'Markets' %}
-      </a>
-    </li>
-    <li class="list-group-item">
-      <a href="{% url 'market_app:cart' %}">
-        {% trans 'My cart' %}
-      </a>
-    </li>
-    {% if user.is_authenticated  %}
+    {% if user.is_authenticated %}
       <li class="list-group-item">
-        <a href="{% url 'market_app:top_up' %}">
+        <a href="{% url 'market_app:operation_history' %}">
           {% trans 'balance' %} {{ user.shopping_account.balance|to_local_currency }}
         </a>
       </li>

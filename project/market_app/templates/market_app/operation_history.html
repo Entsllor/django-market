@@ -8,27 +8,31 @@
     <div class="card-header content-title">
       {% trans 'Operation history' %}
     </div>
-    <div class="list-group list-group-flush">
+    <ul class="list-group list-group-flush">
       {% for operation in operation_list %}
-        <div class="list-group-item">
+        <li class="list-group-item">
           <div class="row row-cols-1 row-cols-sm-3">
             <div class="col col-12 col-md-4">
-              <a href="{{ operation.get_absolute_url }}">
-                {% if operation.amount < 0 %}
-                  {% trans 'Purchase' %}
-                {% else %}
-                  {% trans 'Top-up' %}
-                {% endif %}</a>
+              {% if operation.amount < 0 %}
+                {% trans 'Purchase' %}
+              {% else %}
+                {% trans 'Top-up' %}
+              {% endif %}
             </div>
-            <div class="col col-12 col-md-4">
+            <div class="col col-12 col-md-4 text-center">
               {{ operation.transaction_time }}
             </div>
             <div class="col col-12 col-md-4 text-end">
               {{ operation.amount|to_local_currency }}
             </div>
           </div>
-        </div>
+        </li>
       {% endfor %}
-    </div>
+      <li class="list-group-item text-end">
+        <a href="{% url 'market_app:top_up' %}" class="btn btn-primary">
+          {% trans 'Top up' %}
+        </a>
+      </li>
+    </ul>
   </div>
 {% endblock %}
