@@ -59,12 +59,14 @@ def validate_money_amount(money_amount):
 
 def get_debt_to_sellers(order_items) -> dict:
     debt_to_sellers = {}
-    for item in order_items:
-        seller_pk = item.product.market.owner.pk
+    for pk, data in order_items.items():
+        seller_pk = data['market_owner_id']
+        sale_price = Decimal(data['sale_price'])
+        units_count = data['units_count']
         if seller_pk in debt_to_sellers:
-            debt_to_sellers[seller_pk] += item.sale_price * item.units_on_cart
+            debt_to_sellers[seller_pk] += sale_price * units_count
         else:
-            debt_to_sellers[seller_pk] = item.sale_price * item.units_on_cart
+            debt_to_sellers[seller_pk] = sale_price * units_count
     return debt_to_sellers
 
 
@@ -72,13 +74,29 @@ def _prepare_cart(cart: Cart):
     cart.remove_nonexistent_product_types()
 
 
+def _format_product_type_data(product_type, units_in_order):
+    product = product_type.product
+    return {
+        str(product_type.pk): {
+            'units_count': units_in_order,
+            'properties': product_type.properties.copy(),
+            'sale_price': str(product_type.sale_price),
+            'product_name': product.name,
+            'product_id': product.id,
+            'market_id': product.market.id,
+            'market_owner_id': product.market.owner_id
+        }
+    }
+
+
 def prepare_order(items):
-    order_items = {}
+    items_data = {}
     for product_type in items:
         units_on_cart = product_type.units_on_cart
         taken_units = _take_units_from_db(product_type, units_on_cart)
-        order_items[str(product_type.pk)] = taken_units
-    return Order.objects.create(items=order_items)
+        item_data = _format_product_type_data(product_type, taken_units)
+        items_data.update(item_data)
+    return Order.objects.create(items=items_data)
 
 
 def unlink_activated_coupon(shopping_account: ShoppingAccount) -> None:
@@ -103,12 +121,10 @@ def _send_money_to_sellers(shopping_account, debt_to_sellers):
 def make_purchase(shopping_account: ShoppingAccount) -> Order:
     _prepare_cart(shopping_account.cart)
     order = prepare_order(shopping_account.cart.get_order_list())
-    items = Cart.get_order_list(order)
-    debt_to_sellers = get_debt_to_sellers(items)
+    debt_to_sellers = get_debt_to_sellers(order.items)
     total_debt = sum(debt_to_sellers.values())
     purchase_operation = _change_balance_amount(shopping_account, SUBTRACT, total_debt)
     _send_money_to_sellers(shopping_account, debt_to_sellers)
-    _set_operation_description(purchase_operation, _create_purchase_operation_description(items))
     _set_purchase_operation(purchase_operation, order)
     shopping_account.cart.clear()
     unlink_activated_coupon(shopping_account)

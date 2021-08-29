@@ -302,7 +302,6 @@ class Operation(models.Model):
         verbose_name=_('amount'),
         max_digits=MAX_OPERATION_DIGITS_COUNT,
         decimal_places=MONEY_DECIMAL_PLACES)
-    description = models.TextField(blank=True)
     transaction_time = models.DateTimeField(
         verbose_name=_('transaction time'),
         auto_now=True
@@ -311,9 +310,6 @@ class Operation(models.Model):
     def get_absolute_url(self):
         return reverse_lazy('market_app:operation_detail', kwargs={'pk': self.pk})
 
-    def description_as_list(self):
-        return self.description.split('\n')
-
 
 class Order(models.Model):
     operation = models.OneToOneField(
@@ -321,7 +317,7 @@ class Order(models.Model):
         verbose_name=_('customer account'),
         on_delete=models.CASCADE,
         null=True,
-        related_name='receipt'
+        related_name='order'
     )
     items = models.JSONField(verbose_name=_('order items'))
 

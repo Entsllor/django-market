@@ -133,27 +133,21 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         self.assertEqual(self.balance, 500)
         self.assertEqual(sum(self.sellers_balance.values()), 0)
 
-    def test_get_receipt_after_buying(self):
+    def test_get_order_after_purchase(self):
         top_up_balance(self.shopping_account, 2000)
         units_to_buy = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(units_to_buy)
-        items_list = self.shopping_account.cart.items
         total_price = self.shopping_account.total_price
-        receipt = make_purchase(self.shopping_account)
-        self.assertIsInstance(receipt, Order)
-        self.assertEqual(receipt.operation.amount, -total_price)
-        self.assertEqual(receipt.items, items_list)
+        order = make_purchase(self.shopping_account)
+        self.assertIsInstance(order, Order)
+        self.assertEqual(order.operation.amount, -total_price)
 
-    def test_check_operation_description(self):
+    def test_check_order_items(self):
         top_up_balance(self.shopping_account, 2000)
         units_to_buy = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(units_to_buy)
-        items = self.cart.get_order_list()
-        receipt = make_purchase(self.shopping_account)
-        for item in items:
-            self.assertIn(item.product.name, receipt.operation.description)
-            self.assertIn(str(item.units_on_cart), receipt.operation.description)
-            self.assertIn(str(item.sale_price), receipt.operation.description)
+        order = make_purchase(self.shopping_account)
+        self.assertEqual(len(order.items), len(units_to_buy))
 
 
 class CouponTest(TestBaseWithFilledCatalogue):
@@ -221,9 +215,17 @@ class PrepareOrderTest(TestBaseWithFilledCatalogue):
         order = prepare_order(self.cart.get_order_list())
         self.assertIsInstance(order, Order)
 
-    def test_returned_order_items_equals_cart_items(self):
+    def test_format_order_items(self):
         types_to_take = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(types_to_take)
         order = prepare_order(self.cart.get_order_list())
-        for i_type, count in types_to_take.items():
-            self.assertEqual(order.items[i_type], count)
+        items = self.cart.get_order_list()
+        for item in items:
+            order_item_data = order.items[str(item.pk)]
+            self.assertEqual(order_item_data['units_count'], item.units_on_cart)
+            self.assertEqual(order_item_data['properties'], item.properties)
+            self.assertEqual(order_item_data['sale_price'], str(item.sale_price))
+            self.assertEqual(order_item_data['product_name'], item.product.name)
+            self.assertEqual(order_item_data['product_id'], item.product_id)
+            self.assertEqual(order_item_data['market_id'], item.product.market_id)
+            self.assertEqual(order_item_data['market_owner_id'], item.product.market.owner_id)
