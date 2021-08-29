@@ -10,7 +10,7 @@
     </div>
 
     <ul class="list-group list-group-flush">
-      {% for order_item in shopping_account.get_order_list %}
+      {% for order_item in shopping_account.cart.get_order_list %}
         <li class="list-group-item">
           <a href="{{ order_item.product.get_absolute_url }}">
             <h3>{{ order_item.product.name }}</h3>

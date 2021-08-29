@@ -127,13 +127,9 @@ class ProductPageView(generic.FormView):
         if self.product.market.owner_id == self.request.user.id:
             form.add_error('product_type', _('Cannot buy your own product.'))
             return super(ProductPageView, self).form_invalid(form)
-        added_units_count = self.request.user.shopping_account.set_units_count_to_order(
+        self.request.user.shopping_account.cart.set_item(
             product_type_pk=form.cleaned_data['product_type'].pk,
-            quantity=quantity
-        )
-        if added_units_count == 0 and quantity != 0:
-            form.add_error('product_type', _('This type is old out'))
-            return super(ProductPageView, self).form_invalid(form)
+            quantity=quantity)
         return super(ProductPageView, self).form_valid(form)
 
 

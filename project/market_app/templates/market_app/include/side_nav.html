@@ -40,10 +40,12 @@
         {% trans 'My cart' %}
       </a>
     </li>
-    <li class="list-group-item">
-      <a href="{% url 'market_app:top_up' %}">
-        {% trans 'balance' %} {{ user.shopping_account.balance|to_local_currency }}
-      </a>
-    </li>
+    {% if user.is_authenticated  %}
+      <li class="list-group-item">
+        <a href="{% url 'market_app:top_up' %}">
+          {% trans 'balance' %} {{ user.shopping_account.balance|to_local_currency }}
+        </a>
+      </li>
+    {% endif %}
   </ul>
 </div>
