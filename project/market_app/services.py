@@ -14,24 +14,6 @@ class NotEnoughMoneyError(Exception):
     """Raises if user doesn't have enough money to a transaction"""
 
 
-def _create_purchase_operation_description(items):
-    description_text = ''
-    for item in items:
-        units_count = item.units_on_cart
-        sale_price = item.sale_price
-        description_text += f"""product: {item.product},
-            attributes: {item.str_attributes},
-            market: {item.product.market},
-            count: {units_count},
-            sale price: {sale_price},
-            total price: {units_count} * {sale_price} = {units_count * item.sale_price}"""
-    return description_text
-
-
-def _set_operation_description(operation_pk, description):
-    return Operation.objects.filter(pk=operation_pk.pk).update(description=description)
-
-
 def _set_order_operation(operation: Operation, order: Order):
     return Order.objects.filter(pk=order.pk).update(operation=operation)
 
