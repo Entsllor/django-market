@@ -225,13 +225,13 @@ class PrepareOrderTest(TestBaseWithFilledCatalogue):
 
     def test_return_order_object(self):
         self.fill_cart({'1': 5, '2': 3, '4': 5})
-        order = prepare_order(self.cart.get_order_list())
+        order = prepare_order(self.cart.items)
         self.assertIsInstance(order, Order)
 
     def test_format_order_items(self):
         types_to_take = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(types_to_take)
-        order = prepare_order(self.cart.get_order_list())
+        order = prepare_order(self.cart.items)
         items = self.cart.get_order_list()
         for item in items:
             order_item_data = order.items[str(item.pk)]
