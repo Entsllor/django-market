@@ -7,7 +7,7 @@ from django.db.models.signals import post_save
 from django.test import TestCase
 
 from currencies.services import create_currencies_from_settings
-from ..models import Product, Market, ProductCategory, ProductType, ShoppingAccount
+from ..models import Product, Market, ProductCategory, ProductType, ShoppingAccount, Coupon
 
 
 class FailedToCreateObject(Exception):
@@ -44,6 +44,10 @@ class BaseMarketTestCase(TestCase):
     @property
     def shopping_account(self) -> ShoppingAccount:
         return ShoppingAccount.objects.get(user=self.user)
+
+    @property
+    def cart(self):
+        return self.shopping_account.cart
 
     @property
     def balance(self):
@@ -112,6 +116,11 @@ class BaseMarketTestCase(TestCase):
         return product
 
 
+def _create_coupon(discount_percent, max_discount):
+    coupon = Coupon.objects.create(discount_percent=discount_percent, max_discount=max_discount)
+    return coupon
+
+
 class TestBaseWithFilledCatalogue(BaseMarketTestCase):
     default_product_price = 100
     catalogue_data = {
@@ -165,6 +174,11 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
                 types.append(ProductType(product_id=product_id, **type_data))
         ProductType.objects.bulk_create(types)
 
+    def create_and_set_coupon(self, discount_percent=0, max_discount=0):
+        coupon = _create_coupon(discount_percent, max_discount)
+        coupon.customers.add(self.shopping_account)
+        return coupon
+
     @property
     def markets(self):
         return Market.objects.all()
@@ -187,4 +201,4 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
 
     def fill_cart(self, types_to_add):
         for product_type_id, units_count in types_to_add.items():
-            self.shopping_account.set_units_count_to_order(product_type_pk=product_type_id, quantity=units_count)
+            self.cart.set_item(product_type_pk=product_type_id, quantity=units_count)

@@ -191,6 +191,58 @@ class ProductImage(models.Model):
         verbose_name_plural = _('products images')
 
 
+def _validate_units_quantity(quantity):
+    if not isinstance(quantity, int) or quantity < 0:
+        raise ValueError(f'Expected a natural number, got {quantity} instead')
+
+
+class Cart(models.Model):
+    _default_cart_value = dict
+    items = models.JSONField(verbose_name=_('items'), default=_default_cart_value)
+
+    @property
+    def total_price(self):
+        total_price = 0
+        for item in self.get_order_list('id'):
+            total_price += item.sale_price * item.units_on_cart
+        return total_price
+
+    def get_order_list(self, *fields):
+        result = []
+        types = ProductType.objects.only(*fields).filter(id__in=self.items.keys())
+        for i_type in types:
+            i_type.units_on_cart = self.items[str(i_type.pk)]
+            result.append(i_type)
+        return result
+
+    def set_item(self, product_type_pk, quantity):
+        _validate_units_quantity(quantity)
+        product_type_pk = str(product_type_pk)
+        if quantity == 0:
+            if product_type_pk in self.items:
+                del self.items[product_type_pk]
+        elif product_type_pk not in self.items:
+            self.items[product_type_pk] = quantity
+        else:
+            self.items[product_type_pk] = quantity
+        self.save(update_fields=['items'])
+
+    def clear(self):
+        return Cart.objects.filter(pk=self.pk).update(items=self._default_cart_value())
+
+    def remove_nonexistent_product_types(self):
+        old_pks = list(self.items.keys())
+        new_pks = ProductType.objects.values_list('pk', flat=True)
+        for pk in old_pks:
+            if int(pk) not in new_pks:
+                del self.items[str(pk)]
+        self.save(update_fields=['items'])
+
+
+def _create_cart():
+    return Cart.objects.create()
+
+
 class ShoppingAccount(models.Model):
     user = models.OneToOneField(
         to=User,
@@ -206,81 +258,13 @@ class ShoppingAccount(models.Model):
         default=0
     )
 
-    _default_order_value = dict
-    order = models.JSONField('order', default=_default_order_value, blank=True)
-
-    activated_coupon = models.ForeignKey(
-        'Coupon',
-        verbose_name=_('activated coupon'),
-        on_delete=models.SET_NULL,
-        null=True, blank=True
+    cart = models.OneToOneField(
+        Cart,
+        verbose_name=_('cart'),
+        default=_create_cart,
+        on_delete=models.SET_DEFAULT,
+        related_name='shopping_account'
     )
-
-    def set_units_count_to_order(self, product_type_pk, quantity: int) -> int:
-        """Try to set quantity of product-type's units.
-        Return the number of units after setting"""
-        product_type = ProductType.objects.only('id').get(pk=product_type_pk)
-        self._validate_units_count_setting(product_type, quantity)
-        product_type_pk = str(product_type_pk)
-        units_count_at_start = self.order.get(product_type_pk, 0)
-        difference = quantity - units_count_at_start
-        # need to add
-        if difference > 0:
-            added_units_count = difference if difference < product_type.units_count else product_type.units_count
-            if added_units_count != 0 and product_type.remove_product_units(added_units_count):
-                self.order[product_type_pk] = units_count_at_start + added_units_count
-        # need to reduce
-        elif difference < 0:
-            product_type.create_product_units(-difference)
-            self.order[product_type_pk] = quantity
-        units_count_after_setting = self.order.get(product_type_pk, 0)
-        # don't keep order items if number of units to buy equals zero
-        if units_count_after_setting == 0 and product_type_pk in self.order:
-            del self.order[product_type_pk]
-        self.save()
-        return units_count_after_setting
-
-    def _validate_units_count_setting(self, product_type, quantity):
-        if not isinstance(quantity, int) or quantity < 0:
-            raise ValueError(f'Expected a natural number, got {quantity} instead')
-        if product_type.product.market.owner == self.user:
-            raise PermissionError(f'Cannot add your own product to your order.')
-
-    def get_order_list(self, *fields):
-        result = []
-        types = ProductType.objects.only(*fields).filter(id__in=self.order.keys())
-        for i_type in types:
-            i_type.units_on_cart = self.order[str(i_type.pk)]
-            result.append(i_type)
-        return result
-
-    def cancel_order(self):
-        """Remove all order units from order and return them to DB."""
-        for type_pk in self.order.copy():
-            self.set_units_count_to_order(type_pk, 0)
-
-    def set_default_value_to_order(self):
-        """Set default value to the user order.
-        Irrevocably del all non-default values in the order."""
-        self.order = self._default_order_value()
-        self.save(update_fields=['order'])
-
-    @property
-    def total_price(self):
-        total_price = 0
-        for item in self.get_order_list('id'):
-            total_price += item.sale_price * item.units_on_cart
-        if self.activated_coupon:
-            coupon_discount = self._get_coupon_discount(total_price)
-            total_price -= coupon_discount
-        return total_price
-
-    def _get_coupon_discount(self, total_price):
-        coupon = self.activated_coupon
-        coupon_discount = total_price * coupon.discount_percent / 100
-        if coupon.max_discount:
-            coupon_discount = min(coupon_discount, coupon.max_discount)
-        return coupon_discount
 
     def get_operations_amount_sum(self):
         result = getattr(self, 'operations').aggregate(sum=Sum('amount'))['sum'] or Decimal('0.00')
@@ -298,28 +282,57 @@ class Operation(models.Model):
         verbose_name=_('amount'),
         max_digits=MAX_OPERATION_DIGITS_COUNT,
         decimal_places=MONEY_DECIMAL_PLACES)
-    description = models.TextField(blank=True)
     transaction_time = models.DateTimeField(
         verbose_name=_('transaction time'),
         auto_now=True
     )
 
-    def get_absolute_url(self):
-        return reverse_lazy('market_app:operation_detail', kwargs={'pk': self.pk})
 
-    def description_as_list(self):
-        return self.description.split('\n')
-
-
-class ShoppingReceipt(models.Model):
+class Order(models.Model):
+    shopping_account = models.ForeignKey(
+        ShoppingAccount, verbose_name=_('customer account'),
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='orders'
+    )
     operation = models.OneToOneField(
         to=Operation,
         verbose_name=_('customer account'),
         on_delete=models.CASCADE,
         null=True,
-        related_name='receipt'
+        related_name='order'
     )
-    order_items = models.JSONField(verbose_name=_('order items'))
+    items = models.JSONField(verbose_name=_('order items'))
+
+    activated_coupon = models.ForeignKey(
+        'Coupon',
+        verbose_name=_('activated coupon'),
+        on_delete=models.SET_NULL,
+        null=True, blank=True
+    )
+
+    def get_absolute_url(self):
+        return reverse_lazy('market_app:order_detail', kwargs={'pk': self.pk})
+
+    def _get_coupon_discount(self, total_price):
+        coupon = self.activated_coupon
+        coupon_discount = total_price * coupon.discount_percent / 100
+        if coupon.max_discount:
+            coupon_discount = min(coupon_discount, coupon.max_discount)
+        return coupon_discount
+
+    def set_coupon(self, coupon):
+        Order.objects.filter(pk=self.pk).update(activated_coupon=coupon)
+
+    @property
+    def total_price(self):
+        total_price = 0
+        for item_data in self.items.values():
+            total_price += item_data['units_count'] * Decimal(item_data['sale_price'])
+        if self.activated_coupon:
+            coupon_discount = self._get_coupon_discount(total_price)
+            total_price -= coupon_discount
+        return total_price
 
 
 class Coupon(models.Model):

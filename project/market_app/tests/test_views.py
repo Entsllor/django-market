@@ -4,7 +4,7 @@ from django.urls import reverse_lazy
 from currencies.services import DEFAULT_CURRENCY, exchange_to
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue, FailedToCreateObject
 from ..models import Market, Product, ProductCategory, Operation
-from ..services import top_up_balance, make_purchase
+from ..services import top_up_balance, make_purchase, prepare_order
 
 
 def prepare_product_data_to_post(data) -> dict:
@@ -297,31 +297,31 @@ class CheckOutPage(TestBaseWithFilledCatalogue):
     check_out_page_url = reverse_lazy('market_app:checkout')
     top_up_page_url = reverse_lazy('market_app:top_up')
     cart_page_url = reverse_lazy('market_app:cart')
+    orders_list_url = reverse_lazy('market_app:orders')
     confirmation_page_url = reverse_lazy('market_app:order_confirmation')
 
+    def setUp(self) -> None:
+        super(CheckOutPage, self).setUp()
+        self.log_in_as_customer()
+
+    def get_url(self):
+        order = prepare_order(self.cart)
+        return reverse_lazy('market_app:checkout', kwargs={'pk': order.pk})
+
     def get_from_page(self, **kwargs):
-        return self.client.get(path=self.check_out_page_url, **kwargs)
+        return self.client.get(path=self.get_url(), **kwargs)
 
     def post_to_page(self, **kwargs):
-        return self.client.post(path=self.check_out_page_url, **kwargs)
+        return self.client.post(path=self.get_url(), **kwargs)
 
     def test_redirect_if_user_do_not_have_enough_money(self):
-        self.log_in_as_customer()
         top_up_balance(self.shopping_account, 500)
         self.fill_cart({'1': 5, '4': 5})
         response = self.get_from_page()
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, self.top_up_page_url)
 
-    def test_redirect_if_users_order_list_is_empty(self):
-        self.log_in_as_customer()
-        top_up_balance(self.shopping_account, 500)
-        response = self.get_from_page()
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, self.cart_page_url)
-
     def test_do_not_redirect_if_enough_money(self):
-        self.log_in_as_customer()
         top_up_balance(self.shopping_account, 5000)
         self.fill_cart({'1': 5, '4': 5})
         response = self.get_from_page()
@@ -329,45 +329,40 @@ class CheckOutPage(TestBaseWithFilledCatalogue):
         self.assertTemplateUsed(response, 'market_app/checkout_page.html')
 
     def test_do_purchase_if_user_agrees(self):
-        self.log_in_as_customer()
         top_up_balance(self.shopping_account, 1000)
         self.fill_cart({'1': 5, '4': 5})
-        response = self.post_to_page(data={'agreement': True})
+        response = self.post_to_page(data={'agreement': 'on'})
         self.assertRedirects(response, self.confirmation_page_url)
 
     def test_redirect_if_user_does_not_agree(self):
-        self.log_in_as_customer()
         top_up_balance(self.shopping_account, 1000)
         self.fill_cart({'1': 5, '4': 5})
-        response = self.post_to_page(data={'agreement': False})
-        self.assertRedirects(response, self.cart_page_url)
+        response = self.post_to_page()
+        self.assertRedirects(response, self.orders_list_url)
 
     def test_is_purchasing_successful(self):
-        self.log_in_as_customer()
         top_up_balance(self.shopping_account, 10000)
         self.fill_cart({'1': 5, '2': 3, '4': 2})
         self.assertEqual(self.shopping_account.balance, 10000)
         self.assertEqual(Market.objects.get(id=1).owner.shopping_account.balance, 0)
         self.assertEqual(Market.objects.get(id=2).owner.shopping_account.balance, 0)
-        response = self.post_to_page(data={'agreement': True})
+        response = self.post_to_page(data={'agreement': 'on'})
         self.assertEqual(self.shopping_account.balance, 9000)
         self.assertEqual(Market.objects.get(id=1).owner.shopping_account.balance, 800)
         self.assertEqual(Market.objects.get(id=2).owner.shopping_account.balance, 200)
         self.assertRedirects(response, self.confirmation_page_url)
 
     def test_cart_is_empty_after_purchasing(self):
-        self.log_in_as_customer()
         top_up_balance(self.shopping_account, 10000)
         self.fill_cart({'1': 5, '4': 5})
-        self.assertNotEqual(self.shopping_account.order, {})
         self.assertEqual(self.shopping_account.balance, 10000)
-        self.post_to_page(data={'agreement': True})
-        self.assertEqual(self.shopping_account.order, {})
+        self.post_to_page(data={'agreement': 'False'})
+        self.assertEqual(self.cart.items, {})
 
 
 class TopUpViewTest(BaseMarketTestCase):
     top_up_page_url = reverse_lazy('market_app:top_up')
-    cart_page_url = reverse_lazy('market_app:cart')
+    catalogue_url = reverse_lazy('market_app:catalogue')
 
     def setUp(self) -> None:
         self.create_currencies()
@@ -395,7 +390,7 @@ class TopUpViewTest(BaseMarketTestCase):
         response = self.post_to_page(data=data)
         self.user.shopping_account.refresh_from_db()
         self.assertEqual(self.user.shopping_account.balance, 1000)
-        self.assertRedirects(response, self.cart_page_url)
+        self.assertRedirects(response, self.catalogue_url)
 
 
 class OperationHistoryTest(TestBaseWithFilledCatalogue):
@@ -409,7 +404,8 @@ class OperationHistoryTest(TestBaseWithFilledCatalogue):
         self.log_in_as_customer()
         top_up_balance(self.shopping_account, 10000)
         self.fill_cart({'1': 2, '3': 1, '5': 1})
-        make_purchase(self.shopping_account)
+        order = prepare_order(self.cart)
+        make_purchase(order, self.shopping_account)
 
     def test_redirect_if_not_logged_in(self):
         self.client.logout()
@@ -421,18 +417,17 @@ class OperationHistoryTest(TestBaseWithFilledCatalogue):
         self.assertTemplateUsed(response, 'market_app/operation_history.html')
 
 
-class OperationDetailTest(TestBaseWithFilledCatalogue):
+class OrderDetailTest(TestBaseWithFilledCatalogue):
     def setUp(self) -> None:
-        super(OperationDetailTest, self).setUp()
+        super(OrderDetailTest, self).setUp()
         self.log_in_as_customer()
         top_up_balance(self.shopping_account, 10000)
         self.fill_cart({'1': 2, '3': 1, '5': 1})
-        self.shopping_receipt = make_purchase(self.shopping_account)
-        self.operation = self.shopping_receipt.operation
+        self.order = prepare_order(self.cart)
 
     def get_url(self, pk=None):
         if pk is None:
-            return self.operation.get_absolute_url()
+            return self.order.get_absolute_url()
         return Operation.objects.get(pk=pk).get_absolute_url()
 
     def get_from_url(self):
@@ -445,13 +440,12 @@ class OperationDetailTest(TestBaseWithFilledCatalogue):
 
     def test_correct_template(self):
         response = self.get_from_url()
-        self.assertTemplateUsed(response, 'market_app/operation_detail.html')
+        self.assertTemplateUsed(response, 'market_app/order_detail.html')
 
-    def test_another_user_see_receipt_cant_see_details(self):
+    def test_another_user_cant_see_details(self):
         another_user_data = {'username': 'AnotherCustomer', 'password': self.password}
         self.client.logout()
         self.create_customer(**another_user_data)
         self.client.login(**another_user_data)
         response = self.get_from_url()
         self.assertEqual(response.status_code, 403)
-

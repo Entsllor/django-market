@@ -1,6 +1,5 @@
 import re
 
-from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.db.models import Q
 from django.http import HttpResponseRedirect
@@ -11,9 +10,9 @@ from django.views import generic
 from currencies.services import get_currency_code_by_language, DEFAULT_CURRENCY, \
     get_exchanger
 from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, ProductTypeForm, CreditCardForm, \
-    CheckOutForm, SelectCouponForm, AdvancedSearchForm
-from .models import Product, Market, ProductType, ShoppingAccount, Operation
-from .services import top_up_balance, make_purchase
+    AdvancedSearchForm, SelectCouponForm, CartForm, CheckOutForm
+from .models import Product, Market, ProductType, Operation, Order
+from .services import top_up_balance, make_purchase, prepare_order
 
 
 class MarketOwnerRequiredMixin(PermissionRequiredMixin):
@@ -127,13 +126,9 @@ class ProductPageView(generic.FormView):
         if self.product.market.owner_id == self.request.user.id:
             form.add_error('product_type', _('Cannot buy your own product.'))
             return super(ProductPageView, self).form_invalid(form)
-        added_units_count = self.request.user.shopping_account.set_units_count_to_order(
+        self.request.user.shopping_account.cart.set_item(
             product_type_pk=form.cleaned_data['product_type'].pk,
-            quantity=quantity
-        )
-        if added_units_count == 0 and quantity != 0:
-            form.add_error('product_type', _('This type is old out'))
-            return super(ProductPageView, self).form_invalid(form)
+            quantity=quantity)
         return super(ProductPageView, self).form_valid(form)
 
 
@@ -161,55 +156,77 @@ class MarketEditView(MarketOwnerRequiredMixin, generic.UpdateView):
 
 class CartView(LoginRequiredMixin, generic.FormView):
     template_name = 'market_app/cart_page.html'
-    model = ShoppingAccount
-    form_class = SelectCouponForm
     context_object_name = 'shopping_account'
-    success_url = reverse_lazy('market_app:cart')
-
-    def form_valid(self, form):
-        activated_coupon = form.cleaned_data['activated_coupon']
-        self.request.user.shopping_account.activated_coupon = activated_coupon
-        self.request.user.shopping_account.save()
-        return super(CartView, self).form_valid(form)
+    form_class = CartForm
 
     def get_context_data(self, **kwargs):
         context = super(CartView, self).get_context_data(**kwargs)
-        context['shopping_account'] = self.request.user.shopping_account
+        context['cart'] = self.request.user.shopping_account.cart
         return context
 
     def get_form_kwargs(self):
         kwargs = super(CartView, self).get_form_kwargs()
-        kwargs['shopping_account'] = self.request.user.shopping_account
+        kwargs['cart'] = self.request.user.shopping_account.cart
         return kwargs
 
+    def form_valid(self, form):
+        order = prepare_order(self.request.user.shopping_account.cart)
+        return HttpResponseRedirect(reverse_lazy('market_app:checkout', kwargs={'pk': order.pk}))
 
-class CheckOutView(LoginRequiredMixin, generic.FormView):
+
+class OrderDetail(PermissionRequiredMixin, generic.DetailView):
+    template_name = 'market_app/order_detail.html'
+    model = Order
+
+    def has_permission(self):
+        user = self.request.user
+        return user.id == self.get_object().shopping_account.user_id
+
+
+class OrderListView(generic.ListView):
+    template_name = 'market_app/orders_history.html'
+    model = Order
+
+    def get_queryset(self):
+        return Order.objects.filter(shopping_account_id=self.request.user.shopping_account.id)
+
+
+class CheckOutView(PermissionRequiredMixin, generic.DetailView):
     template_name = 'market_app/checkout_page.html'
     success_url = reverse_lazy('market_app:order_confirmation')
-    form_class = CheckOutForm
+    model = Order
+    context_object_name = 'order'
 
     def get(self, request, *args, **kwargs):
         shopping_account = self.request.user.shopping_account
-        if not shopping_account.order:
-            messages.warning(request=self.request, message='Your order is empty')
-            return HttpResponseRedirect(reverse_lazy('market_app:cart'))
-        if shopping_account.balance < shopping_account.total_price:
+        if shopping_account.balance < self.get_object().total_price:
             return HttpResponseRedirect(
                 reverse_lazy('market_app:top_up'))
         return super(CheckOutView, self).get(request, *args, **kwargs)
 
-    def form_valid(self, form):
-        is_agree = form.cleaned_data['agreement']
-        if not is_agree:
-            return HttpResponseRedirect(reverse_lazy('market_app:cart'))
-        make_purchase(self.request.user.shopping_account)
-        return super(CheckOutView, self).form_valid(form)
+    def get_context_data(self, **kwargs):
+        context = super(CheckOutView, self).get_context_data(**kwargs)
+        context['coupon_form'] = SelectCouponForm(shopping_account=self.request.user.shopping_account)
+        context['form'] = CheckOutForm
+        return context
+
+    def has_permission(self):
+        user = self.request.user
+        return user.id == self.get_object().shopping_account.user_id
+
+    def post(self, request, *args, **kwargs):
+        coupon = request.POST.get('coupon')
+        if request.POST.get('agreement') == 'on':
+            make_purchase(self.get_object(), self.request.user.shopping_account, coupon)
+            return HttpResponseRedirect(self.success_url)
+        else:
+            return HttpResponseRedirect(reverse_lazy('market_app:orders'))
 
 
 class TopUpView(LoginRequiredMixin, generic.FormView):
     form_class = CreditCardForm
     template_name = 'market_app/top_up_page.html'
-    success_url = reverse_lazy('market_app:cart')
+    success_url = reverse_lazy('market_app:catalogue')
 
     def form_valid(self, form):
         amount = form.cleaned_data['top_up_amount']
@@ -317,13 +334,3 @@ class OperationHistoryView(LoginRequiredMixin, generic.ListView):
     def get_queryset(self):
         user_shopping_account_id = self.request.user.shopping_account.id
         return Operation.objects.filter(shopping_account_id=user_shopping_account_id)
-
-
-class OperationDetail(PermissionRequiredMixin, generic.DetailView):
-    template_name = 'market_app/operation_detail.html'
-    model = Operation
-
-    def has_permission(self):
-        user = self.request.user
-        return user.is_authenticated and user.shopping_account == self.get_object().shopping_account
-

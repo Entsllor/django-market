@@ -9,14 +9,15 @@
 
 {% block form_block %}
   <p>
-    total price: {{ user.shopping_account.total_price|to_local_currency }}
+    total price: {{ order.total_price|to_local_currency }}
   </p>
   <p>
     balance: {{ user.shopping_account.balance|to_local_currency }}
   </p>
 
-  <form action="{% url 'market_app:checkout' %}" method="post">
+  <form method="post" action="{% url 'market_app:checkout' pk=order.pk %}">
+    {% include 'core_app/include/pretty_form.html' with form=coupon_form without_button=True %}
+        {% include 'core_app/include/pretty_form.html' with form=form %}
     {% csrf_token %}
-    {% include 'core_app/include/pretty_form.html' with form=form %}
   </form>
 {% endblock %}
