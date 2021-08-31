@@ -94,7 +94,8 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         top_up_balance(self.shopping_account, 2000)
         units_to_buy = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(units_to_buy)
-        make_purchase(self.shopping_account)
+        order = prepare_order(self.cart)
+        make_purchase(order, self.shopping_account)
         self.assertEqual(self.sellers.get(pk=1).shopping_account.balance, 800)
         self.assertEqual(self.sellers.get(pk=2).shopping_account.balance, 500)
         self.assertEqual(sum(self.sellers_balance.values()), 1300)
@@ -104,16 +105,18 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         top_up_balance(self.shopping_account, 2000)
         units_to_buy = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(units_to_buy)
-        make_purchase(self.shopping_account)
+        order = prepare_order(self.cart)
+        make_purchase(order, self.shopping_account)
         self.assertEqual(self.balance, 700)
 
-    def test_will_order_be_cleaned_after_purchase(self):
+    def test_will_cart_be_cleaned_after_purchase(self):
         top_up_balance(self.shopping_account, 2000)
         self.assertEqual(self.shopping_account.cart.items, {})
         units_to_buy = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(units_to_buy)
         self.assertNotEqual(self.shopping_account.cart.items, {})
-        make_purchase(self.shopping_account)
+        order = prepare_order(self.cart)
+        make_purchase(order, self.shopping_account)
         self.assertEqual(self.shopping_account.cart.items, {})
 
     def test_reduce_total_units_count_after_purchasing(self):
@@ -122,7 +125,8 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         units_to_buy = {'1': 5}
         units_at_start = ProductType.objects.get(pk=1).units_count
         self.fill_cart(units_to_buy)
-        make_purchase(self.shopping_account)
+        order = prepare_order(self.cart)
+        make_purchase(order, self.shopping_account)
         self.assertEqual(ProductType.objects.get(pk=1).units_count, units_at_start - 5)
 
     def test_pay_only_for_enable_product_units(self):
@@ -131,7 +135,8 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         units_to_buy = {'1': 5, '10': 10}
         self.fill_cart(units_to_buy)
         balance_before_purchase = self.balance
-        make_purchase(self.shopping_account)
+        order = prepare_order(self.cart)
+        make_purchase(order, self.shopping_account)
         balance_after_purchase = self.balance
         self.assertEqual(balance_after_purchase, balance_before_purchase - 600)
         self.assertEqual(self.sellers.get(pk=4).shopping_account.balance, 100)
@@ -141,25 +146,26 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         top_up_balance(self.shopping_account, 500)
         units_to_buy = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(units_to_buy)
+        order = prepare_order(self.cart)
         with self.assertRaises(NotEnoughMoneyError):
-            make_purchase(self.shopping_account)
+            make_purchase(order, self.shopping_account)
         self.assertEqual(self.balance, 500)
         self.assertEqual(sum(self.sellers_balance.values()), 0)
 
-    def test_get_order_after_purchase(self):
+    def test_get_operation_object_after_purchase(self):
         top_up_balance(self.shopping_account, 2000)
         units_to_buy = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(units_to_buy)
         total_price = self.shopping_account.total_price
-        order = make_purchase(self.shopping_account)
-        self.assertIsInstance(order, Order)
-        self.assertEqual(order.operation.amount, -total_price)
+        order = prepare_order(self.cart)
+        operation = make_purchase(order, self.shopping_account)
+        self.assertEqual(operation.amount, -total_price)
 
     def test_check_order_items(self):
         top_up_balance(self.shopping_account, 2000)
         units_to_buy = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(units_to_buy)
-        order = make_purchase(self.shopping_account)
+        order = prepare_order(self.cart)
         self.assertEqual(len(order.items), len(units_to_buy))
 
 
@@ -180,7 +186,8 @@ class CouponTest(TestBaseWithFilledCatalogue):
         self.assertTrue(self.shopping_account.coupon_set.filter(pk=activated_coupon.pk).exists())
         top_up_balance(self.shopping_account, 1000)
         self.fill_cart({'1': 1})
-        make_purchase(self.shopping_account)
+        order = prepare_order(self.cart)
+        make_purchase(order, self.shopping_account)
         self.assertIsNone(self.shopping_account.activated_coupon)
         self.assertFalse(self.shopping_account.coupon_set.filter(pk=activated_coupon.pk).exists())
 
@@ -225,13 +232,13 @@ class PrepareOrderTest(TestBaseWithFilledCatalogue):
 
     def test_return_order_object(self):
         self.fill_cart({'1': 5, '2': 3, '4': 5})
-        order = prepare_order(self.cart.items)
+        order = prepare_order(self.cart)
         self.assertIsInstance(order, Order)
 
     def test_format_order_items(self):
         types_to_take = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(types_to_take)
-        order = prepare_order(self.cart.items)
+        order = prepare_order(self.cart)
         items = self.cart.get_order_list()
         for item in items:
             order_item_data = order.items[str(item.pk)]

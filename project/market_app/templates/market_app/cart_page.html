@@ -9,47 +9,47 @@
       My cart
     </div>
 
-    <ul class="list-group list-group-flush">
-      {% for order_item in shopping_account.cart.get_order_list %}
-        <li class="list-group-item">
-          <a href="{{ order_item.product.get_absolute_url }}">
-            <h3>{{ order_item.product.name }}</h3>
-          </a>
-          <p>{{ order_item.str_attributes }}</p>
-          <div>
-            <label for="id_counter">
-              Number of units:
-            </label>
-            <input id="id_counter" type="number" disabled class="form-control" value="{{ order_item.units_on_cart }}">
-          </div>
-          <p>
-            Unit price: {{ order_item.sale_price|to_local_currency }}
-            {% if order_item.product.discount_percent %}
-              <s>{{ order_item.original_price|to_local_currency }}</s>
-            {% endif %}
-            <br>
-            {% widthratio order_item.sale_price 1 order_item.units_on_cart as total_item_price %}
-            Total price: {{ total_item_price|to_local_currency }}
+    <form action="{% url 'market_app:cart' %}" method="post">
+      {% csrf_token %}
+      <ul class="list-group list-group-flush">
 
-          </p>
-        </li>
-      {% endfor %}
-    </ul>
-    <div class="card-body">
-      <p>
-        Your balance: <a href="{% url 'market_app:top_up' %}">{{ shopping_account.balance|to_local_currency }}</a>
-        <br>
-        total price: {{ shopping_account.total_price|to_local_currency }}
-      </p>
-      <form method="post" action="{% url 'market_app:cart' %}" name="select_coupon">
-        {% include 'core_app/include/pretty_form.html' with form=form without_button=True %}
-        {% csrf_token %}
-      </form>
-    </div>
-    <div class="card-footer text-end">
-      <a class="btn btn-primary" href="{% url 'market_app:checkout' %}">
-        Check out
-      </a>
-    </div>
+        {% for order_item in cart.get_order_list %}
+          <li class="list-group-item">
+            <a href="{{ order_item.product.get_absolute_url }}">
+              <h3>{{ order_item.product.name }}</h3>
+            </a>
+            <p>{{ order_item.str_attributes }}</p>
+            <div>
+              <label for="id_{{ order_item.pk }}">
+                Number of units:
+              </label>
+              <input id="id_{{ order_item.pk }}" name="{{ order_item.pk }}" type="number" class="form-control"
+                     value="{{ order_item.units_on_cart }}">
+            </div>
+            <p>
+              Unit price: {{ order_item.sale_price|to_local_currency }}
+              {% if order_item.product.discount_percent %}
+                <s>{{ order_item.original_price|to_local_currency }}</s>
+              {% endif %}
+              <br>
+              {% widthratio order_item.sale_price 1 order_item.units_on_cart as total_item_price %}
+              Total price: {{ total_item_price|to_local_currency }}
+
+            </p>
+          </li>
+        {% endfor %}
+      </ul>
+      <div class="card-body">
+        <p>
+          Your balance: <a
+          href="{% url 'market_app:top_up' %}">{{ user.shopping_account.balance|to_local_currency }}</a>
+          <br>
+          total price: {{ user.shopping_account.total_price|to_local_currency }}
+        </p>
+        <button type="submit" class="btn btn-primary d-block ms-auto">
+          Submit
+        </button>
+      </div>
+    </form>
   </div>
 {% endblock %}

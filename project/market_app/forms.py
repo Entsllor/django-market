@@ -135,6 +135,14 @@ class SelectCouponForm(forms.Form):
         )
 
 
+class CartForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        self.cart = kwargs.pop('cart')
+        super(CartForm, self).__init__(*args, **kwargs)
+        for pk, count in self.cart.items.items():
+            self.fields[pk] = forms.IntegerField(initial=count)
+
+
 class AdvancedSearchForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.currency_code = kwargs.pop('currency_code')

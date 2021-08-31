@@ -25,6 +25,12 @@
         </div>
       {% endfor %}
     </ul>
+  {% if not order.operation %}
+  STATUS: WAIT FOR PAYMENT
+    <a href="{% url 'market_app:checkout' pk=order.pk %}">
+      PAY
+    </a>
+  {% endif %}
   </div>
 
 {% endblock %}

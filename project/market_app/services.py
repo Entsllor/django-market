@@ -73,13 +73,16 @@ def _format_product_type_data(product_type, units_in_order):
     }
 
 
-def prepare_order(items):
+def prepare_order(cart: Cart):
+    _prepare_cart(cart)
     items_data = {}
-    for product_type, count in items.items():
+    for product_type, count in cart.items.items():
         taken_units = _take_units_from_db(product_type, count)
         item_data = _format_product_type_data(product_type, taken_units)
         items_data.update(item_data)
-    return Order.objects.create(items=items_data)
+    order = Order.objects.create(items=items_data, shopping_account=cart.shopping_account)
+    cart.clear()
+    return order
 
 
 def unlink_activated_coupon(shopping_account: ShoppingAccount) -> None:
@@ -101,22 +104,13 @@ def _send_money_to_sellers(shopping_account, debt_to_sellers):
         top_up_balance(seller, amount_of_money)
 
 
-def _pay_for_order(shopping_account: ShoppingAccount, order: Order) -> Operation:
+def make_purchase(order: Order, shopping_account: ShoppingAccount) -> Operation:
     debt_to_sellers = get_debt_to_sellers(order.items)
     purchase_operation = _change_balance_amount(shopping_account, SUBTRACT, order.total_price)
     _send_money_to_sellers(shopping_account, debt_to_sellers)
     _set_order_operation(purchase_operation, order)
-    return purchase_operation
-
-
-def make_purchase(shopping_account: ShoppingAccount) -> Order:
-    _prepare_cart(shopping_account.cart)
-    order = prepare_order(shopping_account.cart.items)
-    _pay_for_order(shopping_account, order)
-    shopping_account.cart.clear()
     unlink_activated_coupon(shopping_account)
-    order.refresh_from_db()
-    return order
+    return purchase_operation
 
 
 def _change_balance_amount(shopping_account, operation_type, amount_of_money):
