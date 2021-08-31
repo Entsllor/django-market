@@ -7,7 +7,7 @@ from django.db.models.signals import post_save
 from django.test import TestCase
 
 from currencies.services import create_currencies_from_settings
-from ..models import Product, Market, ProductCategory, ProductType, ShoppingAccount
+from ..models import Product, Market, ProductCategory, ProductType, ShoppingAccount, Coupon
 
 
 class FailedToCreateObject(Exception):
@@ -116,6 +116,11 @@ class BaseMarketTestCase(TestCase):
         return product
 
 
+def _create_coupon(discount_percent, max_discount):
+    coupon = Coupon.objects.create(discount_percent=discount_percent, max_discount=max_discount)
+    return coupon
+
+
 class TestBaseWithFilledCatalogue(BaseMarketTestCase):
     default_product_price = 100
     catalogue_data = {
@@ -168,6 +173,11 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
             for type_id, type_data in types_data.items():
                 types.append(ProductType(product_id=product_id, **type_data))
         ProductType.objects.bulk_create(types)
+
+    def create_and_set_coupon(self, discount_percent=0, max_discount=0):
+        coupon = _create_coupon(discount_percent, max_discount)
+        coupon.customers.add(self.shopping_account)
+        return coupon
 
     @property
     def markets(self):

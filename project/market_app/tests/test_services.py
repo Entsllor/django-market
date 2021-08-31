@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from .base_case import TestBaseWithFilledCatalogue, BaseMarketTestCase, assert_difference
-from ..models import ShoppingAccount, Order, Coupon, ProductType, Operation
+from ..models import Order, Coupon, ProductType, Operation
 from ..services import (
     top_up_balance, make_purchase, withdraw_money, NotEnoughMoneyError, _take_units_from_db, prepare_order
 )
@@ -156,7 +156,7 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         top_up_balance(self.shopping_account, 2000)
         units_to_buy = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(units_to_buy)
-        total_price = self.shopping_account.total_price
+        total_price = self.shopping_account.cart.total_price
         order = prepare_order(self.cart)
         operation = make_purchase(order, self.shopping_account)
         self.assertEqual(operation.amount, -total_price)
@@ -174,22 +174,32 @@ class CouponTest(TestBaseWithFilledCatalogue):
         super(CouponTest, self).setUp()
         self.log_in_as_customer()
 
-    @property
-    def sellers_balance(self):
-        return {seller.pk: seller.shopping_account.balance for seller in self.sellers}
-
     def test_unlink_activated_coupon_after_buying(self):
-        activated_coupon = Coupon.objects.create(discount_percent=10)
-        activated_coupon.customers.add(self.shopping_account)
-        ShoppingAccount.objects.filter(pk=self.shopping_account.pk).update(activated_coupon=activated_coupon)
-        self.assertEqual(self.shopping_account.activated_coupon.pk, activated_coupon.pk)
-        self.assertTrue(self.shopping_account.coupon_set.filter(pk=activated_coupon.pk).exists())
+        coupon = self.create_and_set_coupon(10)
+        top_up_balance(self.shopping_account, 1000)
+        self.fill_cart({'1': 1})
+        self.assertTrue(self.shopping_account.coupon_set.filter(pk=coupon.pk).exists())
+        order = prepare_order(self.cart)
+        make_purchase(order, self.shopping_account, coupon)
+        self.assertFalse(self.shopping_account.coupon_set.filter(pk=coupon.pk).exists())
+
+    def test_coupon_decreases_total_order_price(self):
+        coupon = self.create_and_set_coupon(10)
         top_up_balance(self.shopping_account, 1000)
         self.fill_cart({'1': 1})
         order = prepare_order(self.cart)
-        make_purchase(order, self.shopping_account)
-        self.assertIsNone(self.shopping_account.activated_coupon)
-        self.assertFalse(self.shopping_account.coupon_set.filter(pk=activated_coupon.pk).exists())
+        make_purchase(order, self.shopping_account, coupon)
+        self.assertEqual(self.balance, 910)
+
+    def test_coupon_dont_decrease_seller_income(self):
+        coupon = self.create_and_set_coupon(10)
+        top_up_balance(self.shopping_account, 1000)
+        self.fill_cart({'1': 1})
+        order = prepare_order(self.cart)
+        self.assertEqual(self.sellers.get(pk=1).shopping_account.balance, 0)
+        make_purchase(order, self.shopping_account, coupon)
+        self.assertEqual(self.balance, 910)
+        self.assertEqual(self.sellers.get(pk=1).shopping_account.balance, 100)
 
 
 class TakeUnitsFromDBTest(TestBaseWithFilledCatalogue):

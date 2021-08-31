@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.db.models import F
 
-from .models import ShoppingAccount, ProductType, Order, Operation, Cart
+from .models import ShoppingAccount, ProductType, Order, Operation, Cart, Coupon
 
 logger = logging.getLogger('market.transactions')
 SUBTRACT = '-'
@@ -85,11 +85,13 @@ def prepare_order(cart: Cart):
     return order
 
 
-def unlink_activated_coupon(shopping_account: ShoppingAccount) -> None:
-    coupon = shopping_account.activated_coupon
-    if coupon:
+def activate_coupon_to_order(order: Order, shopping_account: ShoppingAccount, coupon: Coupon):
+    if not isinstance(coupon, Coupon):
+        coupon = Coupon.objects.get(pk=coupon)
+    if shopping_account.coupon_set.filter(pk=coupon.pk).exists():
+        order.set_coupon(coupon)
         coupon.customers.remove(shopping_account)
-        ShoppingAccount.objects.filter(pk=shopping_account.pk).update(activated_coupon=None)
+        order.refresh_from_db()
 
 
 def _send_money_to_sellers(shopping_account, debt_to_sellers):
@@ -104,12 +106,13 @@ def _send_money_to_sellers(shopping_account, debt_to_sellers):
         top_up_balance(seller, amount_of_money)
 
 
-def make_purchase(order: Order, shopping_account: ShoppingAccount) -> Operation:
+def make_purchase(order: Order, shopping_account: ShoppingAccount, coupon: Coupon = None) -> Operation:
+    if coupon:
+        activate_coupon_to_order(order, shopping_account, coupon)
     debt_to_sellers = get_debt_to_sellers(order.items)
     purchase_operation = _change_balance_amount(shopping_account, SUBTRACT, order.total_price)
     _send_money_to_sellers(shopping_account, debt_to_sellers)
     _set_order_operation(purchase_operation, order)
-    unlink_activated_coupon(shopping_account)
     return purchase_operation
 
 

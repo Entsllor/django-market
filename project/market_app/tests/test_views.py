@@ -362,7 +362,7 @@ class CheckOutPage(TestBaseWithFilledCatalogue):
 
 class TopUpViewTest(BaseMarketTestCase):
     top_up_page_url = reverse_lazy('market_app:top_up')
-    cart_page_url = reverse_lazy('market_app:cart')
+    catalogue_url = reverse_lazy('market_app:catalogue')
 
     def setUp(self) -> None:
         self.create_currencies()
@@ -390,7 +390,7 @@ class TopUpViewTest(BaseMarketTestCase):
         response = self.post_to_page(data=data)
         self.user.shopping_account.refresh_from_db()
         self.assertEqual(self.user.shopping_account.balance, 1000)
-        self.assertRedirects(response, self.cart_page_url)
+        self.assertRedirects(response, self.catalogue_url)
 
 
 class OperationHistoryTest(TestBaseWithFilledCatalogue):

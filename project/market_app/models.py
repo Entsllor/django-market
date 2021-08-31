@@ -266,28 +266,6 @@ class ShoppingAccount(models.Model):
         related_name='shopping_account'
     )
 
-    activated_coupon = models.ForeignKey(
-        'Coupon',
-        verbose_name=_('activated coupon'),
-        on_delete=models.SET_NULL,
-        null=True, blank=True
-    )
-
-    @property
-    def total_price(self):
-        total_price = self.cart.total_price
-        if self.activated_coupon:
-            coupon_discount = self._get_coupon_discount(total_price)
-            total_price -= coupon_discount
-        return total_price
-
-    def _get_coupon_discount(self, total_price):
-        coupon = self.activated_coupon
-        coupon_discount = total_price * coupon.discount_percent / 100
-        if coupon.max_discount:
-            coupon_discount = min(coupon_discount, coupon.max_discount)
-        return coupon_discount
-
     def get_operations_amount_sum(self):
         result = getattr(self, 'operations').aggregate(sum=Sum('amount'))['sum'] or Decimal('0.00')
         return result.quantize(Decimal('1.00'))
@@ -326,14 +304,34 @@ class Order(models.Model):
     )
     items = models.JSONField(verbose_name=_('order items'))
 
+    activated_coupon = models.ForeignKey(
+        'Coupon',
+        verbose_name=_('activated coupon'),
+        on_delete=models.SET_NULL,
+        null=True, blank=True
+    )
+
     def get_absolute_url(self):
         return reverse_lazy('market_app:order_detail', kwargs={'pk': self.pk})
+
+    def _get_coupon_discount(self, total_price):
+        coupon = self.activated_coupon
+        coupon_discount = total_price * coupon.discount_percent / 100
+        if coupon.max_discount:
+            coupon_discount = min(coupon_discount, coupon.max_discount)
+        return coupon_discount
+
+    def set_coupon(self, coupon):
+        Order.objects.filter(pk=self.pk).update(activated_coupon=coupon)
 
     @property
     def total_price(self):
         total_price = 0
         for item_data in self.items.values():
             total_price += item_data['units_count'] * Decimal(item_data['sale_price'])
+        if self.activated_coupon:
+            coupon_discount = self._get_coupon_discount(total_price)
+            total_price -= coupon_discount
         return total_price
 
 

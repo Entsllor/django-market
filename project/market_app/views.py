@@ -215,8 +215,9 @@ class CheckOutView(PermissionRequiredMixin, generic.DetailView):
         return user.id == self.get_object().shopping_account.user_id
 
     def post(self, request, *args, **kwargs):
-        if request.POST.get('agreement', None) == 'on':
-            make_purchase(self.get_object(), self.request.user.shopping_account)
+        coupon = request.POST.get('coupon')
+        if request.POST.get('agreement') == 'on':
+            make_purchase(self.get_object(), self.request.user.shopping_account, coupon)
             return HttpResponseRedirect(self.success_url)
         else:
             return HttpResponseRedirect(reverse_lazy('market_app:orders'))
@@ -225,7 +226,7 @@ class CheckOutView(PermissionRequiredMixin, generic.DetailView):
 class TopUpView(LoginRequiredMixin, generic.FormView):
     form_class = CreditCardForm
     template_name = 'market_app/top_up_page.html'
-    success_url = reverse_lazy('market_app:cart')
+    success_url = reverse_lazy('market_app:catalogue')
 
     def form_valid(self, form):
         amount = form.cleaned_data['top_up_amount']

@@ -15,12 +15,9 @@
     balance: {{ user.shopping_account.balance|to_local_currency }}
   </p>
 
-  <form method="post" action="{% url 'market_app:checkout' pk=order.pk %}" name="select_coupon">
+  <form method="post" action="{% url 'market_app:checkout' pk=order.pk %}">
     {% include 'core_app/include/pretty_form.html' with form=coupon_form without_button=True %}
-    {% csrf_token %}
-  </form>
-  <form method="post" action="{% url 'market_app:checkout' pk=order.pk %}" name="select_coupon">
-    {% include 'core_app/include/pretty_form.html' with form=form %}
+        {% include 'core_app/include/pretty_form.html' with form=form %}
     {% csrf_token %}
   </form>
 {% endblock %}

@@ -125,13 +125,11 @@ class SelectCouponForm(forms.Form):
         self.shopping_account = kwargs.pop('shopping_account')
         self.coupons = self.shopping_account.coupon_set
         super(SelectCouponForm, self).__init__(*args, **kwargs)
-        self.fields['activated_coupon'] = forms.ModelChoiceField(
+        self.fields['coupon'] = forms.ModelChoiceField(
             label='Select a coupon',
-            initial=self.shopping_account.activated_coupon,
+            initial=self.coupons.first(),
             queryset=self.coupons,
-            required=False,
-            widget=forms.Select(
-                attrs={'onchange': "document.forms.select_coupon.submit();", 'style': 'white-space: normal'}),
+            required=False
         )
 
 
