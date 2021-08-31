@@ -258,11 +258,13 @@ class ShoppingAccount(models.Model):
         default=0
     )
 
-    cart = models.ForeignKey(
+    cart = models.OneToOneField(
         Cart,
         verbose_name=_('cart'),
         default=_create_cart,
-        on_delete=models.SET_DEFAULT)
+        on_delete=models.SET_DEFAULT,
+        related_name='shopping_account'
+    )
 
     activated_coupon = models.ForeignKey(
         'Coupon',
@@ -309,6 +311,12 @@ class Operation(models.Model):
 
 
 class Order(models.Model):
+    shopping_account = models.ForeignKey(
+        ShoppingAccount, verbose_name=_('customer account'),
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='orders'
+    )
     operation = models.OneToOneField(
         to=Operation,
         verbose_name=_('customer account'),
