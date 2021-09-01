@@ -15,6 +15,10 @@ class NotEnoughMoneyError(Exception):
     """Raises if user doesn't have enough money to a transaction"""
 
 
+class EmptyOrderError(Exception):
+    """Raises if the order is empty"""
+
+
 def _set_order_operation(operation: Operation, order: Order):
     return Order.objects.filter(pk=order.pk).update(operation=operation)
 
@@ -107,16 +111,27 @@ def _send_money_to_sellers(shopping_account, debt_to_sellers):
         top_up_balance(seller, amount_of_money)
 
 
-def _check_if_already_paid(order, raise_error=True):
-    operation = Order.objects.only('operation').get(pk=order.pk).operation
-    if operation:
+def _check_if_already_paid(order: Order, raise_error=True):
+    if order.operation:
         if raise_error:
             raise PermissionDenied('Cannot pay twice for one order.')
-        return operation
+        return order.operation
+
+
+def _check_if_order_empty(order: Order):
+    if not order.items:
+        raise EmptyOrderError('This order is empty.')
+
+
+def _validate_order(order: Order):
+    """Check if order is ready do purchase."""
+    order.refresh_from_db()
+    _check_if_order_empty(order)
+    _check_if_already_paid(order)
 
 
 def make_purchase(order: Order, shopping_account: ShoppingAccount, coupon: Coupon = None) -> Operation:
-    _check_if_already_paid(order, raise_error=True)
+    _validate_order(order)
     if coupon:
         activate_coupon_to_order(order, shopping_account, coupon)
     debt_to_sellers = get_debt_to_sellers(order.items)

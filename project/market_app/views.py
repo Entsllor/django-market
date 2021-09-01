@@ -1,6 +1,8 @@
 import re
 
+from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
@@ -12,7 +14,7 @@ from currencies.services import get_currency_code_by_language, DEFAULT_CURRENCY,
 from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, ProductTypeForm, CreditCardForm, \
     AdvancedSearchForm, SelectCouponForm, CartForm, CheckOutForm
 from .models import Product, Market, ProductType, Operation, Order
-from .services import top_up_balance, make_purchase, prepare_order
+from .services import top_up_balance, make_purchase, prepare_order, EmptyOrderError
 
 
 class MarketOwnerRequiredMixin(PermissionRequiredMixin):
@@ -217,7 +219,13 @@ class CheckOutView(PermissionRequiredMixin, generic.DetailView):
     def post(self, request, *args, **kwargs):
         coupon = request.POST.get('coupon')
         if request.POST.get('agreement') == 'on':
-            make_purchase(self.get_object(), self.request.user.shopping_account, coupon)
+            try:
+                make_purchase(self.get_object(), self.request.user.shopping_account, coupon)
+            except PermissionDenied as exc:
+                raise exc
+            except EmptyOrderError:
+                messages.warning(request, 'Cannot perform empty order')
+                return HttpResponseRedirect(reverse_lazy('market_app:cart'))
             return HttpResponseRedirect(self.success_url)
         else:
             return HttpResponseRedirect(reverse_lazy('market_app:orders'))
