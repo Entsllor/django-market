@@ -1,6 +1,7 @@
 import logging
 from decimal import Decimal
 
+from django.core.exceptions import PermissionDenied
 from django.db.models import F
 
 from .models import ShoppingAccount, ProductType, Order, Operation, Cart, Coupon
@@ -106,7 +107,16 @@ def _send_money_to_sellers(shopping_account, debt_to_sellers):
         top_up_balance(seller, amount_of_money)
 
 
+def _check_if_already_paid(order, raise_error=True):
+    operation = Order.objects.only('operation').get(pk=order.pk).operation
+    if operation:
+        if raise_error:
+            raise PermissionDenied('Cannot pay twice for one order.')
+        return operation
+
+
 def make_purchase(order: Order, shopping_account: ShoppingAccount, coupon: Coupon = None) -> Operation:
+    _check_if_already_paid(order, raise_error=True)
     if coupon:
         activate_coupon_to_order(order, shopping_account, coupon)
     debt_to_sellers = get_debt_to_sellers(order.items)

@@ -1,7 +1,9 @@
 from decimal import Decimal
 
+from django.core.exceptions import PermissionDenied
+
 from .base_case import TestBaseWithFilledCatalogue, BaseMarketTestCase, assert_difference
-from ..models import Order, Coupon, ProductType, Operation
+from ..models import Order, ProductType, Operation
 from ..services import (
     top_up_balance, make_purchase, withdraw_money, NotEnoughMoneyError, _take_units_from_db, prepare_order
 )
@@ -167,6 +169,19 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         self.fill_cart(units_to_buy)
         order = prepare_order(self.cart)
         self.assertEqual(len(order.items), len(units_to_buy))
+
+    def test_cant_pay_twice_for_one_order(self):
+        top_up_balance(self.shopping_account, 2000)
+        units_to_buy = {'1': 5}
+        self.fill_cart(units_to_buy)
+        order = prepare_order(self.cart)
+        make_purchase(order, self.shopping_account)
+        self.assertEqual(self.balance, 1500)
+        self.assertEqual(self.sellers.get(pk=1).shopping_account.balance, 500)
+        with self.assertRaises(PermissionDenied):
+            make_purchase(order, self.shopping_account)
+        self.assertEqual(self.balance, 1500)
+        self.assertEqual(self.sellers.get(pk=1).shopping_account.balance, 500)
 
 
 class CouponTest(TestBaseWithFilledCatalogue):
