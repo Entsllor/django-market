@@ -25,12 +25,28 @@
         </div>
       {% endfor %}
     </ul>
-  {% if not order.operation %}
-  STATUS: WAIT FOR PAYMENT
-    <a href="{% url 'market_app:checkout' pk=order.pk %}">
-      PAY
-    </a>
-  {% endif %}
+    <div class="card-body">
+      {% if order.activated_coupon %}
+        Activated coupon: {{ order.activated_coupon }}
+      {% endif %}
+      <p class="mb-0">
+        Total price: {{ order.total_price|to_local_currency }}
+      </p>
+      {% if not order.operation %}
+      <div class="d-flex flex-row justify-content-between">
+        <p>
+          status: wait for payment
+        </p>
+        <div>
+          <a href="{% url 'market_app:checkout' pk=order.pk %}"
+             class="btn btn-primary">
+            Pay
+          </a>
+        </div>
+      </div>
+    {% endif %}
+    </div>
+
   </div>
 
 {% endblock %}
