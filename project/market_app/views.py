@@ -173,6 +173,16 @@ class CartView(LoginRequiredMixin, generic.FormView):
 
     def form_valid(self, form):
         order = prepare_order(self.request.user.shopping_account.cart)
+        for pk, expected_count in form.cleaned_data.items():
+            order_item = order.items[pk]
+            if order_item['units_count'] < expected_count:
+                messages.warning(
+                    self.request,
+                    'Sorry, product "{}" is almost sold out and we can sell only {} of these.'.format(
+                        order_item['product_name'],
+                        order_item['units_count']
+                    )
+                )
         return HttpResponseRedirect(reverse_lazy('market_app:checkout', kwargs={'pk': order.pk}))
 
 
