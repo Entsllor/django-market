@@ -1,23 +1,43 @@
-{% extends 'market_app/form_block.html' %}
+{% extends 'market_app/app_base.html' %}
 
 {% load currencies %}
 {% get_currency_l10n_filter LANGUAGE as to_local_currency %}
 
-{% block card-title %}
-  Check out
-{% endblock %}
+{% block main_center_block %}
+  <div class="card my-2">
+    <div class="card-header content-title">
+      Check out
+    </div>
+    <ul class="list-group list-group-flush">
+      {% for pk, order_item in order.items.items %}
+        <li class="list-group-item">
+          <h4 class="text-center">
+            {{ order_item.product_name }}
+          </h4>
+          Count: {{ order_item.units_count }}<br class="p">
+          {% if order_item.sale_price %}
+            Sale price: {{ order_item.sale_price|to_local_currency }}<br>
+          {% endif %}
+          {% for prop, value in order_item.properties.items %}
+            {{ prop }}: {{ value }}<br>
+          {% endfor %}
+        </li>
+      {% endfor %}
+    </ul>
+    <div class="card-body">
 
-{% block form_block %}
-  <p>
-    total price: {{ order.total_price|to_local_currency }}
-  </p>
-  <p>
-    balance: {{ user.shopping_account.balance|to_local_currency }}
-  </p>
+      <p>
+        total price: {{ order.total_price|to_local_currency }}
+      </p>
+      <p>
+        balance: {{ user.shopping_account.balance|to_local_currency }}
+      </p>
 
-  <form method="post" action="{% url 'market_app:checkout' pk=order.pk %}">
-    {% include 'core_app/include/pretty_form.html' with form=coupon_form without_button=True %}
+      <form method="post" action="{% url 'market_app:checkout' pk=order.pk %}">
+        {% include 'core_app/include/pretty_form.html' with form=coupon_form without_button=True %}
         {% include 'core_app/include/pretty_form.html' with form=form %}
-    {% csrf_token %}
-  </form>
+        {% csrf_token %}
+      </form>
+    </div>
+  </div>
 {% endblock %}
