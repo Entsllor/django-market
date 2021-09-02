@@ -3,7 +3,7 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from currencies.services import exchange_to, get_currency_choices
-from .models import Product, Market, ProductType, ProductCategory
+from .models import Product, Market, ProductType, ProductCategory, Cart
 
 DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY
 product_attributes_placeholder = _(
@@ -95,7 +95,7 @@ class ProductTypeForm(forms.ModelForm):
 
 
 class AddToCartForm(forms.Form):
-    quantity = forms.IntegerField(min_value=0, max_value=10)
+    quantity = forms.IntegerField(min_value=0, max_value=Cart.max_product_type_count_on_cart)
     product_type = forms.ModelChoiceField(queryset=None)
 
     def __init__(self, *args, **kwargs):

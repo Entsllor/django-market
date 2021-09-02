@@ -198,6 +198,7 @@ def _validate_units_quantity(quantity):
 
 class Cart(models.Model):
     _default_cart_value = dict
+    max_product_type_count_on_cart = 20
     items = models.JSONField(verbose_name=_('items'), default=_default_cart_value)
 
     @property
@@ -244,9 +245,14 @@ class Cart(models.Model):
         self.items = {pk: count for pk, count in self.items.items() if int(pk) not in own_products_types_pks}
         self.save(update_fields=['items'])
 
+    def _to_valid_units_count(self):
+        valid_items = {item: count for item, count in self.items.items()}
+        Cart.objects.filter(pk=self.pk).update(items=valid_items)
+
     def prepare_items(self):
         self._remove_nonexistent_product_types()
         self._remove_own_products_types_from_cart()
+        self._to_valid_units_count()
 
 
 def _create_cart():
