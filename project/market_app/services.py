@@ -57,10 +57,6 @@ def get_debt_to_sellers(order_items) -> dict:
     return debt_to_sellers
 
 
-def _prepare_cart(cart: Cart):
-    cart.remove_nonexistent_product_types()
-
-
 def _format_product_type_data(product_type, units_in_order):
     if not isinstance(product_type, ProductType):
         product_type = ProductType.objects.get(pk=product_type)
@@ -79,7 +75,7 @@ def _format_product_type_data(product_type, units_in_order):
 
 
 def prepare_order(cart: Cart):
-    _prepare_cart(cart)
+    cart.prepare_items()
     items_data = {}
     for product_type, count in cart.items.items():
         taken_units = _take_units_from_db(product_type, count)

@@ -230,13 +230,23 @@ class Cart(models.Model):
     def clear(self):
         return Cart.objects.filter(pk=self.pk).update(items=self._default_cart_value())
 
-    def remove_nonexistent_product_types(self):
+    def _remove_nonexistent_product_types(self):
         old_pks = list(self.items.keys())
         new_pks = ProductType.objects.values_list('pk', flat=True)
         for pk in old_pks:
             if int(pk) not in new_pks:
                 del self.items[str(pk)]
         self.save(update_fields=['items'])
+
+    def _remove_own_products_types_from_cart(self):
+        own_products_types_pks = ProductType.objects.filter(
+            product__market__owner=self.shopping_account.user).values_list('pk', flat=True)
+        self.items = {pk: count for pk, count in self.items.items() if int(pk) not in own_products_types_pks}
+        self.save(update_fields=['items'])
+
+    def prepare_items(self):
+        self._remove_nonexistent_product_types()
+        self._remove_own_products_types_from_cart()
 
 
 def _create_cart():

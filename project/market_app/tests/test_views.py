@@ -3,7 +3,7 @@ from django.urls import reverse_lazy
 
 from currencies.services import DEFAULT_CURRENCY, exchange_to
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue, FailedToCreateObject
-from ..models import Market, Product, ProductCategory, Operation
+from ..models import Market, Product, ProductCategory, Operation, ProductType
 from ..services import top_up_balance, make_purchase, prepare_order
 
 
@@ -358,6 +358,17 @@ class CheckOutPage(TestBaseWithFilledCatalogue):
         self.assertEqual(self.shopping_account.balance, 10000)
         self.post_to_page(data={'agreement': 'False'})
         self.assertEqual(self.cart.items, {})
+
+    def test_sellers_cant_buy_their_own_products(self):
+        self.log_in_as_seller()
+        top_up_balance(self.shopping_account, 2000)
+        own_product_type_units_count_at_start = ProductType.objects.get(pk=1).units_count
+        units_to_buy = {'1': 5, '5': 3}
+        self.fill_cart(units_to_buy)
+        self.post_to_page()
+        own_product_type_units_count_at_end = ProductType.objects.get(pk=1).units_count
+        self.assertEqual(own_product_type_units_count_at_start, own_product_type_units_count_at_end)
+        self.assertEqual(self.shopping_account.orders.first().total_price, 300)
 
 
 class TopUpViewTest(BaseMarketTestCase):

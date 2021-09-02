@@ -153,5 +153,14 @@ class CartTest(TestBaseWithFilledCatalogue):
         self.cart.set_item('2', 3)
         self.cart.set_item('256', 1)
         self.assertEqual(self.cart.items, {'2': 3, '256': 1})
-        self.cart.remove_nonexistent_product_types()
+        self.cart._remove_nonexistent_product_types()
         self.assertEqual(self.cart.items, {'2': 3})
+
+    @assert_difference({'5': 3})
+    def test_remove_own_products_from_cart(self):
+        self.log_in_as_seller()
+        self.cart.set_item('1', 5)
+        self.cart.set_item('3', 5)
+        self.cart.set_item('5', 3)
+        self.cart.set_item('2', 1)
+        self.cart._remove_own_products_types_from_cart()
