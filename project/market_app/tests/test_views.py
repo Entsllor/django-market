@@ -3,7 +3,7 @@ from django.urls import reverse_lazy
 
 from currencies.services import DEFAULT_CURRENCY, exchange_to
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue, FailedToCreateObject
-from ..models import Market, Product, ProductCategory, Operation, ProductType
+from ..models import Market, Product, ProductCategory, Operation, ProductType, Order
 from ..services import top_up_balance, make_purchase, prepare_order
 
 
@@ -248,7 +248,7 @@ class ProductTypeUnitsTest(BaseMarketTestCase):
         self._product_type.refresh_from_db()
         return self._product_type
 
-    def post_to_create_units(self, pk, **kwargs):
+    def post_to_edit_type(self, pk, **kwargs):
         return self.post_data(
             reverse_lazy('market_app:edit_type', kwargs={'pk': pk}),
             data=kwargs
@@ -261,36 +261,69 @@ class ProductTypeUnitsTest(BaseMarketTestCase):
     def test_edit_if_owner(self):
         units_count = 10
         self.log_in_as_seller()
-        self.post_to_create_units(pk=self.product.pk, units_count=units_count)
+        self.post_to_edit_type(pk=self.product.pk, units_count=units_count)
 
     @assert_difference(0)
     def test_edit_if_not_owner(self):
         units_count = 10
         new_seller = self.create_seller(username='NewSeller')
         self.client.login(username=new_seller.username, password=self.password)
-        response = self.post_to_create_units(pk=self.product.pk, units_count=units_count)
+        response = self.post_to_edit_type(pk=self.product.pk, units_count=units_count)
         self.assertEqual(response.status_code, 403)
 
     @assert_difference(0)
     def test_edit_if_customer(self):
         units_count = 10
         self.log_in_as_customer()
-        response = self.post_to_create_units(pk=self.product.pk, units_count=units_count)
+        response = self.post_to_edit_type(pk=self.product.pk, units_count=units_count)
         self.assertEqual(response.status_code, 403)
 
 
 class CartViewTest(TestBaseWithFilledCatalogue):
     page_url = reverse_lazy('market_app:cart')
+    success_url_name = 'market_app:checkout'
+
+    def get_success_url(self, **kwargs):
+        return reverse_lazy(self.success_url_name, kwargs=kwargs)
+
+    def setUp(self) -> None:
+        super(CartViewTest, self).setUp()
+        self.log_in_as_customer()
 
     def get_from_page(self, **kwargs):
-        return self.client.get(path=self.page_url, **kwargs)
+        return self.client.get(self.page_url, **kwargs)
 
-    def post_to_page(self, **kwargs):
-        return self.client.post(path=self.page_url, **kwargs)
+    def post_to_page(self, data: dict = None, **kwargs):
+        return self.post_data(url=self.page_url, data=data, **kwargs)
 
     def test_redirect_if_not_logged_in(self):
+        self.client.logout()
         response = self.get_from_page()
         self.assertRedirects(response, reverse_lazy('accounts:log_in') + '?next=' + self.page_url)
+
+    def test_display_product_type_integer_fields(self):
+        types_to_add = {'1': 5, '2': 3, '4': 5}
+        self.fill_cart(types_to_add)
+        response = self.get_from_page()
+        for pk, count in types_to_add.items():
+            field_input = f'<input id="id_{pk}" name="{pk}" type="number" class="form-control" value="{count}">'
+            self.assertInHTML(field_input, response.content.decode('utf-8'))
+
+    def test_can_change_order_at_cart_page(self):
+        order_items = {'1': 5, '2': 3, '4': 5}
+        self.fill_cart(order_items)
+        changed_order_items = {'1': 8, '2': 0, '4': 2}
+        self.post_to_page(data=changed_order_items)
+        order: Order = self.shopping_account.orders.first()
+        self.assertEqual(order.items['1']['units_count'], 8)
+        self.assertEqual(order.items['4']['units_count'], 2)
+        self.assertTrue('2' not in order.items)
+
+    def test_redirect_if_form_is_valid(self):
+        order_items = {'1': 5, '2': 3, '4': 5}
+        response = self.post_to_page(data=order_items)
+        order = self.shopping_account.orders.first()
+        self.assertRedirects(response, self.get_success_url(pk=order.pk))
 
 
 class CheckOutPage(TestBaseWithFilledCatalogue):
