@@ -79,9 +79,10 @@ def prepare_order(cart: Cart):
     cart.prepare_items()
     items_data = {}
     for product_type, count in cart.items.items():
-        taken_units = _take_units_from_db(product_type, count)
-        item_data = _format_product_type_data(product_type, taken_units)
-        items_data.update(item_data)
+        if count:
+            taken_units = _take_units_from_db(product_type, count)
+            item_data = _format_product_type_data(product_type, taken_units)
+            items_data.update(item_data)
     order = Order.objects.create(items=items_data, shopping_account=cart.shopping_account)
     cart.clear()
     return order
