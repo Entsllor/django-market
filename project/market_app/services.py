@@ -40,7 +40,7 @@ def _take_units_from_db(product_type, expected_count):
 def validate_money_amount(money_amount):
     if not isinstance(money_amount, (Decimal, int)):
         raise TypeError(f'Expected a decimal or integer number, got "{money_amount}" instead.')
-    elif money_amount <= 0:
+    elif money_amount < 0:
         raise ValueError(f'Expected a positive number, got "{money_amount}" instead.')
 
 

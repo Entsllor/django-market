@@ -13,8 +13,8 @@ logger = logging.getLogger('console')
 
 @register.filter
 def to_local_currency(amount):
-    logger.error("filter <to_locale_currency> doesn't work")
-    return f'{amount}{settings.CURRENCIES_SYMBOLS[settings.DEFAULT_CURRENCY]}'
+    logger.debug("filter <to_locale_currency> was called without LANGUAGE arg")
+    return f'{amount or "0"}{settings.CURRENCIES_SYMBOLS[settings.DEFAULT_CURRENCY]}'
 
 
 @register.simple_tag
@@ -29,6 +29,8 @@ def get_currency_l10n_filter(language):
 
     @register.filter
     def to_local_currency(amount):
+        if amount is None:
+            amount = 0
         exchanged_amount = _exchange(amount, rate)
         return f'{exchanged_amount}{currency_sym}'
 
