@@ -50,10 +50,11 @@ def get_debt_to_sellers(order_items) -> dict:
         seller_pk = data['market_owner_id']
         sale_price = Decimal(data['sale_price'])
         units_count = data['units_count']
+        total_price = sale_price * units_count
         if seller_pk in debt_to_sellers:
-            debt_to_sellers[seller_pk] += sale_price * units_count
+            debt_to_sellers[seller_pk] += total_price
         else:
-            debt_to_sellers[seller_pk] = sale_price * units_count
+            debt_to_sellers[seller_pk] = total_price
     return debt_to_sellers
 
 

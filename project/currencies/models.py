@@ -25,7 +25,10 @@ def get_rates(*codes: str) -> dict:
             result[currency_code.upper()] = rate
         else:
             logger.warning(f"Failed to get currency rate: {currency_code}")
-    assert result[DEFAULT_CURRENCY] == 1
+    if not result[DEFAULT_CURRENCY] == 1:
+        raise AssertionError(
+            'Side API returned invalid values. '
+            f'Expected default currency rate equals 1 but not {result[DEFAULT_CURRENCY]}')
     return result
 
 

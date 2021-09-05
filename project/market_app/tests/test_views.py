@@ -194,7 +194,7 @@ class MarketEditTest(BaseMarketTestCase):
         self.client.login(username=another_seller, password=self.password)
         response = self.post_to_market_edit(market=self.market)
         for key in self.new_data:
-            self.assertNotEqual(self.market.__getattribute__(key), self.new_data[key])
+            self.assertNotEqual(getattr(self.market, key), self.new_data[key])
         self.assertEqual(response.status_code, 403)
 
 
