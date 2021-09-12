@@ -26,7 +26,12 @@
       </a>
 
     </div>
-
+  {% empty %}
+    <div class="w-100">
+      <div class="display-5 text-center">
+        {% trans 'There are no products' %}.
+      </div>
+    </div>
   {% endfor %}
 </div>
 
