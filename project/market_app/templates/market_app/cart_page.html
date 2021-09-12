@@ -1,9 +1,7 @@
 {% extends 'market_app/app_base.html' %}
+{% load currencies %}
 
 {% block main_center_block %}
-  {% load currencies %}
-  {% get_currency_l10n_filter LANGUAGE as to_local_currency %}
-
   <div class="card my-2">
     <div class="card-header content-title">
       My cart
@@ -28,14 +26,13 @@
                        value="{{ order_item.units_on_cart }}">
               </div>
               <p>
-                Unit price: {{ order_item.sale_price|to_local_currency }}
+                Unit price: {% to_local_currency order_item.sale_price %}
                 {% if order_item.product.discount_percent %}
-                  <s>{{ order_item.original_price|to_local_currency }}</s>
+                  <s>{% to_local_currency order_item.original_price %}</s>
                 {% endif %}
                 <br>
                 {% widthratio order_item.sale_price 1 order_item.units_on_cart as total_item_price %}
-                Total price: {{ total_item_price|to_local_currency }}
-
+                Total price: {% to_local_currency total_item_price %}
               </p>
             </li>
           {% endfor %}
@@ -43,9 +40,9 @@
         <div class="card-body">
           <p>
             Your balance: <a
-            href="{% url 'market_app:top_up' %}">{{ user.shopping_account.balance|to_local_currency }}</a>
+            href="{% url 'market_app:top_up' %}">{% to_local_currency user.shopping_account.balance %}</a>
             <br>
-            total price: {{ user.shopping_account.cart.total_price|to_local_currency }}
+            total price: {% to_local_currency user.shopping_account.cart.total_price %}
           </p>
           <button type="submit" class="btn btn-primary d-block ms-auto">
             Submit

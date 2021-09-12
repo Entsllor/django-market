@@ -288,6 +288,7 @@ class CartViewTest(TestBaseWithFilledCatalogue):
 
     def setUp(self) -> None:
         super(CartViewTest, self).setUp()
+        self.create_currencies()
         self.log_in_as_customer()
 
     def get_from_page(self, **kwargs):
@@ -335,6 +336,7 @@ class CheckOutPage(TestBaseWithFilledCatalogue):
 
     def setUp(self) -> None:
         super(CheckOutPage, self).setUp()
+        self.create_currencies()
         self.log_in_as_customer()
 
     def get_url(self):
@@ -445,6 +447,7 @@ class OperationHistoryTest(TestBaseWithFilledCatalogue):
 
     def setUp(self) -> None:
         super(OperationHistoryTest, self).setUp()
+        self.create_currencies()
         self.log_in_as_customer()
         top_up_balance(self.shopping_account, 10000)
         self.fill_cart({'1': 2, '3': 1, '5': 1})
@@ -464,6 +467,7 @@ class OperationHistoryTest(TestBaseWithFilledCatalogue):
 class OrderDetailTest(TestBaseWithFilledCatalogue):
     def setUp(self) -> None:
         super(OrderDetailTest, self).setUp()
+        self.create_currencies()
         self.log_in_as_customer()
         top_up_balance(self.shopping_account, 10000)
         self.fill_cart({'1': 2, '3': 1, '5': 1})

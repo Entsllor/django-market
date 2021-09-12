@@ -1,7 +1,5 @@
 {% load i18n %}
 {% load currencies %}
-{% get_current_language as LANGUAGE %}
-{% get_currency_l10n_filter LANGUAGE as to_local_currency %}
 
 <div class="card my-2 border-0">
   <div class="card-header content-title">
@@ -44,7 +42,7 @@
     {% if user.is_authenticated %}
       <li class="list-group-item">
         <a href="{% url 'market_app:operation_history' %}">
-          {% trans 'balance' %} {{ user.shopping_account.balance|to_local_currency }}
+          {% trans 'balance' %} {% to_local_currency user.shopping_account.balance %}
         </a>
       </li>
     {% endif %}

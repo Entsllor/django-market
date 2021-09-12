@@ -3,8 +3,6 @@
 {% load currencies %}
 
 {% block main_center_card %}
-  {% get_current_language as LANGUAGE %}
-  {% get_currency_l10n_filter LANGUAGE as to_local_currency %}
   <div class="card-header content-title">
     {% trans 'Product' %}
   </div>
@@ -36,10 +34,10 @@
         {% csrf_token %}
         <div class="d-flex">
           {% if product.discount_percent %}
-            <span>price: <b>{{ product.sale_price|to_local_currency }}</b>
-              <s>{{ product.original_price|to_local_currency }}</s></span>
+            <span>price: <b>{% to_local_currency  product.sale_price %}</b>
+              <s>{% to_local_currency product.original_price %}</s></span>
           {% else %}
-            <span>price: {{ product.original_price|to_local_currency }}</span>
+            <span>price: {% to_local_currency product.original_price %}</span>
           {% endif %}
 
           <div class="ms-auto">
