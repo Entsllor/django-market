@@ -99,7 +99,7 @@ class AddToCartForm(forms.Form):
     product_type = forms.ModelChoiceField(queryset=None)
 
     def __init__(self, *args, **kwargs):
-        self.types = kwargs.pop('types').only('pk')
+        self.types = kwargs.pop('types')
         super(AddToCartForm, self).__init__(*args, **kwargs)
         self.fields['product_type'].queryset = self.types
 

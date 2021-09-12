@@ -41,7 +41,7 @@
           {% endif %}
 
           <div class="ms-auto">
-            {% if product.market.owner == user %}
+            {% if is_market_owner %}
               <a href="{% url 'market_app:edit_product' pk=product.pk %}"
                  class="btn btn-dark">{% trans 'Edit product' %}
               </a>
@@ -53,7 +53,7 @@
     {% else %}
       <div class="d-flex">
         <div class="text-danger align-self-center">Sold out</div>
-        {% if product.market.owner == user %}
+        {% if is_market_owner %}
           <a href="{% url 'market_app:edit_product' pk=product.pk %}"
              class="btn btn-dark ms-auto">{% trans 'Edit product' %}
           </a>

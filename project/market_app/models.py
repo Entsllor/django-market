@@ -116,7 +116,7 @@ class Product(models.Model):
 
     @property
     def is_available_to_buy(self) -> bool:
-        return self.available and any(self.get_types().values_list('units_count', flat=True))
+        return self.available and self.get_types().filter(units_count__gt=0).exists()
 
     def create_product_type(self, properties=None, markup_percent=0, units_count=0) -> 'ProductType':
         product_type = ProductType.objects.create(

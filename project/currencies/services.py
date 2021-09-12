@@ -5,7 +5,7 @@ from django.conf import settings
 from .models import Currency, get_rates
 
 DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY
-
+CURRENCY_CHOICES = [(currency.code, currency.sym) for currency in Currency.objects.filter(code__in=settings.CURRENCIES)]
 ASSOCIATED_CURRENCY = {
     'en-us': 'USD',
     'ru': 'RUB'
@@ -13,7 +13,7 @@ ASSOCIATED_CURRENCY = {
 
 
 def get_currency_choices():
-    return [(currency.code, currency.sym) for currency in Currency.objects.filter(code__in=settings.CURRENCIES)]
+    return CURRENCY_CHOICES
 
 
 def create_currencies_from_settings():

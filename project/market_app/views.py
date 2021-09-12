@@ -42,7 +42,7 @@ class ProductEditView(MarketOwnerRequiredMixin, generic.UpdateView):
         return reverse_lazy('market_app:product', args=[self.object.pk])
 
     def get_current_market_owner_id(self):
-        return self.model.objects.get(pk=self.kwargs['pk']).market.owner.id
+        return Product.objects.filter(pk=self.kwargs['pk']).values_list('market__owner_id', flat=True)[0]
 
 
 class ProductCreateView(LoginRequiredMixin, generic.CreateView):
@@ -61,7 +61,7 @@ class ProductTypeCreate(MarketOwnerRequiredMixin, generic.CreateView):
     template_name = 'market_app/product_type_create.html'
 
     def get_current_market_owner_id(self):
-        return Product.objects.get(pk=self.kwargs['pk']).market.owner.id
+        return Product.objects.filter(pk=self.kwargs['pk']).values_list('market__owner_id', flat=True)[0]
 
     def get_success_url(self):
         return reverse_lazy('market_app:product', args=[self.kwargs['pk']])
@@ -87,7 +87,7 @@ class ProductTypeEdit(MarketOwnerRequiredMixin, generic.UpdateView):
         return self.get_object().product.get_absolute_url()
 
     def get_current_market_owner_id(self):
-        return self.get_object().product.market.owner.id
+        return ProductType.objects.filter(pk=self.kwargs['pk']).values_list('product__market__owner_id', flat=True)[0]
 
 
 class CatalogueView(generic.ListView):
@@ -110,22 +110,22 @@ class ProductPageView(generic.FormView):
 
     def setup(self, request, *args, **kwargs):
         super(ProductPageView, self).setup(request, *args, **kwargs)
-        self.product = Product.objects.get(pk=self.kwargs['pk'])
+        self.object = Product.objects.get(pk=self.kwargs['pk'])
 
     def get_context_data(self, **kwargs):
         context = super(ProductPageView, self).get_context_data(**kwargs)
-        if 'product' not in context:
-            context['product'] = self.product
+        context['product'] = self.object
+        context['is_market_owner'] = self.object.market.owner_id == self.request.user.id
         return context
 
     def get_form_kwargs(self):
         kwargs = super(ProductPageView, self).get_form_kwargs()
-        kwargs['types'] = self.product.product_types.filter(units_count__gt=0)
+        kwargs['types'] = self.object.product_types.filter(units_count__gt=0)
         return kwargs
 
     def form_valid(self, form):
         quantity = form.cleaned_data['quantity']
-        if self.product.market.owner_id == self.request.user.id:
+        if self.object.market.owner_id == self.request.user.id:
             form.add_error('product_type', _('Cannot buy your own product.'))
             return super(ProductPageView, self).form_invalid(form)
         self.request.user.shopping_account.cart.set_item(
@@ -153,7 +153,7 @@ class MarketEditView(MarketOwnerRequiredMixin, generic.UpdateView):
         return self.object.get_absolute_url()
 
     def get_current_market_owner_id(self):
-        return self.model.objects.get(pk=self.kwargs['pk']).owner.id
+        return self.model.objects.filter(pk=self.kwargs['pk']).values_list('owner_id', flat=True).first()
 
 
 class CartView(LoginRequiredMixin, generic.FormView):
@@ -189,7 +189,8 @@ class OrderDetail(PermissionRequiredMixin, generic.DetailView):
 
     def has_permission(self):
         user = self.request.user
-        return user.id == self.get_object().shopping_account.user_id
+        return user.id == Order.objects.filter(
+            pk=self.kwargs['pk']).values_list('shopping_account__user_id', flat=True).first()
 
 
 class OrderListView(generic.ListView):
@@ -221,7 +222,8 @@ class CheckOutView(PermissionRequiredMixin, generic.DetailView):
 
     def has_permission(self):
         user = self.request.user
-        return user.id == self.get_object().shopping_account.user_id
+        return user.id == self.model.objects.filter(
+            pk=self.kwargs['pk']).values_list('shopping_account__user_id', flat=True).first()
 
     def post(self, request, *args, **kwargs):
         coupon = request.POST.get('coupon')
