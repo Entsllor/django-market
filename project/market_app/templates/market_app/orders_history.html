@@ -30,6 +30,10 @@
             </div>
           </div>
         </div>
+      {% empty %}
+        <div class="list-group-item">
+          {% trans "You don't have any orders yet" %}.
+        </div>
       {% endfor %}
     </div>
   </div>
