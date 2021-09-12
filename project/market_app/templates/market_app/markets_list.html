@@ -17,11 +17,9 @@
         </a>
       </div>
     {% empty %}
-      <div class="list-group-item">
+      <div class="display-5 w-100 text-center">
         {% trans "There are no markets" %}.
       </div>
     {% endfor %}
   </div>
-
-  {% include 'market_app/include/paginator.html' %}
 {% endblock %}

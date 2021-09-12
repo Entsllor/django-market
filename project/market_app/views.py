@@ -255,15 +255,16 @@ class OrderConfirmationView(LoginRequiredMixin, generic.ListView):
     context_object_name = 'products'
 
 
-class UserMarketsView(LoginRequiredMixin, generic.TemplateView):
-    template_name = 'market_app/user_markets.html'
-
-
 class MarketsList(generic.ListView):
     template_name = 'market_app/markets_list.html'
     model = Market
     context_object_name = 'markets'
     paginate_by = 18
+
+
+class UserMarketsView(LoginRequiredMixin, MarketsList):
+    def get_queryset(self):
+        return Market.objects.filter(owner_id=self.request.user)
 
 
 class MarketView(generic.detail.SingleObjectMixin, generic.ListView):
