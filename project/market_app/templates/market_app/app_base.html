@@ -8,12 +8,8 @@
       {% block main_left_block %}
         <div class="sticky-top">
           {% block left_block_over_side_bar %}{% endblock %}
-          {% block search_form_block %}
-            {% include 'market_app/include/search.html' %}
-          {% endblock %}
-          {% block side_navbar %}
-            {% include 'market_app/include/side_nav.html' %}
-          {% endblock %}
+          {% product_search_form %}
+          {% side_nav %}
         </div>
       {% endblock main_left_block %}
       {% block left_block_under_side_bar %}{% endblock %}
