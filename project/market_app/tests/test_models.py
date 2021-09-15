@@ -102,19 +102,19 @@ class CartTest(TestBaseWithFilledCatalogue):
         self.cart.set_item(3, 5)
         self.assertEqual(self.cart.items, {'3': 5})
 
-    def test_get_order_list(self):
+    def test_as_order(self):
         self.fill_cart({'1': 5, '7': 5, '11': 1})
-        order_list = self.cart.get_order_list()
-        for item in order_list:
-            self.assertIn(str(item.pk), self.cart.items.keys())
-            self.assertEqual(item.product.id, ProductType.objects.get(pk=item.pk).product.id)
-            self.assertEqual(item.units_on_cart, self.cart.items[str(item.pk)])
+        order_items = self.cart.get_items_data()
+        for pk, data in order_items.items():
+            self.assertIn(str(pk), self.cart.items.keys())
+            self.assertEqual(data['product_id'], ProductType.objects.only().get(pk=pk).product.id)
+            self.assertEqual(data['units_count'], self.cart.items[str(pk)])
 
     def test_order_list_units_count_is_correct(self):
         units_to_add = {'1': 5, '7': 5, '11': 1}
         self.fill_cart(units_to_add)
         expected_sum = sum(units_to_add.values())
-        real_sum = sum(item.units_on_cart for item in self.cart.get_order_list())
+        real_sum = sum(item['units_count'] for item in self.cart.get_items_data().values())
         self.assertEqual(expected_sum, real_sum)
 
     @assert_difference({})

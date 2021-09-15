@@ -11,28 +11,29 @@
       <form action="{% url 'market_app:cart' %}" method="post">
         {% csrf_token %}
         <ul class="list-group list-group-flush">
-
-          {% for order_item in cart.get_order_list %}
+          {% for pk, item in cart.get_items_data.items %}
             <li class="list-group-item">
-              <a href="{{ order_item.product.get_absolute_url }}">
-                <h3>{{ order_item.product.name }}</h3>
+              <a href="{% url 'market_app:product' pk=item.product_id %}">
+                <h3>{{ item.product_name }}</h3>
               </a>
-              <p>{{ order_item.str_attributes }}</p>
+              {% for attr, value in item.properties.items %}
+                {{ attr }}: {{ value }} <br>
+              {% endfor %}
               <div>
-                <label for="id_{{ order_item.pk }}">
+                <label for="id_{{ pk }}">
                   Number of units:
                 </label>
-                <input id="id_{{ order_item.pk }}" name="{{ order_item.pk }}" type="number" class="form-control"
-                       value="{{ order_item.units_on_cart }}">
+                <input id="id_{{ pk }}" name="{{ pk }}" type="number" class="form-control"
+                       value="{{ item.units_count }}">
               </div>
               <p>
-                Unit price: {% to_local_currency order_item.sale_price %}
-                {% if order_item.product.discount_percent %}
-                  <s>{% to_local_currency order_item.original_price %}</s>
+                Unit price: {% to_local_currency item.sale_price %}
+                {% if item.discount_percent %}
+                  <s>{% to_local_currency item.original_price %}</s>
                 {% endif %}
                 <br>
-                {% widthratio order_item.sale_price 1 order_item.units_on_cart as total_item_price %}
-                Total price: {% to_local_currency total_item_price %}
+                {#                {% widthratio order_item.sale_price 1 order_item.units_on_cart as total_item_price %}#}
+                {#                Total price: {% to_local_currency total_item_price %}#}
               </p>
             </li>
           {% endfor %}
@@ -42,7 +43,7 @@
             Your balance: <a
             href="{% url 'market_app:top_up' %}">{% to_local_currency user.shopping_account.balance %}</a>
             <br>
-            total price: {% to_local_currency user.shopping_account.cart.total_price %}
+{#            total price: {% to_local_currency order.total_price %}#}
           </p>
           <button type="submit" class="btn btn-primary d-block ms-auto">
             Submit

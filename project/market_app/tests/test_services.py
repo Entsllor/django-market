@@ -158,8 +158,8 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         top_up_balance(self.shopping_account, 2000)
         units_to_buy = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(units_to_buy)
-        total_price = self.shopping_account.cart.total_price
         order = prepare_order(self.cart)
+        total_price = order.total_price
         operation = make_purchase(order, self.shopping_account)
         self.assertEqual(operation.amount, -total_price)
 
@@ -264,7 +264,7 @@ class PrepareOrderTest(TestBaseWithFilledCatalogue):
         types_to_take = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(types_to_take)
         order = prepare_order(self.cart)
-        items = self.cart.get_order_list()
+        items = self.cart.get_items_data()
         for item in items:
             order_item_data = order.items[str(item.pk)]
             self.assertEqual(order_item_data['units_count'], item.units_on_cart)

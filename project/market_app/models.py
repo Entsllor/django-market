@@ -196,25 +196,33 @@ def _validate_units_quantity(quantity):
         raise ValueError(f'Expected a natural number, got {quantity} instead')
 
 
+def _format_product_type_data(product_type, units_in_order):
+    return {
+        'units_count': units_in_order,
+        'properties': product_type.properties.copy(),
+        'sale_price': product_type.sale_price,
+        'discount_percent': product_type.product.discount_percent,
+        'markup_percent': product_type.markup_percent,
+        'original_price': round(product_type.product.original_price * (100 + product_type.markup_percent) / 100, 2),
+        'product_name': product_type.product.name,
+        'product_id': product_type.product_id,
+        'market_id': product_type.product.market_id
+    }
+
+
 class Cart(models.Model):
     _default_cart_value = dict
     max_product_type_count_on_cart = 20
     items = models.JSONField(verbose_name=_('items'), default=_default_cart_value)
 
-    @property
-    def total_price(self):
-        total_price = 0
-        for item in self.get_order_list('id'):
-            total_price += item.sale_price * item.units_on_cart
-        return total_price
-
-    def get_order_list(self, *fields):
-        result = []
-        types = ProductType.objects.only(*fields).filter(id__in=self.items.keys())
-        for i_type in types:
-            i_type.units_on_cart = self.items[str(i_type.pk)]
-            result.append(i_type)
-        return result
+    def get_items_data(self):
+        query = ProductType.objects.filter(id__in=self.items.keys()).select_related('product').only(
+            'properties', 'markup_percent',
+            'product__name', 'product__market_id',
+            'product__discount_percent', 'product__original_price'
+        )
+        data = {item.pk: _format_product_type_data(item, self.items[str(item.pk)]) for item in query}
+        return data
 
     def set_item(self, product_type_pk, quantity):
         _validate_units_quantity(quantity)

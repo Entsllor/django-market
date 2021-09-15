@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.core.exceptions import PermissionDenied
 from django.db.models import F
 
-from .models import ShoppingAccount, ProductType, Order, Operation, Cart, Coupon
+from .models import ShoppingAccount, ProductType, Order, Operation, Cart, Coupon, Market
 
 logger = logging.getLogger('market.transactions')
 SUBTRACT = '-'
@@ -58,32 +58,30 @@ def get_debt_to_sellers(order_items) -> dict:
     return debt_to_sellers
 
 
-def _format_product_type_data(product_type, units_in_order):
-    if not isinstance(product_type, ProductType):
-        product_type = ProductType.objects.get(pk=product_type)
-    product = product_type.product
-    return {
-        str(product_type.pk): {
-            'units_count': units_in_order,
-            'properties': product_type.properties.copy(),
-            'sale_price': str(product_type.sale_price),
-            'product_name': product.name,
-            'product_id': product.id,
-            'market_id': product.market.id,
-            'market_owner_id': product.market.owner_id
-        }
-    }
+def _get_sellers_data(markets_pks, *fields):
+    markets = Market.objects.filter(id__in=markets_pks).values('id', *fields)
+    return {market_data['id']: market_data['owner_id'] for market_data in markets}
 
 
 def prepare_order(cart: Cart):
     cart.prepare_items()
-    items_data = {}
-    for product_type, count in cart.items.items():
-        if count:
-            taken_units = _take_units_from_db(product_type, count)
-            item_data = _format_product_type_data(product_type, taken_units)
-            items_data.update(item_data)
-    order = Order.objects.create(items=items_data, shopping_account=cart.shopping_account)
+    order_items = cart.get_items_data()
+    markets_pks = [value['market_id'] for value in order_items.values()]
+    sellers_data = _get_sellers_data(markets_pks, 'owner_id')
+    for pk, data in order_items.copy().items():
+        expected_count = data['units_count']
+        if expected_count > 0:
+            taken_units = _take_units_from_db(pk, expected_count)
+            data['units_count'] = taken_units
+            data['sale_price'] = str(data['sale_price'])
+            data['discount_percent'] = str(data['discount_percent'])
+            data['original_price'] = str(data['original_price'])
+            data['markup_percent'] = str(data['markup_percent'])
+            owner_id = sellers_data[data['market_id']]
+            data['market_owner_id'] = owner_id
+        else:
+            del order_items[pk]
+    order = Order.objects.create(items=order_items, shopping_account=cart.shopping_account)
     cart.clear()
     return order
 
