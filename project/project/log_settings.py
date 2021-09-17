@@ -15,6 +15,10 @@ LOGGING = {
         'transaction': {
             'format': '{levelname} {asctime}: {message}',
             'style': '{',
+        },
+        'sql_query': {
+            'format': '\n{levelname} {asctime} QUERY:\n{message}\n',
+            'style': '{'
         }
     },
     'filters': {
@@ -41,6 +45,12 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose'
         },
+        'sql_query_handler': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'sql_query'
+        }
     },
     'loggers': {
         'django': {
@@ -55,6 +65,10 @@ LOGGING = {
         'market.transactions': {
             'handlers': ['transactions'],
             'level': 'INFO'
-        }
+        },
+        'django.db.backends': {
+            'level': 'DEBUG',
+            'handlers': ['sql_query_handler'],
+        },
     }
 }
