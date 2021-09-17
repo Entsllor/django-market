@@ -207,29 +207,33 @@ class CheckOutView(PermissionRequiredMixin, generic.DetailView):
     model = Order
     context_object_name = 'order'
 
+    def setup(self, request, *args, **kwargs):
+        super(CheckOutView, self).setup(request, *args, **kwargs)
+        self.object = Order.objects.filter(pk=kwargs['pk']).first()
+        self.shopping_account = self.request.user.shopping_account
+
     def get(self, request, *args, **kwargs):
-        shopping_account = self.request.user.shopping_account
-        if shopping_account.balance < self.get_object().total_price:
+        shopping_account = self.shopping_account
+        if shopping_account.balance < self.object.total_price:
             return HttpResponseRedirect(
                 reverse_lazy('market_app:top_up'))
         return super(CheckOutView, self).get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(CheckOutView, self).get_context_data(**kwargs)
-        context['coupon_form'] = SelectCouponForm(shopping_account=self.request.user.shopping_account)
+        context['coupon_form'] = SelectCouponForm(shopping_account=self.shopping_account)
         context['form'] = CheckOutForm
         return context
 
     def has_permission(self):
         user = self.request.user
-        return user.id == self.model.objects.filter(
-            pk=self.kwargs['pk']).values_list('shopping_account__user_id', flat=True).first()
+        return user.id == self.object.shopping_account_id
 
     def post(self, request, *args, **kwargs):
         coupon = request.POST.get('coupon')
         if request.POST.get('agreement') == 'on':
             try:
-                make_purchase(self.get_object(), self.request.user.shopping_account, coupon)
+                make_purchase(self.object, self.shopping_account, coupon)
             except PermissionDenied as exc:
                 raise exc
             except EmptyOrderError:
