@@ -285,8 +285,8 @@ class ShoppingAccount(models.Model):
     cart = models.OneToOneField(
         Cart,
         verbose_name=_('cart'),
-        default=_create_cart,
-        on_delete=models.SET_DEFAULT,
+        on_delete=models.PROTECT,
+        null=True,
         related_name='shopping_account'
     )
 
