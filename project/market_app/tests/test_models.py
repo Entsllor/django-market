@@ -110,7 +110,7 @@ class CartTest(TestBaseWithFilledCatalogue):
             self.assertEqual(data['product_id'], ProductType.objects.only().get(pk=pk).product.id)
             self.assertEqual(data['units_count'], self.cart.items[str(pk)])
 
-    def test_order_list_units_count_is_correct(self):
+    def test_items_data_count_is_correct(self):
         units_to_add = {'1': 5, '7': 5, '11': 1}
         self.fill_cart(units_to_add)
         expected_sum = sum(units_to_add.values())

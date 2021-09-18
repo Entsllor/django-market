@@ -1,10 +1,12 @@
 import re
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
@@ -14,7 +16,8 @@ from currencies.services import get_currency_code_by_language, DEFAULT_CURRENCY,
 from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, ProductTypeForm, CreditCardForm, \
     AdvancedSearchForm, SelectCouponForm, CartForm, CheckOutForm
 from .models import Product, Market, ProductType, Operation, Order
-from .services import top_up_balance, make_purchase, prepare_order, EmptyOrderError
+from .services import top_up_balance, make_purchase, prepare_order, EmptyOrderError, OrderCannotBeCancelledError, \
+    try_to_cancel_order
 
 
 class MarketOwnerRequiredMixin(PermissionRequiredMixin):
@@ -198,7 +201,18 @@ class OrderListView(generic.ListView):
     model = Order
 
     def get_queryset(self):
-        return Order.objects.filter(shopping_account_id=self.request.user.shopping_account.id)
+        shopping_account_id = self.request.user.shopping_account.id
+        return Order.objects.filter(shopping_account_id=shopping_account_id).select_related('operation')
+
+
+@login_required
+def cancel_order_view(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    try:
+        try_to_cancel_order(order, request.user.id)
+        return HttpResponseRedirect(reverse_lazy('market_app:orders'))
+    except OrderCannotBeCancelledError as exc:
+        raise PermissionDenied(exc)
 
 
 class CheckOutView(PermissionRequiredMixin, generic.DetailView):

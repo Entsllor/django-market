@@ -19,8 +19,12 @@ class EmptyOrderError(Exception):
     """Raises if the order is empty"""
 
 
+class OrderCannotBeCancelledError(BaseException):
+    """Raise if the order cannot be cancelled"""
+
+
 def _set_order_operation(operation: Operation, order: Order):
-    return Order.objects.filter(pk=order.pk).update(operation=operation)
+    order.operation = operation
 
 
 def _take_units_from_db(product_type, expected_count):
@@ -86,6 +90,26 @@ def prepare_order(cart: Cart):
     return order
 
 
+def _cancel_order(order: Order) -> None:
+    items = ProductType.objects.filter(id__in=order.items.keys())
+    for item in items:
+        pk = str(item.pk)
+        units_on_cart = order.items[pk]['units_count']
+        item.units_count = F('units_count') + units_on_cart
+        del order.items[pk]
+    ProductType.objects.bulk_update(items, ['units_count'])
+    order.delete()
+
+
+def try_to_cancel_order(order, user_id):
+    customer_id = Order.objects.filter(pk=order.pk).values_list('shopping_account__user_id', flat=True).first()
+    if customer_id != user_id:
+        raise OrderCannotBeCancelledError(f"User(id={user_id}) cannot cancel Order(id={order.id})")
+    elif not order.is_unpaid:
+        raise OrderCannotBeCancelledError("The order cannot be cancelled because of its status.")
+    _cancel_order(order)
+
+
 def activate_coupon_to_order(order: Order, shopping_account: ShoppingAccount, coupon: Coupon):
     if not isinstance(coupon, Coupon):
         coupon = Coupon.objects.get(pk=coupon)
@@ -134,6 +158,8 @@ def make_purchase(order: Order, shopping_account: ShoppingAccount, coupon: Coupo
     purchase_operation = _change_balance_amount(shopping_account, SUBTRACT, order.total_price)
     _send_money_to_sellers(shopping_account, debt_to_sellers)
     _set_order_operation(purchase_operation, order)
+    order.status = order.OrderStatusChoices.HAS_PAID.name
+    order.save()
     return purchase_operation
 
 

@@ -5,7 +5,8 @@ from django.core.exceptions import PermissionDenied
 from .base_case import TestBaseWithFilledCatalogue, BaseMarketTestCase, assert_difference
 from ..models import Order, ProductType, Operation
 from ..services import (
-    top_up_balance, make_purchase, withdraw_money, NotEnoughMoneyError, _take_units_from_db, prepare_order
+    top_up_balance, make_purchase, withdraw_money, NotEnoughMoneyError, _take_units_from_db, prepare_order,
+    _cancel_order
 )
 
 
@@ -274,3 +275,42 @@ class PrepareOrderTest(TestBaseWithFilledCatalogue):
             self.assertEqual(order_item_data['product_id'], item.product_id)
             self.assertEqual(order_item_data['market_id'], item.product.market_id)
             self.assertEqual(order_item_data['market_owner_id'], item.product.market.owner_id)
+
+
+class CancelOrderTest(TestBaseWithFilledCatalogue):
+    def setUp(self) -> None:
+        super(CancelOrderTest, self).setUp()
+        self.log_in_as_customer()
+
+    @staticmethod
+    def get_units_count(order):
+        units_count = {}
+        for pk, data in order.items.items():
+            units_count[str(pk)] = data['units_count']
+        return units_count
+
+    @staticmethod
+    def get_global_units_count(pks):
+        units_count = {}
+        for product_type in ProductType.objects.filter(id__in=pks):
+            pk = str(product_type.pk)
+            units_count[pk] = product_type.units_count
+        return units_count
+
+    def test_can_cancel_order(self):
+        self.fill_cart({'1': 3, '2': 5, '4': 2})
+        order = prepare_order(self.cart)
+        self.assertEqual(self.get_units_count(order), {'1': 3, '2': 5, '4': 2})
+        _cancel_order(order)
+        self.assertEqual(self.get_units_count(order), {})
+
+    def test_add_units_from_canceled_order_to_db(self):
+        units_to_add = {'1': 3, '2': 5, '4': 2}
+        product_types_pks = units_to_add.keys()
+        global_units_count_at_start = self.get_global_units_count(product_types_pks)
+        self.fill_cart(units_to_add)
+        order = prepare_order(self.cart)
+        for pk, count in self.get_global_units_count(product_types_pks).items():
+            self.assertEqual(global_units_count_at_start[pk], count + units_to_add[str(pk)])
+        _cancel_order(order)
+        self.assertEqual(global_units_count_at_start, self.get_global_units_count(product_types_pks))

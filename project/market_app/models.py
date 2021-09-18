@@ -221,7 +221,7 @@ class Cart(models.Model):
             'product__name', 'product__market_id',
             'product__discount_percent', 'product__original_price'
         )
-        data = {item.pk: _format_product_type_data(item, self.items[str(item.pk)]) for item in query}
+        data = {str(item.pk): _format_product_type_data(item, self.items[str(item.pk)]) for item in query}
         return data
 
     def set_item(self, product_type_pk, quantity):
@@ -313,6 +313,13 @@ class Operation(models.Model):
 
 
 class Order(models.Model):
+    class OrderStatusChoices(models.TextChoices):
+        UNPAID = 'UNPAID', _("awaiting for payment")
+        CANCELED = "CANCEL", _("canceled")
+        HAS_PAID = "HAS_PAID", _("has successfully paid")
+        SHIPPED = 'SHIPPED', _("Shipped")
+        DELIVERED = 'DELIVERED', _("successfully completed")
+
     shopping_account = models.ForeignKey(
         ShoppingAccount, verbose_name=_('customer account'),
         on_delete=models.SET_NULL,
@@ -327,13 +334,21 @@ class Order(models.Model):
         related_name='order'
     )
     items = models.JSONField(verbose_name=_('order items'))
-
+    status = models.CharField(
+        max_length=15,
+        choices=OrderStatusChoices.choices,
+        default=OrderStatusChoices.UNPAID,
+    )
     activated_coupon = models.ForeignKey(
         'Coupon',
         verbose_name=_('activated coupon'),
         on_delete=models.SET_NULL,
         null=True, blank=True
     )
+
+    @property
+    def is_unpaid(self):
+        return self.status == self.OrderStatusChoices.UNPAID.name
 
     def get_absolute_url(self):
         return reverse_lazy('market_app:order_detail', kwargs={'pk': self.pk})
