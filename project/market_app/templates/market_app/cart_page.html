@@ -32,25 +32,16 @@
                   <s>{% to_local_currency item.original_price %}</s>
                 {% endif %}
                 <br>
-                {#                {% widthratio order_item.sale_price 1 order_item.units_on_cart as total_item_price %}#}
-                {#                Total price: {% to_local_currency total_item_price %}#}
               </p>
             </li>
           {% endfor %}
         </ul>
         <div class="card-body">
-          <p>
-            Your balance: <a
-            href="{% url 'market_app:top_up' %}">{% to_local_currency user.shopping_account.balance %}</a>
-            <br>
-{#            total price: {% to_local_currency order.total_price %}#}
-          </p>
           <button type="submit" class="btn btn-primary d-block ms-auto">
             Submit
           </button>
         </div>
       </form>
     {% endif %}
-
   </div>
 {% endblock %}
