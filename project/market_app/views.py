@@ -113,7 +113,8 @@ class ProductPageView(generic.FormView):
 
     def setup(self, request, *args, **kwargs):
         super(ProductPageView, self).setup(request, *args, **kwargs)
-        self.object = Product.objects.get(pk=self.kwargs['pk'])
+        self.object = Product.objects.select_related('market').get(pk=self.kwargs['pk'])
+        self.product_types = self.object.product_types.filter(units_count__gt=0)
 
     def get_context_data(self, **kwargs):
         context = super(ProductPageView, self).get_context_data(**kwargs)
@@ -123,7 +124,7 @@ class ProductPageView(generic.FormView):
 
     def get_form_kwargs(self):
         kwargs = super(ProductPageView, self).get_form_kwargs()
-        kwargs['types'] = self.object.product_types.filter(units_count__gt=0)
+        kwargs['types'] = self.product_types
         return kwargs
 
     def form_valid(self, form):

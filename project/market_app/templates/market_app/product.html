@@ -28,7 +28,7 @@
         </p>
       </div>
     </div>
-    {% if product.is_available_to_buy %}
+    {% if product.available %}
       <form action="{{ product.get_absolute_url }}" method="post">
         {% include 'core_app/include/pretty_form.html' with form=form without_button=True %}
         {% csrf_token %}

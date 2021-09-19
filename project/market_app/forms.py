@@ -96,12 +96,13 @@ class ProductTypeForm(forms.ModelForm):
 
 class AddToCartForm(forms.Form):
     quantity = forms.IntegerField(min_value=0, max_value=Cart.max_product_type_count_on_cart)
-    product_type = forms.ModelChoiceField(queryset=None)
 
     def __init__(self, *args, **kwargs):
         self.types = kwargs.pop('types')
         super(AddToCartForm, self).__init__(*args, **kwargs)
-        self.fields['product_type'].queryset = self.types
+        self.fields['product_type'] = forms.ModelChoiceField(
+            queryset=self.types, initial=0
+        )
 
 
 class CreditCardForm(MoneyExchangerMixin, forms.Form):
