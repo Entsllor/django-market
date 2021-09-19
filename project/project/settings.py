@@ -145,6 +145,10 @@ DEFAULT_CURRENCY = 'USD'
 EXTRA_CURRENCIES = (
     'RUB',
 )
+LOCAL_CURRENCIES = {
+    'en-us': 'USD',
+    'ru': 'RUB'
+}
 CURRENCIES_SYMBOLS = {
     'USD': '$',
     'RUB': '₽'
