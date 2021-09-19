@@ -31,7 +31,7 @@
       <p class="mb-0">
         Total price: {% to_local_currency order.total_price %}
       </p>
-      {% if not order.is_unpaid %}
+      {% if order.is_unpaid %}
         <div class="d-flex flex-row justify-content-between">
           <p>
             status: {{ order.get_status_display }}
