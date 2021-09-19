@@ -302,14 +302,6 @@ class CartViewTest(TestBaseWithFilledCatalogue):
         response = self.get_from_page()
         self.assertRedirects(response, reverse_lazy('accounts:log_in') + '?next=' + self.page_url)
 
-    def test_display_product_type_integer_fields(self):
-        types_to_add = {'1': 5, '2': 3, '4': 5}
-        self.fill_cart(types_to_add)
-        response = self.get_from_page()
-        for pk, count in types_to_add.items():
-            field_input = f'<input id="id_{pk}" name="{pk}" type="number" class="form-control" value="{count}">'
-            self.assertInHTML(field_input, response.content.decode('utf-8'))
-
     def test_can_change_order_at_cart_page(self):
         order_items = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(order_items)

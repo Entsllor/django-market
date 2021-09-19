@@ -138,7 +138,11 @@ class CartForm(forms.Form):
         self.cart = kwargs.pop('cart')
         super(CartForm, self).__init__(*args, **kwargs)
         for pk, count in self.cart.items.items():
-            self.fields[pk] = forms.IntegerField(initial=count)
+            self.fields[pk] = forms.IntegerField(
+                initial=count,
+                min_value=0,
+                max_value=Cart.max_product_type_count_on_cart
+            )
 
 
 class AdvancedSearchForm(forms.Form):

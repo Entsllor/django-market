@@ -1,4 +1,5 @@
 {% extends 'market_app/app_base.html' %}
+{% load i18n %}
 {% load currencies %}
 
 {% block main_center_block %}
@@ -11,7 +12,57 @@
       <form action="{% url 'market_app:cart' %}" method="post">
         {% csrf_token %}
         <ul class="list-group list-group-flush">
+          <script>
+              const call = (msg) => {
+                  alert(msg)
+              }
+          </script>
+          <script>
+
+              const LOCAL_CURRENCY_RATE = Number("{{ LOCAL_CURRENCY.rate }}".replace(',', '.'));
+              const LOCAL_CURRENCY_SYM = "{{ LOCAL_CURRENCY.sym }}";
+              let prices = {}
+              let original_prices = {}
+
+              const toLocalCurrency = price => {
+                  let local_price = (price * LOCAL_CURRENCY_RATE).toFixed(2)
+                  return String(local_price) + LOCAL_CURRENCY_SYM
+              };
+
+              const countPrice = (unitsCount, unitPrice) => {
+                  return unitPrice * unitsCount
+              };
+
+              const updateTotalPriceElem = (itemId) => {
+                  let inputCountElem = document.getElementById("id_" + itemId)
+                  let itemUnitCount = inputCountElem.value;
+                  if (inputCountElem.value < 0) {
+                      inputCountElem.value = 0;
+                      itemUnitCount = 0;
+                  }
+                  let totalTypePriceElem = document.getElementById("itemTotalPrice" + itemId);
+                  let totalSalePrice = countPrice(itemUnitCount, prices[itemId]);
+                  let totalOriginalPrice = countPrice(itemUnitCount, original_prices[itemId]);
+                  if (totalSalePrice !== totalOriginalPrice) {
+                      let totalTypeOriginalPriceElem = document.getElementById("itemTotalOriginalPrice" + itemId);
+                      totalTypeOriginalPriceElem.textContent = toLocalCurrency(totalOriginalPrice);
+                  }
+                  totalTypePriceElem.textContent = toLocalCurrency(totalSalePrice);
+                  return totalSalePrice
+              }
+
+              const onChangeCount = () => {
+                  let totalPrice = 0
+                  for (let itemId in prices) {
+                      totalPrice += updateTotalPriceElem(itemId);
+                  }
+                  document.getElementById('total_sale_price').textContent = toLocalCurrency(totalPrice)
+              };
+              window.onload = onChangeCount
+          </script>
           {% for pk, item in cart.get_items_data.items %}
+            <script>prices[{{ pk }}] = {{ item.sale_price }};</script>
+            <script>original_prices[{{ pk }}] = {{ item.original_price }};</script>
             <li class="list-group-item">
               <a href="{% url 'market_app:product' pk=item.product_id %}">
                 <h3>{{ item.product_name }}</h3>
@@ -20,16 +71,20 @@
                 {{ attr }}: {{ value }} <br>
               {% endfor %}
               <div>
+                Price for unit {% to_local_currency item.sale_price %} <br>
                 <label for="id_{{ pk }}">
                   Number of units:
                 </label>
                 <input id="id_{{ pk }}" name="{{ pk }}" type="number" class="form-control"
-                       value="{{ item.units_count }}">
+                       value="{{ item.units_count }}" onchange="onChangeCount()">
               </div>
               <p>
-                Unit price: {% to_local_currency item.sale_price %}
+                Total order item price:
+                <span id="itemTotalPrice{{ pk }}">{% to_local_currency item.sale_price %}</span>
                 {% if item.discount_percent %}
-                  <s>{% to_local_currency item.original_price %}</s>
+                  <s id="itemTotalOriginalPrice{{ pk }}">
+                    {% to_local_currency item.original_price %}
+                  </s>
                 {% endif %}
                 <br>
               </p>
@@ -37,6 +92,12 @@
           {% endfor %}
         </ul>
         <div class="card-body">
+          <p>
+            {% trans "Total order price" %}:
+            <span id="total_sale_price"></span>
+          </p>
+        </div>
+        <div class="card-footer">
           <button type="submit" class="btn btn-primary d-block ms-auto">
             Submit
           </button>
