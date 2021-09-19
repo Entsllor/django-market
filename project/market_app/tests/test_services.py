@@ -283,13 +283,6 @@ class CancelOrderTest(TestBaseWithFilledCatalogue):
         self.log_in_as_customer()
 
     @staticmethod
-    def get_units_count(order):
-        units_count = {}
-        for pk, data in order.items.items():
-            units_count[str(pk)] = data['units_count']
-        return units_count
-
-    @staticmethod
     def get_global_units_count(pks):
         units_count = {}
         for product_type in ProductType.objects.filter(id__in=pks):
@@ -300,9 +293,9 @@ class CancelOrderTest(TestBaseWithFilledCatalogue):
     def test_can_cancel_order(self):
         self.fill_cart({'1': 3, '2': 5, '4': 2})
         order = prepare_order(self.cart)
-        self.assertEqual(self.get_units_count(order), {'1': 3, '2': 5, '4': 2})
+        self.assertEqual(order.get_units_count(), {'1': 3, '2': 5, '4': 2})
         _cancel_order(order)
-        self.assertEqual(self.get_units_count(order), {})
+        self.assertEqual(order.get_units_count(), {})
 
     def test_add_units_from_canceled_order_to_db(self):
         units_to_add = {'1': 3, '2': 5, '4': 2}

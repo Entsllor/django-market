@@ -94,8 +94,8 @@ def _cancel_order(order: Order) -> None:
     items = ProductType.objects.filter(id__in=order.items.keys())
     for item in items:
         pk = str(item.pk)
-        units_on_cart = order.items[pk]['units_count']
-        item.units_count = F('units_count') + units_on_cart
+        units_in_order = order.get_units_count_of(pk)
+        item.units_count = F('units_count') + units_in_order
         del order.items[pk]
     ProductType.objects.bulk_update(items, ['units_count'])
     order.delete()

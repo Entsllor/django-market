@@ -102,20 +102,19 @@ class CartTest(TestBaseWithFilledCatalogue):
         self.cart.set_item(3, 5)
         self.assertEqual(self.cart.items, {'3': 5})
 
-    def test_as_order(self):
+    def test_get_items_data(self):
         self.fill_cart({'1': 5, '7': 5, '11': 1})
-        order_items = self.cart.get_items_data()
-        for pk, data in order_items.items():
-            self.assertIn(str(pk), self.cart.items.keys())
-            self.assertEqual(data['product_id'], ProductType.objects.only().get(pk=pk).product.id)
-            self.assertEqual(data['units_count'], self.cart.items[str(pk)])
+        items_data = self.cart.get_items_data()
+        product_types = ProductType.objects.filter(id__in=self.cart.get_types_pks()).select_related('product')
+        for pk, data in items_data.items():
+            self.assertEqual(data['product_id'], product_types.filter(pk=pk).first().product_id)
+            self.assertEqual(data['units_count'], self.cart.get_count(pk))
 
-    def test_items_data_count_is_correct(self):
-        units_to_add = {'1': 5, '7': 5, '11': 1}
+    def test_get_taken_units_count(self):
+        units_to_add = {'1': 5, '7': 5, '11': 10}
         self.fill_cart(units_to_add)
-        expected_sum = sum(units_to_add.values())
-        real_sum = sum(item['units_count'] for item in self.cart.get_items_data().values())
-        self.assertEqual(expected_sum, real_sum)
+        for pk, count in units_to_add.items():
+            self.assertEqual(count, self.cart.get_count(pk))
 
     @assert_difference({})
     def test_got_negative_numbers(self):

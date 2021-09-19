@@ -221,8 +221,14 @@ class Cart(models.Model):
             'product__name', 'product__market_id',
             'product__discount_percent', 'product__original_price'
         )
-        data = {str(item.pk): _format_product_type_data(item, self.items[str(item.pk)]) for item in query}
+        data = {str(item.pk): _format_product_type_data(item, self.get_count(item.pk)) for item in query}
         return data
+
+    def get_count(self, pk):
+        return self.items[str(pk)]
+
+    def get_types_pks(self):
+        return tuple(self.items.keys())
 
     def set_item(self, product_type_pk, quantity):
         _validate_units_quantity(quantity)
@@ -240,7 +246,7 @@ class Cart(models.Model):
         return Cart.objects.filter(pk=self.pk).update(items=self._default_cart_value())
 
     def _remove_nonexistent_product_types(self):
-        old_pks = list(self.items.keys())
+        old_pks = self.get_types_pks()
         new_pks = ProductType.objects.values_list('pk', flat=True)
         for pk in old_pks:
             if int(pk) not in new_pks:
@@ -349,6 +355,18 @@ class Order(models.Model):
     @property
     def is_unpaid(self):
         return self.status == self.OrderStatusChoices.UNPAID.name
+
+    def get_units_count(self):
+        units_count = {}
+        for pk in self.items.keys():
+            units_count[str(pk)] = self.get_units_count_of(pk)
+        return units_count
+
+    def get_units_count_of(self, pk) -> int:
+        return self.get_item(pk)['units_count']
+
+    def get_item(self, pk):
+        return self.items.get(str(pk))
 
     def get_absolute_url(self):
         return reverse_lazy('market_app:order_detail', kwargs={'pk': self.pk})
