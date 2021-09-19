@@ -11,7 +11,7 @@ from .forms import *
 
 class LogIn(LoginView):
     template_name = 'accounts/log_in_template.html'
-    success_url = reverse_lazy('accounts:profile')
+    success_url = reverse_lazy('market_app:catalogue')
     redirect_authenticated_user = True
 
 
