@@ -47,19 +47,19 @@ On Windows:
 SET SECRET_KEY=YOUR_SECRET_KEY
 ```
 
-3. Install requirements and run server
+3. Install configure and run server
 
 ```
 pip install -r requirements.txt
 cd project
-python manage.py makemigrations
-python manage.py migrate
+python manage.py configure_market
 python manage.py runserver 0.0.0.0:8000
 ```
 
 ## Warning
 
 Keep the secret key used in production secret!
+
 Don't run with debug turned on in production!
 
 ### How to open admin-panel
@@ -72,3 +72,24 @@ python manage.py createsuperuser
 
 2. Go to http://localhost:8000/admin
 3. Enter admin (superuser) username and password
+
+### Currencies
+This project supports multi-currencies system.
+
+1. Set constants in /project/project/settings.py
+- LANGUAGES (codes of supported languages)
+- DEFAULT_CURRENCY (use as default for your data base)
+- EXTRA_CURRENCIES (codes of supported currencies)
+- CURRENCIES_SYMBOLS (set associated currencies symbols. For example, 'USD': $)
+- LOCAL_CURRENCIES (associated currencies with languages. For example, 'en-us': 'USD')
+
+2. Run commands
+
+```
+python manage.py create_currencies
+python manage.py update_currencies
+```
+
+[Optional] Use 'update_currencies' command when you need to update exchanging rates
+
+[Optional] Change rates-source-url if it is necessary
