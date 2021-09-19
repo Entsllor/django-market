@@ -1,13 +1,15 @@
 {% extends 'market_app/app_base.html' %}
 {% load i18n %}
 {% load currencies %}
+{% load market_app_blocks %}
+
 
 {% block main_center_block %}
-  <div class="card my-2">
-    <div class="card-header content-title">
-      My cart
-    </div>
-    {% if cart.items %}
+  {% if cart.items %}
+    <div class="card my-2">
+      <div class="card-header content-title">
+        My cart
+      </div>
 
       <form action="{% url 'market_app:cart' %}" method="post">
         {% csrf_token %}
@@ -103,6 +105,15 @@
           </button>
         </div>
       </form>
-    {% endif %}
-  </div>
+
+    </div>
+  {% else %}
+    <div class="display-5">
+      {% trans 'Your cart is empty' %}
+    </div>
+    <div class="display-6">
+      {% trans 'But these products will interest you' %}
+    </div>
+    {% products_catalogue 36 %}
+  {% endif %}
 {% endblock %}
