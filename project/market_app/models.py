@@ -389,7 +389,7 @@ class Order(models.Model):
         if self.activated_coupon:
             coupon_discount = self._get_coupon_discount(total_price)
             total_price -= coupon_discount
-        return total_price
+        return round(total_price, MONEY_DECIMAL_PLACES)
 
 
 class Coupon(models.Model):
