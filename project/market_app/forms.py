@@ -155,8 +155,8 @@ class AdvancedSearchForm(forms.Form):
         self.fields['currency_code'] = forms.CharField(
             max_length=3, initial=self.currency_code, widget=forms.HiddenInput())
 
-    q = forms.CharField(label='Query', max_length=63, required=False)
+    q = forms.CharField(label=_('Query'), max_length=63, required=False)
     min_price = forms.IntegerField(min_value=0, max_value=1000000000, required=False)
     max_price = forms.IntegerField(min_value=0, max_value=1000000000, required=False)
-    category = forms.ModelChoiceField(queryset=ProductCategory.objects.all(), required=False)
-    show_if_sold_out = forms.BooleanField(required=False)
+    category = forms.ModelChoiceField(label=_('Category'), queryset=ProductCategory.objects.all(), required=False)
+    show_if_sold_out = forms.BooleanField(label=_('Show if sold out'), required=False)

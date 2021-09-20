@@ -9,8 +9,11 @@
     <div class="col-md-3 order-1">
       {% block main_left_block %}
         <div class="sticky-top">
-          {% block left_block_over_side_bar %}{% endblock %}
-          {% product_search_form %}
+          {% block left_block_over_side_bar %}
+          {% endblock %}
+          {% block search_form_block %}
+            {% product_search_form %}
+          {% endblock %}
           {% side_nav %}
         </div>
       {% endblock main_left_block %}

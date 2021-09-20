@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-09-20 22:12+0500\n"
-"PO-Revision-Date: 2021-09-20 22:13+0500\n"
+"POT-Creation-Date: 2021-09-20 22:31+0500\n"
+"PO-Revision-Date: 2021-09-20 22:33+0500\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
@@ -240,6 +240,10 @@ msgstr "Страница"
 msgid "Next"
 msgstr "Следующая"
 
+#: .\currencies\apps.py:8 .\currencies\models.py:63
+msgid "currencies"
+msgstr "валюты"
+
 #: .\currencies\models.py:54
 msgid "currency code"
 msgstr "код валюты"
@@ -255,10 +259,6 @@ msgstr "обменный курс"
 #: .\currencies\models.py:62
 msgid "currency"
 msgstr "валюта"
-
-#: .\currencies\models.py:63
-msgid "currencies"
-msgstr "валюты"
 
 #: .\market_app\apps.py:8
 msgid "Shopping"
@@ -290,6 +290,18 @@ msgstr "Минимальная цена"
 #: .\market_app\forms.py:154
 msgid "Max price"
 msgstr "Максимальная цена"
+
+#: .\market_app\forms.py:158
+msgid "Query"
+msgstr "Запрос"
+
+#: .\market_app\forms.py:161
+msgid "Category"
+msgstr "Категория"
+
+#: .\market_app\forms.py:162
+msgid "Show if sold out"
+msgstr "Показывать если распродано"
 
 #: .\market_app\models.py:20 .\market_app\models.py:23
 #: .\market_app\models.py:86
@@ -339,7 +351,7 @@ msgstr "процент скидки"
 
 #: .\market_app\models.py:76
 msgid "available"
-msgstr "доступность к продаже"
+msgstr "доступно к продаже"
 
 #: .\market_app\models.py:78 .\market_app\models.py:196
 msgid "image"
