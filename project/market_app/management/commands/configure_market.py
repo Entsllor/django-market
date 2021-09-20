@@ -1,6 +1,5 @@
-from django.core.management.base import BaseCommand
 from django.core import management
-from currencies.services import create_currencies_from_settings
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):

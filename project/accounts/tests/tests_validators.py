@@ -2,8 +2,8 @@ import datetime
 import unittest
 import string
 
-from ..file_utils import create_img, is_file_exists
-from ..validators import (
+from accounts.file_utils import create_img, is_file_exists
+from accounts.validators import (
     MAX_AVATAR_WIDTH, MAX_AVATAR_HEIGHT,
     MIN_AVATAR_WIDTH, MIN_AVATAR_HEIGHT,
     SUPPORTED_AVATAR_FORMATS, MIN_USER_AGE,
@@ -114,12 +114,6 @@ class PhoneNumberValidatorTest(unittest.TestCase):
     invalid_chars = string.ascii_letters + string.punctuation.replace('+', '') + string.whitespace
 
     def get_number(self, num_len):
-        """
-        >>>self.get_number(15)
-        '123456789012345'
-        >>>self.get_number(6)
-        '123456
-        """
         digits = '1234567890'
         return digits * (num_len // len(digits)) + digits[:(num_len % len(digits))]
 

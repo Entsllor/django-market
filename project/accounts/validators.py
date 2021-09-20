@@ -3,9 +3,9 @@ import os.path
 import re
 
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
-SUPPORTED_AVATAR_FORMATS = ['.jpg', '.jpeg', '.png']
+SUPPORTED_AVATAR_FORMATS = ('.jpg', '.jpeg', '.png')
 MAX_AVATAR_WIDTH = 1200
 MAX_AVATAR_HEIGHT = 1200
 MIN_AVATAR_WIDTH = 200
@@ -26,36 +26,28 @@ def avatar_dimensions_validate(avatar):
     w = avatar.width
     h = avatar.height
     if w > MAX_AVATAR_WIDTH or h > MAX_AVATAR_HEIGHT:
-        raise ValidationError("{} {}x{} {}".format(
-            _('Please use an image that is'),
-            MAX_AVATAR_WIDTH,
-            MAX_AVATAR_HEIGHT,
-            _('or smaller.'),
-        ))
+        raise ValidationError(
+            _("Please use an image that is {}x{} or MAX_AVATAR_WIDTH.".format(MAX_AVATAR_WIDTH, MAX_AVATAR_HEIGHT))
+        )
     elif w < MIN_AVATAR_WIDTH or h < MIN_AVATAR_HEIGHT:
-        raise ValidationError("{} {}x{} {}".format(
-            _('Please use an image that is'),
-            MIN_AVATAR_WIDTH,
-            MIN_AVATAR_HEIGHT,
-            _('or bigger.'),
-        ))
+        raise ValidationError(
+            _("Please use an image that is {}x{} or bigger.".format(MIN_AVATAR_WIDTH, MIN_AVATAR_HEIGHT))
+        )
 
 
 def avatar_format_validate(avatar):
     main, extension = os.path.splitext(avatar.path)
     if extension not in SUPPORTED_AVATAR_FORMATS:
-        raise ValidationError('{}: {}. {} "{extension}"'.format(
-            _("Expected file formats for uploads"),
+        raise ValidationError('Expected file formats for uploads: {}. Caught "{}"'.format(
             ", ".join(SUPPORTED_AVATAR_FORMATS),
-            _("Caught"),
-            extension=extension
+            extension
         ))
 
 
 def birthday_validate(date: datetime.datetime):
     age = get_age(date)
     if age < MIN_USER_AGE:
-        raise ValidationError(_('You cannot create an account if you are under 18'))
+        raise ValidationError(_('You cannot create an account if you are under {}.'.format(MIN_USER_AGE)))
 
 
 def phone_number_validate(phone):
