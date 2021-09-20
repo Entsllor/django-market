@@ -73,7 +73,7 @@ class Product(models.Model):
         blank=True
     )
     created_at = models.DateTimeField(verbose_name=_('created at'), auto_now_add=True)
-    available = models.BooleanField(verbose_name=_('is available'), default=True)
+    available = models.BooleanField(verbose_name=_('available'), default=True)
     image = models.ImageField(
         verbose_name=_('image'),
         null=True,
@@ -101,7 +101,7 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
-    attributes = models.TextField('attributes', blank=True)
+    attributes = models.TextField(verbose_name=_('attributes'), blank=True)
 
     @property
     def get_attributes(self):
@@ -133,15 +133,20 @@ class Product(models.Model):
 
 
 class ProductType(models.Model):
-    product = models.ForeignKey(Product, related_name='product_types', on_delete=models.CASCADE)
+    product = models.ForeignKey(
+        Product,
+        verbose_name=_('product'),
+        related_name='product_types',
+        on_delete=models.CASCADE
+    )
     units_count = models.PositiveIntegerField(
-        'number of units on sale',
+        verbose_name=_('Amount'),
         blank=True,
         default=0
     )
-    properties = models.JSONField('properties', blank=True, default=dict)
+    properties = models.JSONField(verbose_name=_('properties'), blank=True, default=dict)
     markup_percent = models.DecimalField(
-        'markup percent of this type',
+        verbose_name=_('markup percent'),
         decimal_places=2,
         max_digits=5,
         blank=True,
@@ -181,6 +186,10 @@ class ProductType(models.Model):
     def __str__(self):
         return f'{self.str_attributes or f"id={self.id}"}'
 
+    class Meta:
+        verbose_name = _('Product type')
+        verbose_name_plural = _('Product types')
+
 
 class ProductImage(models.Model):
     product = models.OneToOneField(Product, verbose_name=_('product'), on_delete=models.CASCADE)
@@ -214,6 +223,10 @@ class Cart(models.Model):
     _default_cart_value = dict
     max_product_type_count_on_cart = 20
     items = models.JSONField(verbose_name=_('items'), default=_default_cart_value)
+
+    class Meta:
+        verbose_name = _('cart')
+        verbose_name_plural = _('carts')
 
     def get_items_data(self):
         query = ProductType.objects.filter(id__in=self.items.keys()).select_related('product').only(
@@ -289,12 +302,16 @@ class ShoppingAccount(models.Model):
     )
 
     cart = models.OneToOneField(
-        Cart,
+        to=Cart,
         verbose_name=_('cart'),
         on_delete=models.PROTECT,
         null=True,
         related_name='shopping_account'
     )
+
+    class Meta:
+        verbose_name = _('shopping account')
+        verbose_name_plural = _('shopping accounts')
 
     def get_operations_amount_sum(self):
         result = getattr(self, 'operations').aggregate(sum=Sum('amount'))['sum'] or Decimal('0.00')
@@ -303,7 +320,8 @@ class ShoppingAccount(models.Model):
 
 class Operation(models.Model):
     shopping_account = models.ForeignKey(
-        ShoppingAccount, verbose_name=_('customer account'),
+        to=ShoppingAccount,
+        verbose_name=_('shopping accounts'),
         on_delete=models.SET_NULL,
         null=True,
         related_name='operations'
@@ -317,6 +335,10 @@ class Operation(models.Model):
         auto_now=True
     )
 
+    class Meta:
+        verbose_name = _('operation')
+        verbose_name_plural = _('operations')
+
 
 class Order(models.Model):
     class OrderStatusChoices(models.TextChoices):
@@ -327,14 +349,15 @@ class Order(models.Model):
         DELIVERED = 'DELIVERED', _("successfully completed")
 
     shopping_account = models.ForeignKey(
-        ShoppingAccount, verbose_name=_('customer account'),
+        to=ShoppingAccount,
+        verbose_name=_('shopping account'),
         on_delete=models.SET_NULL,
         null=True,
         related_name='orders'
     )
     operation = models.OneToOneField(
         to=Operation,
-        verbose_name=_('customer account'),
+        verbose_name=_('operation'),
         on_delete=models.CASCADE,
         null=True,
         related_name='order'
@@ -346,7 +369,7 @@ class Order(models.Model):
         default=OrderStatusChoices.UNPAID,
     )
     activated_coupon = models.ForeignKey(
-        'Coupon',
+        to='Coupon',
         verbose_name=_('activated coupon'),
         on_delete=models.SET_NULL,
         null=True, blank=True
@@ -409,6 +432,10 @@ class Coupon(models.Model):
         blank=True,
         validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
+
+    class Meta:
+        verbose_name = _('coupon')
+        verbose_name_plural = _('coupons')
 
     def __str__(self):
         str_class = _('Coupon')

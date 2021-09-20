@@ -58,4 +58,8 @@ class Currency(models.Model):
     def __str__(self):
         return self.code
 
+    class Meta:
+        verbose_name = _('currency')
+        verbose_name_plural = _('currencies')
+
     objects = CurrencyManager()

@@ -17,8 +17,7 @@
           {% trans 'Description' %} {{ market.description }} <br>
         {% endif %}
         {% trans 'Market owner' %}: {{ market.owner.username }} <br>
-        {% trans 'Product count' %}
-        {{ market.product_set.len }}
+        {% trans 'Product count' %}: {{ market.product_set.count }}
       </p>
     </div>
     {% if market.owner == user %}

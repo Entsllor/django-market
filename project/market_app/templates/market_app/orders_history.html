@@ -13,7 +13,7 @@
           <div class="row row-cols-1 row-cols-sm-3 ">
             <div class="col col-12 col-md-4">
               <a href="{{ order.get_absolute_url }}">
-                Order №{{ order.id }}
+                {% trans 'Order №' %}{{ order.id }}
               </a>
             </div>
             <div class="col col-12 col-md-4 text-center">

@@ -150,8 +150,8 @@ class AdvancedSearchForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.currency_code = kwargs.pop('currency_code')
         super(AdvancedSearchForm, self).__init__(*args, **kwargs)
-        self.fields['min_price'].label = _(f'Min price ({self.currency_code}):')
-        self.fields['max_price'].label = _(f'Max price ({self.currency_code}):')
+        self.fields['min_price'].label = _('Min price') + f' ({self.currency_code}):'
+        self.fields['max_price'].label = _('Max price') + f' ({self.currency_code}):'
         self.fields['currency_code'] = forms.CharField(
             max_length=3, initial=self.currency_code, widget=forms.HiddenInput())
 

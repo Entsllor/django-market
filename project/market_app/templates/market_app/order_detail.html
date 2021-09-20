@@ -6,7 +6,7 @@
   <div class="card my-2">
 
     <div class="card-header content-title">
-      Order №{{ order.id }}
+      {% trans 'Order №' %}{{ order.id }}
     </div>
     <ul class="list-group list-group-flush">
       {% for pk, order_item in order.items.items %}
@@ -14,9 +14,9 @@
           <h4 class="text-center">
             {{ order_item.product_name }}
           </h4>
-          Count: {{ order_item.units_count }}<br class="p">
+          {% trans "Amount" %}: {{ order_item.units_count }}<br class="p">
           {% if order_item.sale_price %}
-            Sale price: {% to_local_currency order_item.sale_price %}<br>
+            {% trans 'Sale price' %}: {% to_local_currency order_item.sale_price %}<br>
           {% endif %}
           {% for prop, value in order_item.properties.items %}
             {{ prop }}: {{ value }}<br>
@@ -26,22 +26,22 @@
     </ul>
     <div class="card-body">
       {% if order.activated_coupon %}
-        Activated coupon: {{ order.activated_coupon }}
+        {% trans 'Activated coupon' %}: {{ order.activated_coupon }}
       {% endif %}
       <p class="mb-0">
-        Total price: {% to_local_currency order.total_price %}
+        {% trans 'Total price' %}: {% to_local_currency order.total_price %}
       </p>
       {% if order.is_unpaid %}
         <div class="d-flex flex-row justify-content-between">
           <p>
-            status: {{ order.get_status_display }}
+            {% trans "Status" %}: {{ order.get_status_display }}
           </p>
           <div>
             <a href="{% url 'market_app:order_cancel' pk=order.pk %}" class="btn btn-danger">
-              Cancel
+              {% trans "Cancel" %}
             </a>
             <a href="{% url 'market_app:checkout' pk=order.pk %}" class="btn btn-primary">
-              Pay
+              {% trans "Pay" %}
             </a>
           </div>
         </div>

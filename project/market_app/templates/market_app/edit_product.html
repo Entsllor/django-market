@@ -17,7 +17,7 @@
       <thead>
       <tr>
         <th scope="col">
-          count
+          {% trans "count" %}
         </th>
         {% for attribute in product.get_attributes %}
           <th scope="col">{{ attribute }}</th>
@@ -36,7 +36,7 @@
           {% endfor %}
           <td>
             <a href="{% url 'market_app:edit_type' product_type.pk %}">
-              edit
+              {% trans "edit" %}
             </a>
           </td>
         </tr>
@@ -47,7 +47,7 @@
 
   <div class="text-center">
     <a class="btn btn-primary" href="{% url 'market_app:create_type' pk=product.pk %}">
-      create type
+      {% trans 'create type' %}
     </a>
   </div>
 {% endblock %}

@@ -42,7 +42,7 @@
     {% if user.is_authenticated %}
       <li class="list-group-item">
         <a href="{% url 'market_app:operation_history' %}">
-          {% trans 'balance' %} {% to_local_currency user.shopping_account.balance %}
+          {% trans 'Balance' %} {% to_local_currency user.shopping_account.balance %}
         </a>
       </li>
     {% endif %}

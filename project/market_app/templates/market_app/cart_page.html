@@ -8,17 +8,12 @@
   {% if cart.items %}
     <div class="card my-2">
       <div class="card-header content-title">
-        My cart
+        {% trans 'My cart' %}
       </div>
 
       <form action="{% url 'market_app:cart' %}" method="post">
         {% csrf_token %}
         <ul class="list-group list-group-flush">
-          <script>
-              const call = (msg) => {
-                  alert(msg)
-              }
-          </script>
           <script>
 
               const LOCAL_CURRENCY_RATE = Number("{{ LOCAL_CURRENCY.rate }}".replace(',', '.'));
@@ -73,15 +68,15 @@
                 {{ attr }}: {{ value }} <br>
               {% endfor %}
               <div>
-                Price for unit {% to_local_currency item.sale_price %} <br>
+                {% trans 'Unit price' %}: {% to_local_currency item.sale_price %} <br>
                 <label for="id_{{ pk }}">
-                  Number of units:
+                  {% trans 'Amount' %}:
                 </label>
                 <input id="id_{{ pk }}" name="{{ pk }}" type="number" class="form-control"
                        value="{{ item.units_count }}" onchange="onChangeCount()">
               </div>
               <p>
-                Total order item price:
+                {% trans 'Total order item price' %}:
                 <span id="itemTotalPrice{{ pk }}">{% to_local_currency item.sale_price %}</span>
                 {% if item.discount_percent %}
                   <s id="itemTotalOriginalPrice{{ pk }}">
@@ -101,7 +96,7 @@
         </div>
         <div class="card-footer">
           <button type="submit" class="btn btn-primary d-block ms-auto">
-            Submit
+            {% trans 'Submit' %}
           </button>
         </div>
       </form>

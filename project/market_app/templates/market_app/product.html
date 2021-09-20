@@ -18,7 +18,7 @@
       <div class="col">
         <h3 class="text-center">{{ product.name }}</h3>
         {% if product.description %}
-          <p>description: {{ product.description }}</p>
+          <p>{% trans "Description" %}: {{ product.description }}</p>
         {% endif %}
         <p class="text-end">
           {% trans 'Market' %}:
@@ -37,7 +37,7 @@
             <span>price: <b>{% to_local_currency  product.sale_price %}</b>
               <s>{% to_local_currency product.original_price %}</s></span>
           {% else %}
-            <span>price: {% to_local_currency product.original_price %}</span>
+            <span>{% trans "price" %}: {% to_local_currency product.original_price %}</span>
           {% endif %}
 
           <div class="ms-auto">
