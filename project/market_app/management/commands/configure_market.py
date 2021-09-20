@@ -9,3 +9,4 @@ class Command(BaseCommand):
         management.call_command('makemigrations')
         management.call_command('migrate')
         management.call_command('create_currencies')
+        management.call_command('compilemessages')
