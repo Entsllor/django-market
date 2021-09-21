@@ -9,12 +9,12 @@
       {% trans 'Order №' %}{{ order.id }}
     </div>
     <ul class="list-group list-group-flush">
-      {% for pk, order_item in order.items.items %}
+      {% for order_item in order.items.all %}
         <li class="list-group-item">
           <h4 class="text-center">
             {{ order_item.product_name }}
           </h4>
-          {% trans "Amount" %}: {{ order_item.units_count }}<br class="p">
+          {% trans "Amount" %}: {{ order_item.amount }}<br class="p">
           {% if order_item.sale_price %}
             {% trans 'Sale price' %}: {% to_local_currency order_item.sale_price %}<br>
           {% endif %}

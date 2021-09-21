@@ -310,7 +310,7 @@ class CartViewTest(TestBaseWithFilledCatalogue):
         order: Order = self.shopping_account.orders.first()
         self.assertEqual(order.get_units_count_of('1'), 8)
         self.assertEqual(order.get_units_count_of('4'), 2)
-        self.assertTrue('2' not in order.items)
+        self.assertFalse(order.items.filter(product_type_id='2').exists())
 
     def test_redirect_if_form_is_valid(self):
         order_items = {'1': 5, '2': 3, '4': 5}

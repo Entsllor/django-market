@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.core.exceptions import PermissionDenied
 from django.db.models import F
 
-from .models import ShoppingAccount, ProductType, Order, Operation, Cart, Coupon, Market
+from .models import ShoppingAccount, ProductType, Order, Operation, Cart, Coupon, Market, OrderItem
 
 logger = logging.getLogger('market.transactions')
 SUBTRACT = '-'
@@ -48,13 +48,12 @@ def validate_money_amount(money_amount):
         raise ValueError(f'Expected a positive number, got "{money_amount}" instead.')
 
 
-def get_debt_to_sellers(order_items) -> dict:
+def get_debt_to_sellers(order) -> dict:
     debt_to_sellers = {}
-    for pk, data in order_items.items():
-        seller_pk = data['market_owner_id']
-        sale_price = Decimal(data['sale_price'])
-        units_count = data['units_count']
-        total_price = sale_price * units_count
+    order_items = order.items.select_related('market')
+    for item in order_items:
+        seller_pk = item.market.owner_id
+        total_price = item.sale_price * item.amount
         if seller_pk in debt_to_sellers:
             debt_to_sellers[seller_pk] += total_price
         else:
@@ -69,35 +68,34 @@ def _get_sellers_data(markets_pks, *fields):
 
 def prepare_order(cart: Cart):
     cart.prepare_items()
-    order_items = cart.get_items_data()
-    markets_pks = [value['market_id'] for value in order_items.values()]
-    sellers_data = _get_sellers_data(markets_pks, 'owner_id')
-    for pk, data in order_items.copy().items():
+    items_data = cart.get_items_data()
+    order = Order.objects.create(shopping_account=cart.shopping_account)
+    order_items = []
+    for product_type_id, data in items_data.items():
         expected_count = data['units_count']
         if expected_count > 0:
-            taken_units = _take_units_from_db(pk, expected_count)
-            data['units_count'] = taken_units
-            data['sale_price'] = str(data['sale_price'])
-            data['discount_percent'] = str(data['discount_percent'])
-            data['original_price'] = str(data['original_price'])
-            data['markup_percent'] = str(data['markup_percent'])
-            owner_id = sellers_data[data['market_id']]
-            data['market_owner_id'] = owner_id
-        else:
-            del order_items[pk]
-    order = Order.objects.create(items=order_items, shopping_account=cart.shopping_account)
+            taken_units = _take_units_from_db(product_type_id, expected_count)
+            order_item = OrderItem(
+                order=order,
+                amount=taken_units,
+                product_type_id=product_type_id,
+                sale_price=data['sale_price'],
+                market_id=data['market_id']
+            )
+            order_items.append(order_item)
+    OrderItem.objects.bulk_create(order_items)
     cart.clear()
     return order
 
 
 def _cancel_order(order: Order) -> None:
-    items = ProductType.objects.filter(id__in=order.items.keys())
+    items = order.items.select_related('product_type').only('pk', 'product_type', 'amount')
+    product_types = []
     for item in items:
-        pk = str(item.pk)
-        units_in_order = order.get_units_count_of(pk)
-        item.units_count = F('units_count') + units_in_order
-        del order.items[pk]
-    ProductType.objects.bulk_update(items, ['units_count'])
+        units_in_order = item.amount
+        item.product_type.units_count = F('units_count') + units_in_order
+        product_types.append(item.product_type)
+    ProductType.objects.bulk_update(product_types, ['units_count'])
     order.delete()
 
 
@@ -154,7 +152,7 @@ def make_purchase(order: Order, shopping_account: ShoppingAccount, coupon: Coupo
     _validate_order(order)
     if coupon:
         activate_coupon_to_order(order, shopping_account, coupon)
-    debt_to_sellers = get_debt_to_sellers(order.items)
+    debt_to_sellers = get_debt_to_sellers(order)
     purchase_operation = _change_balance_amount(shopping_account, SUBTRACT, order.total_price)
     _send_money_to_sellers(shopping_account, debt_to_sellers)
     _set_order_operation(purchase_operation, order)

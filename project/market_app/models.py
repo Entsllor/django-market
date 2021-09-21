@@ -362,7 +362,6 @@ class Order(models.Model):
         null=True,
         related_name='order'
     )
-    items = models.JSONField(verbose_name=_('order items'))
     status = models.CharField(
         max_length=15,
         choices=OrderStatusChoices.choices,
@@ -380,16 +379,13 @@ class Order(models.Model):
         return self.status == self.OrderStatusChoices.UNPAID.name
 
     def get_units_count(self):
-        units_count = {}
-        for pk in self.items.keys():
-            units_count[str(pk)] = self.get_units_count_of(pk)
-        return units_count
+        return {str(pk): amount for pk, amount in self.items.values_list('product_type_id', 'amount')}
 
-    def get_units_count_of(self, pk) -> int:
-        return self.get_item(pk)['units_count']
+    def get_units_count_of(self, product_type_pk) -> int:
+        return self.items.values_list('amount', flat=True).filter(product_type_id=product_type_pk).first()
 
     def get_item(self, pk):
-        return self.items.get(str(pk))
+        return self.items.get(pk=pk)
 
     def get_absolute_url(self):
         return reverse_lazy('market_app:order_detail', kwargs={'pk': self.pk})
@@ -407,12 +403,44 @@ class Order(models.Model):
     @property
     def total_price(self):
         total_price = 0
-        for item_data in self.items.values():
-            total_price += item_data['units_count'] * Decimal(item_data['sale_price'])
+        for item_data in self.items.values('amount', 'sale_price'):
+            total_price += item_data['amount'] * Decimal(item_data['sale_price'])
         if self.activated_coupon:
             coupon_discount = self._get_coupon_discount(total_price)
             total_price -= coupon_discount
         return round(total_price, MONEY_DECIMAL_PLACES)
+
+
+class OrderItem(models.Model):
+    product_type = models.ForeignKey(
+        to=ProductType,
+        verbose_name=_('product type'),
+        related_name='order_items',
+        on_delete=models.SET_NULL,
+        null=True
+    )
+    order = models.ForeignKey(
+        to=Order,
+        verbose_name=_('order'),
+        related_name='items',
+        on_delete=models.CASCADE
+    )
+    market = models.ForeignKey(
+        to=Market,
+        verbose_name=_('market'),
+        related_name=_('order_items'),
+        on_delete=models.SET_NULL,
+        null=True
+    )
+    amount = models.PositiveIntegerField(verbose_name=_('amount'))
+    is_shipped = models.BooleanField(verbose_name=_('is shipped'), default=False)
+    sale_price = models.DecimalField(
+        verbose_name=_('sale price'),
+        max_digits=MAX_BALANCE_DIGITS_COUNT,
+        decimal_places=MONEY_DECIMAL_PLACES,
+        blank=True,
+        default=0
+    )
 
 
 class Coupon(models.Model):

@@ -169,7 +169,7 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         units_to_buy = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(units_to_buy)
         order = prepare_order(self.cart)
-        self.assertEqual(len(order.items), len(units_to_buy))
+        self.assertEqual(order.items.count(), len(units_to_buy))
 
     def test_cant_pay_twice_for_one_order(self):
         top_up_balance(self.shopping_account, 2000)
@@ -292,7 +292,7 @@ class CancelOrderTest(TestBaseWithFilledCatalogue):
 
     def test_can_cancel_order(self):
         self.fill_cart({'1': 3, '2': 5, '4': 2})
-        order = prepare_order(self.cart)
+        order: Order = prepare_order(self.cart)
         self.assertEqual(order.get_units_count(), {'1': 3, '2': 5, '4': 2})
         _cancel_order(order)
         self.assertEqual(order.get_units_count(), {})
