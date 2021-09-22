@@ -338,8 +338,12 @@ class CheckOutPage(TestBaseWithFilledCatalogue):
     def get_from_page(self, **kwargs):
         return self.client.get(path=self.get_url(), **kwargs)
 
-    def post_to_page(self, **kwargs):
-        return self.client.post(path=self.get_url(), **kwargs)
+    def post_to_page(self, data: dict = None, **kwargs):
+        if data is None:
+            data = {}
+        elif 'address' not in data:
+            data['address'] = 'Some user shipped address'
+        return self.client.post(path=self.get_url(), data=data, **kwargs)
 
     def test_redirect_if_user_do_not_have_enough_money(self):
         top_up_balance(self.shopping_account, 500)
@@ -364,7 +368,7 @@ class CheckOutPage(TestBaseWithFilledCatalogue):
     def test_redirect_if_user_does_not_agree(self):
         top_up_balance(self.shopping_account, 1000)
         self.fill_cart({'1': 5, '4': 5})
-        response = self.post_to_page()
+        response = self.post_to_page(data={})
         self.assertRedirects(response, self.orders_list_url)
 
     def test_is_purchasing_successful(self):

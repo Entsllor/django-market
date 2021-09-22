@@ -118,20 +118,23 @@ class CreditCardForm(MoneyExchangerMixin, forms.Form):
 
 
 class CheckOutForm(forms.Form):
-    agreement = forms.BooleanField(label='Do you agree?', required=False)
-
-
-class SelectCouponForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.shopping_account = kwargs.pop('shopping_account')
         self.coupons = self.shopping_account.coupon_set
-        super(SelectCouponForm, self).__init__(*args, **kwargs)
+        super(CheckOutForm, self).__init__(*args, **kwargs)
         self.fields['coupon'] = forms.ModelChoiceField(
-            label='Select a coupon',
+            label=_('Select a coupon'),
             initial=self.coupons.first(),
             queryset=self.coupons,
             required=False
         )
+        self.order_fields(['coupon', 'address', 'agreement'])
+
+    agreement = forms.BooleanField(label=_('Do you agree?'), required=False)
+    address = forms.CharField(
+        label=_('Shipping address'), min_length=15, max_length=255,
+        widget=forms.Textarea(attrs={'rows': 2})
+    )
 
 
 class CartForm(forms.Form):

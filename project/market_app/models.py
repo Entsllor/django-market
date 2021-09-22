@@ -348,13 +348,6 @@ class Order(models.Model):
         SHIPPED = 'SHIPPED', _("Shipped")
         DELIVERED = 'DELIVERED', _("successfully completed")
 
-    shopping_account = models.ForeignKey(
-        to=ShoppingAccount,
-        verbose_name=_('shopping account'),
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='orders'
-    )
     operation = models.OneToOneField(
         to=Operation,
         verbose_name=_('operation'),
@@ -372,6 +365,20 @@ class Order(models.Model):
         verbose_name=_('activated coupon'),
         on_delete=models.SET_NULL,
         null=True, blank=True
+    )
+
+    shopping_account = models.ForeignKey(
+        to=ShoppingAccount,
+        verbose_name=_('shopping account'),
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='orders'
+    )
+
+    address = models.TextField(
+        verbose_name=_('address'),
+        blank=False,
+        max_length=200
     )
 
     @property

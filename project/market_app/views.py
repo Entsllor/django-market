@@ -14,7 +14,7 @@ from django.views import generic
 from currencies.services import get_currency_code_by_language, DEFAULT_CURRENCY, \
     get_exchanger
 from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, ProductTypeForm, CreditCardForm, \
-    AdvancedSearchForm, SelectCouponForm, CartForm, CheckOutForm
+    AdvancedSearchForm, CartForm, CheckOutForm
 from .models import Product, Market, ProductType, Operation, Order
 from .services import top_up_balance, make_purchase, prepare_order, EmptyOrderError, OrderCannotBeCancelledError, \
     try_to_cancel_order
@@ -180,7 +180,8 @@ class CartView(LoginRequiredMixin, generic.FormView):
         cart.items = form.cleaned_data
         order: Order = prepare_order(cart)
         almost_sold_types_pks = {
-            item.product_type_id: item.amount for item in order.items.all() if item.amount < form.cleaned_data.get(str(item.product_type_id))
+            item.product_type_id: item.amount for item in order.items.all() if
+            item.amount < form.cleaned_data.get(str(item.product_type_id))
         }
         if almost_sold_types_pks:
             types = ProductType.objects.filter(
@@ -221,16 +222,25 @@ def cancel_order_view(request, pk):
         raise PermissionDenied(exc)
 
 
-class CheckOutView(PermissionRequiredMixin, generic.DetailView):
+class CheckOutView(PermissionRequiredMixin, generic.FormView):
     template_name = 'market_app/checkout_page.html'
     success_url = reverse_lazy('market_app:order_confirmation')
-    model = Order
-    context_object_name = 'order'
+    form_class = CheckOutForm
 
     def setup(self, request, *args, **kwargs):
         super(CheckOutView, self).setup(request, *args, **kwargs)
-        self.object = Order.objects.filter(pk=kwargs['pk']).first()
+        self.object = Order.objects.select_related('shopping_account').filter(pk=kwargs['pk']).first()
         self.shopping_account = self.request.user.shopping_account
+
+    def get_form_kwargs(self):
+        kwargs = super(CheckOutView, self).get_form_kwargs()
+        kwargs['shopping_account'] = self.shopping_account
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super(CheckOutView, self).get_context_data(**kwargs)
+        context['order'] = self.object
+        return context
 
     def get(self, request, *args, **kwargs):
         shopping_account = self.shopping_account
@@ -239,25 +249,21 @@ class CheckOutView(PermissionRequiredMixin, generic.DetailView):
                 reverse_lazy('market_app:top_up'))
         return super(CheckOutView, self).get(request, *args, **kwargs)
 
-    def get_context_data(self, **kwargs):
-        context = super(CheckOutView, self).get_context_data(**kwargs)
-        context['coupon_form'] = SelectCouponForm(shopping_account=self.shopping_account)
-        context['form'] = CheckOutForm
-        return context
-
     def has_permission(self):
         user = self.request.user
         return user.id == self.object.shopping_account_id
 
-    def post(self, request, *args, **kwargs):
-        coupon = request.POST.get('coupon')
-        if request.POST.get('agreement') == 'on':
+    def form_valid(self, form):
+        coupon = form.cleaned_data.get('coupon')
+        self.object.save(update_fields=['address'])
+        Order.objects.filter(pk=self.kwargs['pk']).update(address=form.cleaned_data['address'])
+        if form.cleaned_data['agreement']:
             try:
                 make_purchase(self.object, self.shopping_account, coupon)
             except PermissionDenied as exc:
                 raise exc
             except EmptyOrderError:
-                messages.warning(request, 'Cannot perform empty order')
+                messages.warning(self.request, 'Cannot perform empty order')
                 return HttpResponseRedirect(reverse_lazy('market_app:cart'))
             return HttpResponseRedirect(self.success_url)
         else:
