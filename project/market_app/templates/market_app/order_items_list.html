@@ -1,0 +1,37 @@
+{% extends 'market_app/app_base.html' %}
+{% load i18n %}
+{% load currencies %}
+
+{% block main_center_block %}
+  <div class="card my-2">
+    <div class="card-header content-title">
+      {% trans 'Orders Items' %}
+    </div>
+    <div class="list-group list-group-flush">
+      <form action="{% url 'market_app:shipping' pk=view.kwargs.pk %}" method="post">
+      {% csrf_token %}
+        {% for item in orders_items %}
+          <div class="list-group-item">
+            <div class="row row-cols-5">
+              <div class="col col-1">{{ item.product_type_id }}</div>
+              <div class="col col-3">{{ item.product_type.product.name }}</div>
+              <div class="col col-3">{{ item.product_type.str_attributes }}</div>
+              <div class="col col-3">{% to_local_currency item.sale_price %}</div>
+              <div class="col col-1">{{ item.amount }}</div>
+              <div class="col col-1">
+                <input type="checkbox" name="item_{{ item.pk }}" id="item_{{ item.pk }}"
+                  {% if item.is_shipped %} checked {% endif %}>
+              </div>
+            </div>
+          <div>{% trans 'Address' %}: {{ item.order.address }}</div>
+          </div>
+        {% empty %}
+          {% trans 'There is nothing' %}
+        {% endfor %}
+        <div class="d-flex justify-content-end">
+          <button class="btn btn-primary m-1" type="submit">{% trans 'Submit' %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

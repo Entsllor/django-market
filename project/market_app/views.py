@@ -15,7 +15,7 @@ from currencies.services import get_currency_code_by_language, DEFAULT_CURRENCY,
     get_exchanger
 from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, ProductTypeForm, CreditCardForm, \
     AdvancedSearchForm, CartForm, CheckOutForm
-from .models import Product, Market, ProductType, Operation, Order
+from .models import Product, Market, ProductType, Operation, Order, OrderItem
 from .services import top_up_balance, make_purchase, prepare_order, EmptyOrderError, OrderCannotBeCancelledError, \
     try_to_cancel_order
 
@@ -382,3 +382,30 @@ class OperationHistoryView(LoginRequiredMixin, generic.ListView):
     def get_queryset(self):
         user_shopping_account_id = self.request.user.shopping_account.id
         return Operation.objects.filter(shopping_account_id=user_shopping_account_id)
+
+
+class ShippingPage(MarketOwnerRequiredMixin, generic.ListView):
+    template_name = 'market_app/order_items_list.html'
+    model = OrderItem
+    context_object_name = 'orders_items'
+
+    def get_current_market_owner_id(self):
+        return Market.objects.filter(pk=self.kwargs['pk']).values_list('owner_id', flat=True).first()
+
+    def get_queryset(self):
+        self.queryset = OrderItem.objects.select_related(
+            'product_type', 'product_type__product', 'order').filter(
+            market_id=self.kwargs['pk']).only(
+            'product_type__product__name', 'sale_price', 'amount',
+            'order__address', 'is_shipped', 'product_type__properties'
+        )
+        return self.queryset
+
+    def post(self, request, *args, **kwargs):
+        pks = [pk[5:] for pk, value in request.POST.items()
+               if isinstance(pk, str) and pk.startswith('item_') and value == 'on']
+        if self.queryset is None:
+            self.get_queryset()
+        self.queryset.filter(~Q(id__in=pks)).update(is_shipped=False)
+        self.queryset.filter(id__in=pks).update(is_shipped=True)
+        return HttpResponseRedirect(reverse_lazy('market_app:shipping', kwargs=self.kwargs))
