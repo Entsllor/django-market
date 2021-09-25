@@ -33,7 +33,7 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose'
         },
-        'transactions': {
+        'money_transactions': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': TRANSACTION_LOG_PATH,
@@ -60,15 +60,18 @@ LOGGING = {
         'market.debug': {
             'handlers': ['debug'],
             'level': 'DEBUG',
-            'propagate': False
+            'propagate': True
         },
-        'market.transactions': {
-            'handlers': ['transactions'],
-            'level': 'INFO'
+        'market_app.services': {
+            'handlers': ['money_transactions'],
+            'level': 'DEBUG',
+            'propagate': True
+
         },
         'django.db.backends': {
             'level': 'DEBUG',
             'handlers': ['sql_query_handler'],
+            'propagate': True
         },
     }
 }

@@ -6,7 +6,7 @@ from django.db.models import F
 
 from .models import ShoppingAccount, ProductType, Order, Operation, Cart, Coupon, OrderItem
 
-logger = logging.getLogger('market.transactions')
+logger = logging.getLogger(__name__)
 SUBTRACT = '-'
 ADD = '+'
 
