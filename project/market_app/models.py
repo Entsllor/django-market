@@ -28,7 +28,7 @@ class ProductCategory(models.Model):
 
 
 class Market(models.Model):
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('market owner'))
+    owner = models.OneToOneField(User, on_delete=models.CASCADE, related_name='market', verbose_name=_('market owner'))
     name = models.CharField(verbose_name=_('name'), max_length=63)
     description = models.TextField(verbose_name=_('description'), blank=True)
     created_at = models.DateTimeField(verbose_name=_('created at'), auto_now_add=True)

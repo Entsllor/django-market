@@ -42,12 +42,6 @@ class ProductUpdateForm(MoneyExchangerMixin, forms.ModelForm):
 
 
 class ProductForm(ProductUpdateForm):
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user')
-        super(ProductForm, self).__init__(*args, **kwargs)
-        self.fields['market'].queryset = self.user.market_set.all()
-        self.initial['market'] = self.user.market_set.first()
-
     class Meta:
         model = Product
         fields = '__all__'

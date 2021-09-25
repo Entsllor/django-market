@@ -24,7 +24,7 @@ class ProductCreateTest(BaseMarketTestCase):
     def setUp(self) -> None:
         self.create_currencies()
         super(ProductCreateTest, self).setUp()
-        self.market = self.create_market(owner=self.seller)
+        self.market = self.seller.market
         self.product_data = {
             'name': 'TestProductName', 'description': 'text', 'market': self.market,
             'original_price': 100, 'discount_percent': 0,
@@ -155,7 +155,10 @@ class MarketEditTest(BaseMarketTestCase):
         super(MarketEditTest, self).setUp()
         self.old_data = {'name': 'OldName', 'description': 'OldDescription'}
         self.new_data = {'name': 'NewName', 'description': 'NewDescription'}
-        self.market = self.create_market(owner=self.seller, **self.old_data)
+        self.market = self.seller.market
+        for key, value in self.old_data.items():
+            setattr(self.market, key, value)
+        self.market.save()
 
     def post_to_market_edit(self, market: Market, data_to_update: dict = None, **kwargs):
         if data_to_update is None:
@@ -221,7 +224,7 @@ class MarketCreateViewsTest(BaseMarketTestCase):
 
     def try_set_created_market(self, **data):
         try:
-            self.created_market = Market.objects.get(**data)
+            self.created_market: Market = Market.objects.get(**data)
         except ObjectDoesNotExist:
             self.created_market = None
 
@@ -230,6 +233,18 @@ class MarketCreateViewsTest(BaseMarketTestCase):
         self.post_to_market_create()
         self.assertIsInstance(self.created_market, Market)
         self.assertEqual(self.created_market.owner.id, self.user.id)
+
+    def test_one_user_cannot_create_two_markets(self):
+        self.log_in_as_seller()
+        self.post_to_market_create()
+        response = self.post_to_market_create(check_unique=False)
+        self.assertEqual(response.status_code, 403)
+
+    def test_redirects_if_user_already_have_account(self):
+        self.log_in_as_seller()
+        self.post_to_market_create()
+        response = self.client.get(path=reverse_lazy('market_app:create_market'))
+        self.assertRedirects(response, reverse_lazy('market_app:my_market'), target_status_code=302)
 
 
 class ProductTypeUnitsTest(BaseMarketTestCase):

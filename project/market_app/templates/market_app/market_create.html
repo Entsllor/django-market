@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block form_block %}
-  <form action="{% url 'market_app:create_market' %}" method="post">
+  <form action="{% url 'market_app:create_market' %}" method="post" enctype="multipart/form-data">
     {% include 'core_app/include/pretty_form.html' with form=form %}
     {% csrf_token %}
   </form>

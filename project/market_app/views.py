@@ -52,10 +52,9 @@ class ProductCreateView(LoginRequiredMixin, generic.CreateView):
     form_class = ProductForm
     template_name = 'market_app/create_product.html'
 
-    def get_form_kwargs(self):
-        kwargs = super(ProductCreateView, self).get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
+    def form_valid(self, form):
+        form.cleaned_data['market'] = self.request.user.market
+        return super(ProductCreateView, self).form_valid(form)
 
 
 class ProductTypeCreate(MarketOwnerRequiredMixin, generic.CreateView):
@@ -138,9 +137,23 @@ class ProductPageView(generic.FormView):
         return super(ProductPageView, self).form_valid(form)
 
 
-class MarketCreateView(generic.CreateView):
+class MarketCreateView(LoginRequiredMixin, generic.CreateView):
     template_name = 'market_app/market_create.html'
     form_class = MarketForm
+
+    def setup(self, request, *args, **kwargs):
+        super(MarketCreateView, self).setup(request, *args, **kwargs)
+        self.has_market = Market.objects.filter(owner_id=request.user.id).exists()
+
+    def get(self, request, *args, **kwargs):
+        if self.has_market:
+            return HttpResponseRedirect(reverse_lazy('market_app:my_market'), status=302)
+        return super(MarketCreateView, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if self.has_market:
+            raise PermissionDenied('User can have only one market')
+        return super(MarketCreateView, self).post(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super(MarketCreateView, self).get_form_kwargs()
@@ -294,9 +307,12 @@ class MarketsList(generic.ListView):
     paginate_by = 18
 
 
-class UserMarketsView(LoginRequiredMixin, MarketsList):
-    def get_queryset(self):
-        return Market.objects.filter(owner_id=self.request.user)
+@login_required
+def my_market(request):
+    user_market_id = Market.objects.filter(owner_id=request.user.id).values_list('id', flat=True).first()
+    if user_market_id:
+        return HttpResponseRedirect(reverse_lazy('market_app:market', kwargs={'pk': user_market_id}))
+    return HttpResponseRedirect(reverse_lazy('market_app:create_market'))
 
 
 class MarketView(generic.detail.SingleObjectMixin, generic.ListView):
