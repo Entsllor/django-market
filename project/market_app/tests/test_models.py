@@ -102,14 +102,6 @@ class CartTest(TestBaseWithFilledCatalogue):
         self.cart.set_item(3, 5)
         self.assertEqual(self.cart.items, {'3': 5})
 
-    def test_get_items_data(self):
-        self.fill_cart({'1': 5, '7': 5, '11': 1})
-        items_data = self.cart.get_items_data()
-        product_types = ProductType.objects.filter(id__in=self.cart.get_types_pks()).select_related('product')
-        for pk, data in items_data.items():
-            self.assertEqual(data['product_id'], product_types.filter(pk=pk).first().product_id)
-            self.assertEqual(data['units_count'], self.cart.get_count(pk))
-
     def test_get_taken_units_count(self):
         units_to_add = {'1': 5, '7': 5, '11': 10}
         self.fill_cart(units_to_add)

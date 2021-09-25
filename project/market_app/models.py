@@ -205,20 +205,6 @@ def _validate_units_quantity(quantity):
         raise ValueError(f'Expected a natural number, got {quantity} instead')
 
 
-def _format_product_type_data(product_type, units_in_order):
-    return {
-        'units_count': units_in_order,
-        'properties': product_type.properties.copy(),
-        'sale_price': product_type.sale_price,
-        'discount_percent': product_type.product.discount_percent,
-        'markup_percent': product_type.markup_percent,
-        'original_price': round(product_type.product.original_price * (100 + product_type.markup_percent) / 100, 2),
-        'product_name': product_type.product.name,
-        'product_id': product_type.product_id,
-        'market_id': product_type.product.market_id
-    }
-
-
 class Cart(models.Model):
     _default_cart_value = dict
     max_product_type_count_on_cart = 20
@@ -228,14 +214,13 @@ class Cart(models.Model):
         verbose_name = _('cart')
         verbose_name_plural = _('carts')
 
-    def get_items_data(self):
-        query = ProductType.objects.filter(id__in=self.items.keys()).select_related('product').only(
-            'properties', 'markup_percent',
+    def get_cart_items(self) -> QuerySet[ProductType]:
+        items = ProductType.objects.filter(id__in=self.items.keys()).select_related('product').only(
+            'properties', 'markup_percent', 'units_count',
             'product__name', 'product__market_id',
             'product__discount_percent', 'product__original_price'
         )
-        data = {str(item.pk): _format_product_type_data(item, self.get_count(item.pk)) for item in query}
-        return data
+        return items
 
     def get_count(self, pk):
         return self.items[str(pk)]
@@ -243,7 +228,7 @@ class Cart(models.Model):
     def get_types_pks(self):
         return tuple(self.items.keys())
 
-    def set_item(self, product_type_pk, quantity):
+    def set_item(self, product_type_pk, quantity, commit=True):
         _validate_units_quantity(quantity)
         product_type_pk = str(product_type_pk)
         if quantity == 0:
@@ -253,7 +238,8 @@ class Cart(models.Model):
             self.items[product_type_pk] = quantity
         else:
             self.items[product_type_pk] = quantity
-        self.save(update_fields=['items'])
+        if commit:
+            self.save(update_fields=['items'])
 
     def clear(self):
         return Cart.objects.filter(pk=self.pk).update(items=self._default_cart_value())

@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load currencies %}
 {% load market_app_blocks %}
+{% load market_app_utils %}
 
 
 {% block main_center_block %}
@@ -57,35 +58,38 @@
               };
               window.onload = onChangeCount
           </script>
-          {% for pk, item in cart.get_items_data.items %}
-            <script>prices[{{ pk }}] = {{ item.sale_price }};</script>
-            <script>original_prices[{{ pk }}] = {{ item.original_price }};</script>
-            <li class="list-group-item">
-              <a href="{% url 'market_app:product' pk=item.product_id %}">
-                <h3>{{ item.product_name }}</h3>
-              </a>
-              {% for attr, value in item.properties.items %}
-                {{ attr }}: {{ value }} <br>
-              {% endfor %}
-              <div>
-                {% trans 'Unit price' %}: {% to_local_currency item.sale_price %} <br>
-                <label for="id_{{ pk }}">
-                  {% trans 'Amount' %}:
-                </label>
-                <input id="id_{{ pk }}" name="{{ pk }}" type="number" class="form-control"
-                       value="{{ item.units_count }}" onchange="onChangeCount()">
-              </div>
-              <p>
-                {% trans 'Total order item price' %}:
-                <span id="itemTotalPrice{{ pk }}">{% to_local_currency item.sale_price %}</span>
-                {% if item.discount_percent %}
-                  <s id="itemTotalOriginalPrice{{ pk }}">
-                    {% to_local_currency item.original_price %}
-                  </s>
-                {% endif %}
-                <br>
-              </p>
-            </li>
+          {% for item in cart.get_cart_items %}
+            {% with item.pk as pk %}
+
+              <script>prices[{{ pk }}] = {{ item.sale_price }};</script>
+              <script>original_prices[{{ pk }}] = {{ item.product.original_price }};</script>
+              <li class="list-group-item">
+                <a href="{% url 'market_app:product' pk=item.product_id %}">
+                  <h3>{{ item.product.name }}</h3>
+                </a>
+                {% for attr, value in item.properties %}
+                  {{ attr }}: {{ value }} <br>
+                {% endfor %}
+                <div>
+                  {% trans 'Unit price' %}: {% to_local_currency item.sale_price %} <br>
+                  <label for="id_{{ pk }}">
+                    {% trans 'Amount' %}:
+                  </label>
+                  <input id="id_{{ pk }}" name="{{ pk }}" type="number" class="form-control"
+                         value="{% units_in_cart_count cart pk=pk %}" onchange="onChangeCount()">
+                </div>
+                <p>
+                  {% trans 'Total order item price' %}:
+                  <span id="itemTotalPrice{{ pk }}">{% to_local_currency item.sale_price %}</span>
+                  {% if item.discount_percent %}
+                    <s id="itemTotalOriginalPrice{{ pk }}">
+                      {% to_local_currency item.original_price %}
+                    </s>
+                  {% endif %}
+                  <br>
+                </p>
+              </li>
+            {% endwith %}
           {% endfor %}
         </ul>
         <div class="card-body">

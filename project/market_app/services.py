@@ -64,19 +64,19 @@ def get_debt_to_sellers(order) -> dict:
 
 def prepare_order(cart: Cart):
     cart.prepare_items()
-    items_data = cart.get_items_data()
+    product_types = cart.get_cart_items()
     order = Order.objects.create(shopping_account=cart.shopping_account)
     order_items = []
-    for product_type_id, data in items_data.items():
-        expected_count = data['units_count']
+    for product_type in product_types:
+        expected_count = cart.get_count(product_type.pk)
         if expected_count > 0:
-            taken_units = _take_units_from_db(product_type_id, expected_count)
+            taken_units = _take_units_from_db(product_type, expected_count)
             order_item = OrderItem(
                 order=order,
                 amount=taken_units,
-                product_type_id=product_type_id,
-                sale_price=data['sale_price'],
-                market_id=data['market_id']
+                product_type_id=product_type.pk,
+                sale_price=product_type.sale_price,
+                market_id=product_type.product.market_id
             )
             order_items.append(order_item)
     OrderItem.objects.bulk_create(order_items)

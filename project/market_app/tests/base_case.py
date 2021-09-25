@@ -200,5 +200,7 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
         return ProductType.objects.all()
 
     def fill_cart(self, types_to_add):
+        cart = self.cart
         for product_type_id, units_count in types_to_add.items():
-            self.cart.set_item(product_type_pk=product_type_id, quantity=units_count)
+            cart.set_item(product_type_pk=product_type_id, quantity=units_count, commit=False)
+        cart.save()

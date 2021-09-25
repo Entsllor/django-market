@@ -265,7 +265,7 @@ class PrepareOrderTest(TestBaseWithFilledCatalogue):
         types_to_take = {'1': 5, '2': 3, '4': 5}
         self.fill_cart(types_to_take)
         order = prepare_order(self.cart)
-        items = self.cart.get_items_data()
+        items = self.cart.get_cart_items()
         for item in items:
             order_item_data = order.items[str(item.pk)]
             self.assertEqual(order_item_data['units_count'], item.units_on_cart)
