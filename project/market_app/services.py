@@ -2,6 +2,7 @@ import logging
 from decimal import Decimal
 
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.db.models import F
 
 from .models import ShoppingAccount, ProductType, Order, Operation, Cart, Coupon, OrderItem
@@ -115,13 +116,17 @@ def activate_coupon_to_order(order: Order, shopping_account: ShoppingAccount, co
 def _send_money_to_sellers(shopping_account, debt_to_sellers):
     sellers_pks = debt_to_sellers.keys()
     sellers = ShoppingAccount.objects.only('id', 'balance').filter(user_id__in=sellers_pks)
+    operations = []
     for seller in sellers:
         amount_of_money = debt_to_sellers[seller.pk]
         logger.info(
             f'Transaction {amount_of_money} '
             f'from ShoppingAccount(id={shopping_account.pk}) to ShoppingAccount(id={seller.pk})'
         )
-        top_up_balance(seller, amount_of_money)
+        operation = _change_balance_amount(seller, ADD, amount_of_money, commit=False)
+        operations.append(operation)
+    ShoppingAccount.objects.bulk_update(sellers, fields=['balance'])
+    Operation.objects.bulk_create(operations)
 
 
 def _check_if_already_paid(order: Order, raise_error=True):
@@ -143,6 +148,7 @@ def _validate_order(order: Order):
     _check_if_already_paid(order)
 
 
+@transaction.atomic
 def make_purchase(order: Order, shopping_account: ShoppingAccount, coupon: Coupon = None) -> Operation:
     _validate_order(order)
     if coupon:
@@ -156,7 +162,7 @@ def make_purchase(order: Order, shopping_account: ShoppingAccount, coupon: Coupo
     return purchase_operation
 
 
-def _change_balance_amount(shopping_account, operation_type, amount_of_money):
+def _change_balance_amount(shopping_account, operation_type, amount_of_money, commit=True):
     validate_money_amount(amount_of_money)
     if operation_type == SUBTRACT:
         if shopping_account.balance < amount_of_money:
@@ -164,14 +170,15 @@ def _change_balance_amount(shopping_account, operation_type, amount_of_money):
                 f"Shopping_account(pk={shopping_account.pk}) balance doesn't have enough money to the transaction"
                 f"Balance: {shopping_account.balance}. Expected at least {amount_of_money}.")
         amount_of_money = -amount_of_money
-    updated = ShoppingAccount.objects.filter(pk=shopping_account.pk).update(balance=F('balance') + amount_of_money)
-    if updated:
+    shopping_account.balance = F('balance') + amount_of_money
+    operation = Operation(shopping_account=shopping_account, amount=amount_of_money)
+    if commit:
+        shopping_account.save(update_fields=['balance'])
+        operation.save()
         logger.info(
             f'Shopping_account(pk={shopping_account.pk}) balance has been successfully changed. '
             f'Amount: {amount_of_money}')
-        return Operation.objects.create(shopping_account=shopping_account, amount=amount_of_money)
-    else:
-        logger.error(f'Failed to change Shopping_account(pk={shopping_account.pk}) balance. Amount: {amount_of_money}')
+    return operation
 
 
 def withdraw_money(shopping_account, amount_of_money):
