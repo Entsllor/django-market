@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.core.exceptions import PermissionDenied
 from django.db.models import F
 
-from .models import ShoppingAccount, ProductType, Order, Operation, Cart, Coupon, Market, OrderItem
+from .models import ShoppingAccount, ProductType, Order, Operation, Cart, Coupon, OrderItem
 
 logger = logging.getLogger('market.transactions')
 SUBTRACT = '-'
@@ -59,11 +59,6 @@ def get_debt_to_sellers(order) -> dict:
         else:
             debt_to_sellers[seller_pk] = total_price
     return debt_to_sellers
-
-
-def _get_sellers_data(markets_pks, *fields):
-    markets = Market.objects.filter(id__in=markets_pks).values('id', *fields)
-    return {market_data['id']: market_data['owner_id'] for market_data in markets}
 
 
 def prepare_order(cart: Cart):
