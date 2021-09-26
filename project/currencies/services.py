@@ -5,11 +5,15 @@ from django.conf import settings
 from .models import Currency, get_rates
 
 DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY
-CURRENCY_CHOICES = [(currency.code, currency.sym) for currency in Currency.objects.filter(code__in=settings.CURRENCIES)]
+CURRENCY_CHOICES = []
 LOCAL_CURRENCIES = settings.LOCAL_CURRENCIES
 
 
 def get_currency_choices():
+    if not CURRENCY_CHOICES:
+        CURRENCY_CHOICES.extend(
+            (currency.code, currency.sym) for currency in Currency.objects.filter(code__in=settings.CURRENCIES)
+        )
     return CURRENCY_CHOICES
 
 

@@ -49,19 +49,6 @@ def validate_money_amount(money_amount):
         raise ValueError(f'Expected a positive number, got "{money_amount}" instead.')
 
 
-def get_debt_to_sellers(order) -> dict:
-    debt_to_sellers = {}
-    order_items = order.items.select_related('market')
-    for item in order_items:
-        seller_pk = item.market.owner_id
-        total_price = item.sale_price * item.amount
-        if seller_pk in debt_to_sellers:
-            debt_to_sellers[seller_pk] += total_price
-        else:
-            debt_to_sellers[seller_pk] = total_price
-    return debt_to_sellers
-
-
 def prepare_order(cart: Cart):
     cart.prepare_items()
     product_types = cart.get_cart_items()
@@ -74,9 +61,7 @@ def prepare_order(cart: Cart):
             order_item = OrderItem(
                 order=order,
                 amount=taken_units,
-                product_type_id=product_type.pk,
-                sale_price=product_type.sale_price,
-                market_id=product_type.product.market_id
+                product_type=product_type
             )
             order_items.append(order_item)
     OrderItem.objects.bulk_create(order_items)
@@ -113,20 +98,27 @@ def activate_coupon_to_order(order: Order, shopping_account: ShoppingAccount, co
         order.refresh_from_db()
 
 
-def _send_money_to_sellers(shopping_account, debt_to_sellers):
-    sellers_pks = debt_to_sellers.keys()
-    sellers = ShoppingAccount.objects.only('id', 'balance').filter(user_id__in=sellers_pks)
+def _send_money_to_sellers(order: Order):
     operations = []
-    for seller in sellers:
-        amount_of_money = debt_to_sellers[seller.pk]
+    order_items = order.items.only(
+        'amount', 'product_type__product__original_price', 'product_type__product__discount_percent',
+        'product_type__markup_percent', 'order__shopping_account__balance',
+        'product_type__product__market__owner__shopping_account__id'
+    ).select_related(
+        'product_type', 'product_type__product', 'product_type__product__market',
+        'product_type__product__market__owner', 'product_type__product__market__owner__shopping_account'
+    )
+    for item in order_items:
+        seller = item.product_type.product.market.owner.shopping_account
+        total_price = item.amount * item.product_type.sale_price
         logger.info(
-            f'Transaction {amount_of_money} '
-            f'from ShoppingAccount(id={shopping_account.pk}) to ShoppingAccount(id={seller.pk})'
+            f'Transaction {total_price} '
+            f'from ShoppingAccount(id={order.shopping_account_id}) to ShoppingAccount(id={seller.pk})'
         )
-        operation = _change_balance_amount(seller, ADD, amount_of_money, commit=False)
+        operation = _change_balance_amount(seller, ADD, total_price, commit=True)
+        item.payment = operation
         operations.append(operation)
-    ShoppingAccount.objects.bulk_update(sellers, fields=['balance'])
-    Operation.objects.bulk_create(operations)
+    OrderItem.objects.bulk_update(order_items, fields=['payment'])
 
 
 def _check_if_already_paid(order: Order, raise_error=True):
@@ -153,9 +145,8 @@ def make_purchase(order: Order, shopping_account: ShoppingAccount, coupon: Coupo
     _validate_order(order)
     if coupon:
         activate_coupon_to_order(order, shopping_account, coupon)
-    debt_to_sellers = get_debt_to_sellers(order)
     purchase_operation = _change_balance_amount(shopping_account, SUBTRACT, order.total_price)
-    _send_money_to_sellers(shopping_account, debt_to_sellers)
+    _send_money_to_sellers(order)
     _set_order_operation(purchase_operation, order)
     order.status = order.OrderStatusChoices.HAS_PAID.name
     order.save()

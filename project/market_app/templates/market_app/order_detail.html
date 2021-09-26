@@ -15,8 +15,8 @@
             {{ order_item.product_type.product.name }}
           </h4>
           {% trans "Amount" %}: {{ order_item.amount }}<br class="p">
-          {% trans 'Sale price' %}: {% to_local_currency order_item.sale_price %}<br>
-          {% for prop, value in order_item.product_type.properties.items %}
+          {% trans 'Sale price' %}: {% to_local_currency order_item.product_type.sale_price %}<br>
+          {% for prop, value in order_item.product_type.dict_attributes.items %}
             {{ prop }}: {{ value }}<br>
           {% endfor %}
         </li>

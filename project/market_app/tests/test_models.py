@@ -1,7 +1,6 @@
 from decimal import Decimal
 
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue
-from ..models import ProductType
 from ..services import top_up_balance, withdraw_money
 
 

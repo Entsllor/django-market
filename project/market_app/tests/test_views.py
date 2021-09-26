@@ -1,3 +1,5 @@
+import time
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse_lazy
 
@@ -390,12 +392,12 @@ class CheckOutPage(TestBaseWithFilledCatalogue):
         top_up_balance(self.shopping_account, 10000)
         self.fill_cart({'1': 5, '2': 3, '4': 2})
         self.assertEqual(self.shopping_account.balance, 10000)
-        self.assertEqual(Market.objects.get(id=1).owner.shopping_account.balance, 0)
-        self.assertEqual(Market.objects.get(id=2).owner.shopping_account.balance, 0)
+        self.assertEqual(self.markets.get(id=1).owner.shopping_account.balance, 0)
+        self.assertEqual(self.markets.get(id=2).owner.shopping_account.balance, 0)
         response = self.post_to_page(data={'agreement': 'on'})
         self.assertEqual(self.shopping_account.balance, 9000)
-        self.assertEqual(Market.objects.get(id=1).owner.shopping_account.balance, 800)
-        self.assertEqual(Market.objects.get(id=2).owner.shopping_account.balance, 200)
+        self.assertEqual(self.markets.get(id=1).owner.shopping_account.balance, 800)
+        self.assertEqual(self.markets.get(id=2).owner.shopping_account.balance, 200)
         self.assertRedirects(response, self.confirmation_page_url)
 
     def test_cart_is_empty_after_purchasing(self):

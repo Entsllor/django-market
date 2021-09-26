@@ -410,10 +410,11 @@ class ShippingPage(MarketOwnerRequiredMixin, generic.ListView):
 
     def get_queryset(self):
         self.queryset = OrderItem.objects.select_related(
-            'product_type', 'product_type__product', 'order').filter(
-            market_id=self.kwargs['pk']).only(
-            'product_type__product__name', 'sale_price', 'amount',
-            'order__address', 'is_shipped', 'product_type__properties'
+            'product_type', 'product_type__product', 'order', 'payment').filter(
+            payment__shopping_account_id=self.request.user.shopping_account.id).only(
+            'product_type__product__name', 'amount',
+            'order__address', 'is_shipped', 'product_type__properties', 'payment__amount',
+            'payment__transaction_time'
         )
         return self.queryset
 

@@ -9,21 +9,24 @@
     </div>
     <div class="list-group list-group-flush">
       <form action="{% url 'market_app:shipping' pk=view.kwargs.pk %}" method="post">
-      {% csrf_token %}
+        {% csrf_token %}
         {% for item in orders_items %}
           <div class="list-group-item">
             <div class="row row-cols-5">
-              <div class="col col-1">{{ item.product_type_id }}</div>
               <div class="col col-3">{{ item.product_type.product.name }}</div>
               <div class="col col-3">{{ item.product_type.str_attributes }}</div>
-              <div class="col col-3">{% to_local_currency item.sale_price %}</div>
               <div class="col col-1">{{ item.amount }}</div>
+              <div class="col col-4">
+                <a href="{{ item.payment.get_absolute_url }}">
+                  {{ item.payment.transaction_time }}
+                </a>
+              </div>
               <div class="col col-1">
                 <input type="checkbox" name="item_{{ item.pk }}" id="item_{{ item.pk }}"
                   {% if item.is_shipped %} checked {% endif %}>
               </div>
             </div>
-          <div>{% trans 'Address' %}: {{ item.order.address }}</div>
+            <div>{% trans 'Address' %}: {{ item.order.address }}</div>
           </div>
         {% empty %}
           {% trans 'There is nothing' %}

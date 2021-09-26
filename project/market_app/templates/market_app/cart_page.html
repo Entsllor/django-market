@@ -62,12 +62,12 @@
             {% with item.pk as pk %}
 
               <script>prices[{{ pk }}] = {{ item.sale_price }};</script>
-              <script>original_prices[{{ pk }}] = {{ item.product.original_price }};</script>
+              <script>original_prices[{{ pk }}] = {{ item.original_price }};</script>
               <li class="list-group-item">
                 <a href="{% url 'market_app:product' pk=item.product_id %}">
                   <h3>{{ item.product.name }}</h3>
                 </a>
-                {% for attr, value in item.properties %}
+                {% for attr, value in item.dict_attributes.items %}
                   {{ attr }}: {{ value }} <br>
                 {% endfor %}
                 <div>
@@ -81,9 +81,9 @@
                 <p>
                   {% trans 'Total order item price' %}:
                   <span id="itemTotalPrice{{ pk }}">{% to_local_currency item.sale_price %}</span>
-                  {% if item.discount_percent %}
+                  {% if item.product.discount_percent %}
                     <s id="itemTotalOriginalPrice{{ pk }}">
-                      {% to_local_currency item.original_price %}
+                      {% to_local_currency item.product.original_price %}
                     </s>
                   {% endif %}
                   <br>

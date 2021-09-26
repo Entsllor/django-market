@@ -28,7 +28,12 @@ class ProductCategory(models.Model):
 
 
 class Market(models.Model):
-    owner = models.OneToOneField(User, on_delete=models.CASCADE, related_name='market', verbose_name=_('market owner'))
+    owner = models.OneToOneField(
+        to=User,
+        on_delete=models.CASCADE,
+        related_name='market',
+        verbose_name=_('market owner')
+    )
     name = models.CharField(verbose_name=_('name'), max_length=63)
     description = models.TextField(verbose_name=_('description'), blank=True)
     created_at = models.DateTimeField(verbose_name=_('created at'), auto_now_add=True)
@@ -321,6 +326,9 @@ class Operation(models.Model):
         auto_now=True
     )
 
+    def get_absolute_url(self):
+        return reverse_lazy('market_app:order_detail', kwargs={'pk': self.pk})
+
     class Meta:
         verbose_name = _('operation')
         verbose_name_plural = _('operations')
@@ -396,8 +404,12 @@ class Order(models.Model):
     @property
     def total_price(self):
         total_price = 0
-        for item_data in self.items.values('amount', 'sale_price'):
-            total_price += item_data['amount'] * Decimal(item_data['sale_price'])
+        if not self.operation:
+            for item in self.items.select_related('product_type', 'product_type__product'):
+                total_price += item.product_type.sale_price * item.amount
+        else:
+            for item_data in self.items.select_related('payment').values('payment__amount'):
+                total_price += item_data.get('payment__amount') or 0
         if self.activated_coupon:
             coupon_discount = self._get_coupon_discount(total_price)
             total_price -= coupon_discount
@@ -418,22 +430,16 @@ class OrderItem(models.Model):
         related_name='items',
         on_delete=models.CASCADE
     )
-    market = models.ForeignKey(
-        to=Market,
-        verbose_name=_('market'),
-        related_name=_('order_items'),
-        on_delete=models.SET_NULL,
-        null=True
+    # Related to seller top-up operation (However Order.operation relates to all order)
+    payment = models.ForeignKey(
+        to=Operation,
+        on_delete=models.CASCADE,
+        verbose_name=_('payment'),
+        null=True,
+        default=None,
     )
     amount = models.PositiveIntegerField(verbose_name=_('amount'))
     is_shipped = models.BooleanField(verbose_name=_('is shipped'), default=False)
-    sale_price = models.DecimalField(
-        verbose_name=_('sale price'),
-        max_digits=MAX_BALANCE_DIGITS_COUNT,
-        decimal_places=MONEY_DECIMAL_PLACES,
-        blank=True,
-        default=0
-    )
 
 
 class Coupon(models.Model):
