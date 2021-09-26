@@ -7,7 +7,7 @@ from django.db.models.signals import post_save
 from django.test import TestCase
 
 from currencies.services import create_currencies_from_settings
-from ..models import Product, Market, ProductCategory, ProductType, ShoppingAccount, Coupon
+from ..models import Product, Market, ProductCategory, ProductType, Coupon, Cart, Balance
 
 
 class FailedToCreateObject(Exception):
@@ -34,6 +34,7 @@ def assert_difference(expected_difference):
 
 class BaseMarketTestCase(TestCase):
     password = 'SomePassword123/'  # password for all accounts
+    _user = None
 
     def setUp(self) -> None:
         self.customer = self.create_customer()
@@ -42,16 +43,12 @@ class BaseMarketTestCase(TestCase):
         self.market = self.create_market(owner=self.seller)
 
     @property
-    def shopping_account(self) -> ShoppingAccount:
-        return ShoppingAccount.objects.get(user=self.user)
-
-    @property
-    def cart(self):
-        return self.shopping_account.cart
+    def cart(self) -> Cart:
+        return self.user.cart
 
     @property
     def balance(self):
-        return self.shopping_account.balance
+        return Balance.objects.get(pk=self.user.balance.id)
 
     @staticmethod
     def create_currencies():
@@ -68,7 +65,11 @@ class BaseMarketTestCase(TestCase):
             user.set_password(self.password)
             user.save()
         self.client.login(username=user.username, password=self.password)
-        self.user = user
+        self._user = user
+
+    @property
+    def user(self) -> User:
+        return User.objects.get(pk=self._user.pk)
 
     def create_customer(self, username='customer', password=None):
         if password is None:
@@ -176,7 +177,7 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
 
     def create_and_set_coupon(self, discount_percent=0, max_discount=0):
         coupon = _create_coupon(discount_percent, max_discount)
-        coupon.customers.add(self.shopping_account)
+        coupon.customers.add(self.user)
         return coupon
 
     @property

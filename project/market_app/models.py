@@ -213,6 +213,12 @@ def _validate_units_quantity(quantity):
 class Cart(models.Model):
     _default_cart_value = dict
     max_product_type_count_on_cart = 20
+    user = models.OneToOneField(
+        to=User,
+        verbose_name=_('user'),
+        related_name='cart',
+        on_delete=models.CASCADE
+    )
     items = models.JSONField(verbose_name=_('items'), default=_default_cart_value)
 
     class Meta:
@@ -259,7 +265,7 @@ class Cart(models.Model):
 
     def _remove_own_products_types_from_cart(self):
         own_products_types_pks = ProductType.objects.filter(
-            product__market__owner=self.shopping_account.user).values_list('pk', flat=True)
+            product__market__owner=self.user).values_list('pk', flat=True)
         self.items = {pk: count for pk, count in self.items.items() if int(pk) not in own_products_types_pks}
         self.save(update_fields=['items'])
 
@@ -277,42 +283,30 @@ def _create_cart():
     return Cart.objects.create()
 
 
-class ShoppingAccount(models.Model):
+class Balance(models.Model):
     user = models.OneToOneField(
         to=User,
         verbose_name=_('user'),
         on_delete=models.CASCADE,
-        related_name='shopping_account'
+        related_name='balance'
     )
-    balance = models.DecimalField(
-        verbose_name=_('balance'),
+    amount = models.DecimalField(
+        verbose_name=_('amount'),
         max_digits=MAX_BALANCE_DIGITS_COUNT,
         decimal_places=MONEY_DECIMAL_PLACES,
         blank=True,
         default=0
     )
 
-    cart = models.OneToOneField(
-        to=Cart,
-        verbose_name=_('cart'),
-        on_delete=models.PROTECT,
-        null=True,
-        related_name='shopping_account'
-    )
-
-    class Meta:
-        verbose_name = _('shopping account')
-        verbose_name_plural = _('shopping accounts')
-
     def get_operations_amount_sum(self):
-        result = getattr(self, 'operations').aggregate(sum=Sum('amount'))['sum'] or Decimal('0.00')
+        result = getattr(self.user, 'operations').aggregate(sum=Sum('amount'))['sum'] or Decimal('0.00')
         return result.quantize(Decimal('1.00'))
 
 
 class Operation(models.Model):
-    shopping_account = models.ForeignKey(
-        to=ShoppingAccount,
-        verbose_name=_('shopping accounts'),
+    user = models.ForeignKey(
+        to=User,
+        verbose_name=_('user'),
         on_delete=models.SET_NULL,
         null=True,
         related_name='operations'
@@ -321,6 +315,7 @@ class Operation(models.Model):
         verbose_name=_('amount'),
         max_digits=MAX_OPERATION_DIGITS_COUNT,
         decimal_places=MONEY_DECIMAL_PLACES)
+
     transaction_time = models.DateTimeField(
         verbose_name=_('transaction time'),
         auto_now=True
@@ -361,9 +356,9 @@ class Order(models.Model):
         null=True, blank=True
     )
 
-    shopping_account = models.ForeignKey(
-        to=ShoppingAccount,
-        verbose_name=_('shopping account'),
+    user = models.ForeignKey(
+        to=User,
+        verbose_name=_('user'),
         on_delete=models.SET_NULL,
         null=True,
         related_name='orders'
@@ -444,7 +439,7 @@ class OrderItem(models.Model):
 
 class Coupon(models.Model):
     customers = models.ManyToManyField(
-        ShoppingAccount, verbose_name=_('customer')
+        to=User, verbose_name=_('customer')
     )
     description = models.TextField(verbose_name=_('description'), blank=True)
     max_discount = models.DecimalField(

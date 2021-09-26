@@ -44,7 +44,7 @@ class ProductUpdateForm(MoneyExchangerMixin, forms.ModelForm):
 class ProductForm(ProductUpdateForm):
     class Meta:
         model = Product
-        fields = '__all__'
+        exclude = ['market']
 
 
 class MarketForm(forms.ModelForm):
@@ -113,8 +113,8 @@ class CreditCardForm(MoneyExchangerMixin, forms.Form):
 
 class CheckOutForm(forms.Form):
     def __init__(self, *args, **kwargs):
-        self.shopping_account = kwargs.pop('shopping_account')
-        self.coupons = self.shopping_account.coupon_set
+        self.user = kwargs.pop('user')
+        self.coupons = self.user.coupon_set
         super(CheckOutForm, self).__init__(*args, **kwargs)
         self.fields['coupon'] = forms.ModelChoiceField(
             label=_('Select a coupon'),

@@ -53,8 +53,10 @@ class ProductCreateView(LoginRequiredMixin, generic.CreateView):
     template_name = 'market_app/create_product.html'
 
     def form_valid(self, form):
-        form.cleaned_data['market'] = self.request.user.market
-        return super(ProductCreateView, self).form_valid(form)
+        product = form.save(commit=False)
+        product.market = self.request.user.market
+        product.save()
+        return HttpResponseRedirect(product.get_absolute_url())
 
 
 class ProductTypeCreate(MarketOwnerRequiredMixin, generic.CreateView):
@@ -131,7 +133,7 @@ class ProductPageView(generic.FormView):
         if self.object.market.owner_id == self.request.user.id:
             form.add_error('product_type', _('Cannot buy your own product.'))
             return super(ProductPageView, self).form_invalid(form)
-        self.request.user.shopping_account.cart.set_item(
+        self.request.user.cart.set_item(
             product_type_pk=form.cleaned_data['product_type'].pk,
             quantity=quantity)
         return super(ProductPageView, self).form_valid(form)
@@ -175,21 +177,20 @@ class MarketEditView(MarketOwnerRequiredMixin, generic.UpdateView):
 
 class CartView(LoginRequiredMixin, generic.FormView):
     template_name = 'market_app/cart_page.html'
-    context_object_name = 'shopping_account'
     form_class = CartForm
 
     def get_context_data(self, **kwargs):
         context = super(CartView, self).get_context_data(**kwargs)
-        context['cart'] = self.request.user.shopping_account.cart
+        context['cart'] = self.request.user.cart
         return context
 
     def get_form_kwargs(self):
         kwargs = super(CartView, self).get_form_kwargs()
-        kwargs['cart'] = self.request.user.shopping_account.cart
+        kwargs['cart'] = self.request.user.cart
         return kwargs
 
     def form_valid(self, form):
-        cart = self.request.user.shopping_account.cart
+        cart = self.request.user.cart
         cart.items = form.cleaned_data
         order: Order = prepare_order(cart)
         almost_sold_types_pks = {
@@ -210,10 +211,15 @@ class OrderDetail(PermissionRequiredMixin, generic.DetailView):
     template_name = 'market_app/order_detail.html'
     model = Order
 
+    def get_context_data(self, **kwargs):
+        context = super(OrderDetail, self).get_context_data(**kwargs)
+        context['order_items'] = self.object.items.select_related('product_type', 'product_type__product')
+        return context
+
     def has_permission(self):
         user = self.request.user
         return user.id == Order.objects.filter(
-            pk=self.kwargs['pk']).values_list('shopping_account__user_id', flat=True).first()
+            pk=self.kwargs['pk']).values_list('user_id', flat=True).first()
 
 
 class OrderListView(generic.ListView):
@@ -221,8 +227,8 @@ class OrderListView(generic.ListView):
     model = Order
 
     def get_queryset(self):
-        shopping_account_id = self.request.user.shopping_account.id
-        return Order.objects.filter(shopping_account_id=shopping_account_id).select_related('operation')
+        user_id = self.request.user.id
+        return Order.objects.filter(user_id=user_id).select_related('operation')
 
 
 @login_required
@@ -242,12 +248,12 @@ class CheckOutView(PermissionRequiredMixin, generic.FormView):
 
     def setup(self, request, *args, **kwargs):
         super(CheckOutView, self).setup(request, *args, **kwargs)
-        self.object = Order.objects.select_related('shopping_account').filter(pk=kwargs['pk']).first()
-        self.shopping_account = self.request.user.shopping_account
+        self.object = Order.objects.select_related('user').filter(pk=kwargs['pk']).first()
+        self.user = self.request.user
 
     def get_form_kwargs(self):
         kwargs = super(CheckOutView, self).get_form_kwargs()
-        kwargs['shopping_account'] = self.shopping_account
+        kwargs['user'] = self.user
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -256,15 +262,15 @@ class CheckOutView(PermissionRequiredMixin, generic.FormView):
         return context
 
     def get(self, request, *args, **kwargs):
-        shopping_account = self.shopping_account
-        if shopping_account.balance < self.object.total_price:
+        user = self.user
+        if user.balance.amount < self.object.total_price:
             return HttpResponseRedirect(
                 reverse_lazy('market_app:top_up'))
         return super(CheckOutView, self).get(request, *args, **kwargs)
 
     def has_permission(self):
         user = self.request.user
-        return user.id == self.object.shopping_account_id
+        return user.id == self.object.user_id
 
     def form_valid(self, form):
         coupon = form.cleaned_data.get('coupon')
@@ -272,7 +278,7 @@ class CheckOutView(PermissionRequiredMixin, generic.FormView):
         Order.objects.filter(pk=self.kwargs['pk']).update(address=form.cleaned_data['address'])
         if form.cleaned_data['agreement']:
             try:
-                make_purchase(self.object, self.shopping_account, coupon)
+                make_purchase(self.object, self.user, coupon)
             except PermissionDenied as exc:
                 raise exc
             except EmptyOrderError:
@@ -290,7 +296,7 @@ class TopUpView(LoginRequiredMixin, generic.FormView):
 
     def form_valid(self, form):
         amount = form.cleaned_data['top_up_amount']
-        top_up_balance(self.request.user.shopping_account, amount)
+        top_up_balance(self.request.user, amount)
         return super(TopUpView, self).form_valid(form)
 
 
@@ -396,8 +402,8 @@ class OperationHistoryView(LoginRequiredMixin, generic.ListView):
     model = Operation
 
     def get_queryset(self):
-        user_shopping_account_id = self.request.user.shopping_account.id
-        return Operation.objects.filter(shopping_account_id=user_shopping_account_id)
+        user_id = self.request.user.id
+        return Operation.objects.filter(user_id=user_id)
 
 
 class ShippingPage(MarketOwnerRequiredMixin, generic.ListView):
@@ -411,7 +417,7 @@ class ShippingPage(MarketOwnerRequiredMixin, generic.ListView):
     def get_queryset(self):
         self.queryset = OrderItem.objects.select_related(
             'product_type', 'product_type__product', 'order', 'payment').filter(
-            payment__shopping_account_id=self.request.user.shopping_account.id).only(
+            payment__user_id=self.request.user.id).only(
             'product_type__product__name', 'amount',
             'order__address', 'is_shipped', 'product_type__properties', 'payment__amount',
             'payment__transaction_time'

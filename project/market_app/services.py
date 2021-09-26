@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import F
 
-from .models import ShoppingAccount, ProductType, Order, Operation, Cart, Coupon, OrderItem
+from .models import ProductType, Order, Operation, Cart, Coupon, OrderItem, User
 
 logger = logging.getLogger(__name__)
 SUBTRACT = '-'
@@ -52,7 +52,7 @@ def validate_money_amount(money_amount):
 def prepare_order(cart: Cart):
     cart.prepare_items()
     product_types = cart.get_cart_items()
-    order = Order.objects.create(shopping_account=cart.shopping_account)
+    order = Order.objects.create(user_id=cart.user_id)
     order_items = []
     for product_type in product_types:
         expected_count = cart.get_count(product_type.pk)
@@ -81,7 +81,7 @@ def _cancel_order(order: Order) -> None:
 
 
 def try_to_cancel_order(order, user_id):
-    customer_id = Order.objects.filter(pk=order.pk).values_list('shopping_account__user_id', flat=True).first()
+    customer_id = Order.objects.filter(pk=order.pk).values_list('user_id', flat=True).first()
     if customer_id != user_id:
         raise OrderCannotBeCancelledError(f"User(id={user_id}) cannot cancel Order(id={order.id})")
     elif not order.is_unpaid:
@@ -89,12 +89,12 @@ def try_to_cancel_order(order, user_id):
     _cancel_order(order)
 
 
-def activate_coupon_to_order(order: Order, shopping_account: ShoppingAccount, coupon: Coupon):
+def activate_coupon_to_order(order: Order, user: User, coupon: Coupon):
     if not isinstance(coupon, Coupon):
         coupon = Coupon.objects.get(pk=coupon)
-    if shopping_account.coupon_set.filter(pk=coupon.pk).exists():
+    if user.coupon_set.filter(pk=coupon.pk).exists():
         order.set_coupon(coupon)
-        coupon.customers.remove(shopping_account)
+        coupon.customers.remove(user)
         order.refresh_from_db()
 
 
@@ -102,18 +102,18 @@ def _send_money_to_sellers(order: Order):
     operations = []
     order_items = order.items.only(
         'amount', 'product_type__product__original_price', 'product_type__product__discount_percent',
-        'product_type__markup_percent', 'order__shopping_account__balance',
-        'product_type__product__market__owner__shopping_account__id'
+        'product_type__markup_percent', 'order__user__balance__amount',
+        'product_type__product__market__owner_id'
     ).select_related(
         'product_type', 'product_type__product', 'product_type__product__market',
-        'product_type__product__market__owner', 'product_type__product__market__owner__shopping_account'
+        'product_type__product__market__owner', 'order__user__balance'
     )
     for item in order_items:
-        seller = item.product_type.product.market.owner.shopping_account
+        seller = item.product_type.product.market.owner
         total_price = item.amount * item.product_type.sale_price
         logger.info(
             f'Transaction {total_price} '
-            f'from ShoppingAccount(id={order.shopping_account_id}) to ShoppingAccount(id={seller.pk})'
+            f'from User(id={order.user_id}) to User(id={seller.pk})'
         )
         operation = _change_balance_amount(seller, ADD, total_price, commit=True)
         item.payment = operation
@@ -141,11 +141,11 @@ def _validate_order(order: Order):
 
 
 @transaction.atomic
-def make_purchase(order: Order, shopping_account: ShoppingAccount, coupon: Coupon = None) -> Operation:
+def make_purchase(order: Order, user: User, coupon: Coupon = None) -> Operation:
     _validate_order(order)
     if coupon:
-        activate_coupon_to_order(order, shopping_account, coupon)
-    purchase_operation = _change_balance_amount(shopping_account, SUBTRACT, order.total_price)
+        activate_coupon_to_order(order, user, coupon)
+    purchase_operation = _change_balance_amount(user, SUBTRACT, order.total_price)
     _send_money_to_sellers(order)
     _set_order_operation(purchase_operation, order)
     order.status = order.OrderStatusChoices.HAS_PAID.name
@@ -153,32 +153,33 @@ def make_purchase(order: Order, shopping_account: ShoppingAccount, coupon: Coupo
     return purchase_operation
 
 
-def _change_balance_amount(shopping_account, operation_type, amount_of_money, commit=True):
+def _change_balance_amount(user: User, operation_type: str, amount_of_money, commit=True):
     validate_money_amount(amount_of_money)
+    balance = user.balance
     if operation_type == SUBTRACT:
-        if shopping_account.balance < amount_of_money:
+        if balance.amount < amount_of_money:
             raise NotEnoughMoneyError(
-                f"Shopping_account(pk={shopping_account.pk}) balance doesn't have enough money to the transaction"
-                f"Balance: {shopping_account.balance}. Expected at least {amount_of_money}.")
+                f"User(pk={user.pk}) balance doesn't have enough money to the transaction"
+                f"Balance: {balance.amount}. Expected at least {amount_of_money}.")
         amount_of_money = -amount_of_money
-    shopping_account.balance = F('balance') + amount_of_money
-    operation = Operation(shopping_account=shopping_account, amount=amount_of_money)
+    balance.amount = F('amount') + amount_of_money
+    operation = Operation(user_id=user.pk, amount=amount_of_money)
     if commit:
-        shopping_account.save(update_fields=['balance'])
+        balance.save(update_fields=['amount'])
         operation.save()
         logger.info(
-            f'Shopping_account(pk={shopping_account.pk}) balance has been successfully changed. '
+            f'User(pk={user.pk}) balance has been successfully changed. '
             f'Amount: {amount_of_money}')
     return operation
 
 
-def withdraw_money(shopping_account, amount_of_money):
-    logger.info(f'Try to withdraw Shopping_account(pk={shopping_account.pk}) balance. Amount: {amount_of_money}.')
-    operation = _change_balance_amount(shopping_account, SUBTRACT, amount_of_money)
+def withdraw_money(user: User, amount_of_money):
+    logger.info(f'Try to withdraw User(pk={user.pk}) balance. Amount: {amount_of_money}.')
+    operation = _change_balance_amount(user, SUBTRACT, amount_of_money)
     return operation
 
 
-def top_up_balance(shopping_account: ShoppingAccount, amount_of_money):
-    logger.info(f"Try to top-up Shopping_account(pk={shopping_account.pk}) balance. Amount: {amount_of_money}.")
-    operation = _change_balance_amount(shopping_account, ADD, amount_of_money)
+def top_up_balance(user: User, amount_of_money):
+    logger.info(f"Try to top-up User(pk={user.pk}) balance. Amount: {amount_of_money}.")
+    operation = _change_balance_amount(user, ADD, amount_of_money)
     return operation

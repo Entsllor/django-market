@@ -9,7 +9,7 @@
       {% trans 'Order №' %}{{ order.id }}
     </div>
     <ul class="list-group list-group-flush">
-      {% for order_item in order.items.all %}
+      {% for order_item in order_items %}
         <li class="list-group-item">
           <h4 class="text-center">
             {{ order_item.product_type.product.name }}

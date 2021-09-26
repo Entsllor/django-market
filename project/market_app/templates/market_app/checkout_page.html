@@ -30,7 +30,7 @@
         total price: {% to_local_currency order.total_price %}
       </p>
       <p>
-        balance: {% to_local_currency user.shopping_account.balance %}
+        balance: {% to_local_currency user.balance.amount %}
       </p>
 
       <form method="post" action="{% url 'market_app:checkout' pk=order.pk %}">

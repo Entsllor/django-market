@@ -17,9 +17,7 @@
               <div class="col col-3">{{ item.product_type.str_attributes }}</div>
               <div class="col col-1">{{ item.amount }}</div>
               <div class="col col-4">
-                <a href="{{ item.payment.get_absolute_url }}">
-                  {{ item.payment.transaction_time }}
-                </a>
+                {{ item.payment.transaction_time }}
               </div>
               <div class="col col-1">
                 <input type="checkbox" name="item_{{ item.pk }}" id="item_{{ item.pk }}"
