@@ -181,7 +181,7 @@ class ProductType(models.Model):
 
     @property
     def dict_attributes(self):
-        return {attr: self.properties.get(attr, "") for attr in self.product.get_attributes}
+        return {attr: value for attr, value in self.properties.items()}
 
     def __str__(self):
         return f'{self.str_attributes or f"id={self.id}"}'
