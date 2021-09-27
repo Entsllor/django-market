@@ -26,13 +26,6 @@
         {% trans 'My market' %}
       </a>
     </li>
-    {% if user.market %}
-      <li class="list-group-item">
-        <a href="{% url 'market_app:create_product' %}">
-          {% trans 'Create product' %}
-        </a>
-      </li>
-    {% endif %}
     {% if user.is_authenticated %}
       <li class="list-group-item">
         <a href="{% url 'market_app:operation_history' %}">
