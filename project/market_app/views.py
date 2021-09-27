@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
@@ -210,16 +210,31 @@ class CartView(LoginRequiredMixin, generic.FormView):
 class OrderDetail(PermissionRequiredMixin, generic.DetailView):
     template_name = 'market_app/order_detail.html'
     model = Order
+    context_object_name = 'order'
 
     def get_context_data(self, **kwargs):
         context = super(OrderDetail, self).get_context_data(**kwargs)
-        context['order_items'] = self.object.items.select_related('product_type', 'product_type__product')
+        context['order_items'] = self.object.items.all()
         return context
+
+    def get_object(self, queryset=None):
+        order_pk = self.kwargs['pk']
+        if not hasattr(self, 'object'):
+            self.object = Order.objects.prefetch_related(
+                Prefetch('items', OrderItem.objects.only(
+                    'product_type__product__name', 'amount', 'payment__amount',
+                    'order', 'product_type__properties', 'product_type__markup_percent',
+                    'product_type__product__discount_percent',
+                    'product_type__product__original_price'
+                ).filter(order_id=order_pk).select_related(
+                    'product_type', 'product_type__product', 'payment'
+                ))
+            ).select_related('operation').get(pk=self.kwargs['pk'])
+        return self.object
 
     def has_permission(self):
         user = self.request.user
-        return user.id == Order.objects.filter(
-            pk=self.kwargs['pk']).values_list('user_id', flat=True).first()
+        return user.id == self.get_object().user_id
 
 
 class OrderListView(generic.ListView):
@@ -228,7 +243,14 @@ class OrderListView(generic.ListView):
 
     def get_queryset(self):
         user_id = self.request.user.id
-        return Order.objects.filter(user_id=user_id).select_related('operation')
+        return Order.objects.filter(user_id=user_id).prefetch_related(
+            Prefetch(
+                'items',
+                OrderItem.objects.select_related(
+                    'product_type', 'product_type__product'
+                )
+            )
+        ).select_related('operation')
 
 
 @login_required

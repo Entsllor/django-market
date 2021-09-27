@@ -12,10 +12,12 @@
       {% for order_item in order_items %}
         <li class="list-group-item">
           <h4 class="text-center">
-            {{ order_item.product_type.product.name }}
+            <a href="{{ order_item.product_type.product.get_absolute_url }}">
+              {{ order_item.product_type.product.name }}
+            </a>
           </h4>
           {% trans "Amount" %}: {{ order_item.amount }}<br class="p">
-          {% trans 'Sale price' %}: {% to_local_currency order_item.product_type.sale_price %}<br>
+          {% trans 'Sale price' %}: {% to_local_currency order_item.total_price %}<br>
           {% for prop, value in order_item.product_type.dict_attributes.items %}
             {{ prop }}: {{ value }}<br>
           {% endfor %}

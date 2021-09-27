@@ -58,11 +58,6 @@ class ProductCreateTest(BaseMarketTestCase):
         for key in self.product_data:
             self.assertEqual(getattr(self.created_product, key), self.product_data[key])
 
-    def test_invalid_data(self):
-        self.log_in_as_seller()
-        with self.assertRaises(FailedToCreateObject):
-            self.post_to_product_create(extra_data={'market': 71.2})
-
     def test_create_in_default_currency(self):
         self.log_in_as_seller()
         expected_price = exchange_to(DEFAULT_CURRENCY, 1000)

@@ -398,16 +398,16 @@ class Order(models.Model):
 
     @property
     def total_price(self):
-        total_price = 0
-        if not self.operation:
-            for item in self.items.select_related('product_type', 'product_type__product'):
-                total_price += item.product_type.sale_price * item.amount
+        if not self.operation_id:
+            total_price = 0
+            items = self.items.all()
+            for item in items:
+                total_price += item.total_price
+            if self.activated_coupon:
+                coupon_discount = self._get_coupon_discount(total_price)
+                total_price -= coupon_discount
         else:
-            for item_data in self.items.select_related('payment').values('payment__amount'):
-                total_price += item_data.get('payment__amount') or 0
-        if self.activated_coupon:
-            coupon_discount = self._get_coupon_discount(total_price)
-            total_price -= coupon_discount
+            total_price = self.operation.amount
         return round(total_price, MONEY_DECIMAL_PLACES)
 
 
@@ -435,6 +435,12 @@ class OrderItem(models.Model):
     )
     amount = models.PositiveIntegerField(verbose_name=_('amount'))
     is_shipped = models.BooleanField(verbose_name=_('is shipped'), default=False)
+
+    @property
+    def total_price(self):
+        if self.payment_id:
+            return self.payment.amount
+        return self.product_type.sale_price * self.amount
 
 
 class Coupon(models.Model):
