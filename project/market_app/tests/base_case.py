@@ -123,7 +123,7 @@ def _create_coupon(discount_percent, max_discount):
 
 
 class TestBaseWithFilledCatalogue(BaseMarketTestCase):
-    default_product_price = 100
+    DEFAULT_PRODUCT_PRICE = 100
     catalogue_data = {
         # 'product_name': {'type_id': 'type_data'}
         '1': {'1': {'units_count': 10}, '2': {'units_count': 10}, '3': {'units_count': 10}},
@@ -158,7 +158,7 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
 
     def _init_products(self, data):
         products = [Product(id=i_id, name=f'product_{i_id}', category_id=1, market_id=i_id,
-                            original_price=self.default_product_price) for i_id in data.keys()]
+                            original_price=self.DEFAULT_PRODUCT_PRICE) for i_id in data.keys()]
         Product.objects.bulk_create(objs=products)
 
     @staticmethod
