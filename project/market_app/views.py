@@ -335,12 +335,20 @@ class MarketsList(generic.ListView):
     paginate_by = 18
 
 
-@login_required
-def my_market(request):
-    user_market_id = Market.objects.filter(owner_id=request.user.id).values_list('id', flat=True).first()
-    if user_market_id:
-        return HttpResponseRedirect(reverse_lazy('market_app:market', kwargs={'pk': user_market_id}))
-    return HttpResponseRedirect(reverse_lazy('market_app:create_market'))
+class UserMarketView(LoginRequiredMixin, generic.DetailView):
+    template_name = 'market_app/user_market.html'
+    model = Market
+    context_object_name = 'market'
+
+    def get(self, request, *args, **kwargs):
+        if not self.get_object():
+            return HttpResponseRedirect(reverse_lazy('market_app:create_market'), status=302)
+        return super(UserMarketView, self).get(request, *args, **kwargs)
+
+    def get_object(self, queryset=None):
+        if not hasattr(self, 'market'):
+            self.market = Market.objects.select_related('owner').get(owner_id=self.request.user.id)
+        return self.market
 
 
 class MarketView(generic.detail.SingleObjectMixin, generic.ListView):

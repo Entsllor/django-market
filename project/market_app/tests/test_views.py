@@ -7,7 +7,7 @@ from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilled
 from ..models import Market, Product, ProductCategory, Operation, ProductType, Order
 from ..services import top_up_balance, make_purchase, prepare_order
 from ..views import ProductCreateView, ProductEditView, CatalogueView, MarketEditView, MarketCreateView, \
-    CartView, CheckOutView, TopUpView, OperationHistoryView, OrderDetail, ProductTypeEdit
+    CartView, CheckOutView, TopUpView, OperationHistoryView, OrderDetail, ProductTypeEdit, UserMarketView
 
 
 def prepare_product_data_to_post(data) -> dict:
@@ -316,7 +316,7 @@ class MarketCreateViewsTest(ViewTestMixin, BaseMarketTestCase):
         self.log_in_as_seller()
         self.post_to_market_create()
         response = self.get_from_page()
-        self.assertRedirects(response, reverse_lazy('market_app:my_market'), target_status_code=302)
+        self.assertRedirects(response, reverse_lazy('market_app:user_market'), target_status_code=302)
 
     def test_redirect_if_not_logged_in(self):
         self._test_redirect_if_not_logged_in()
@@ -605,3 +605,20 @@ class OrderDetailTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.client.login(**another_user_data)
         response = self.get_from_page()
         self.assertEqual(response.status_code, 403)
+
+
+class UserMarketViewTest(ViewTestMixin, TestBaseWithFilledCatalogue):
+    ViewClass = UserMarketView
+    page_url = reverse_lazy('market_app:user_market')
+
+    def test_redirect_if_not_logged_in(self):
+        self._test_redirect_if_not_logged_in()
+
+    def test_correct_template(self):
+        self.log_in_as_seller()
+        self._test_correct_template()
+
+    def test_redirects_if_user_has_not_market(self):
+        self.log_in_as_customer()
+        response = self.get_from_page()
+        self.assertRedirects(response, reverse_lazy('market_app:create_market'))
