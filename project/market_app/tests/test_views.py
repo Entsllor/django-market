@@ -312,11 +312,11 @@ class MarketCreateViewsTest(ViewTestMixin, BaseMarketTestCase):
         response = self.post_to_market_create(check_unique=False)
         self.assertEqual(response.status_code, 403)
 
-    def test_redirects_if_user_already_have_account(self):
+    def test_redirects_if_user_already_have_market(self):
         self.log_in_as_seller()
         self.post_to_market_create()
         response = self.get_from_page()
-        self.assertRedirects(response, reverse_lazy('market_app:user_market'), target_status_code=302)
+        self.assertRedirects(response, reverse_lazy('market_app:user_market'), target_status_code=200)
 
     def test_redirect_if_not_logged_in(self):
         self._test_redirect_if_not_logged_in()

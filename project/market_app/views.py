@@ -149,7 +149,7 @@ class MarketCreateView(LoginRequiredMixin, generic.CreateView):
 
     def get(self, request, *args, **kwargs):
         if self.has_market:
-            return HttpResponseRedirect(reverse_lazy('market_app:my_market'), status=302)
+            return HttpResponseRedirect(reverse_lazy('market_app:user_market'), status=302)
         return super(MarketCreateView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -347,7 +347,7 @@ class UserMarketView(LoginRequiredMixin, generic.DetailView):
 
     def get_object(self, queryset=None):
         if not hasattr(self, 'market'):
-            self.market = Market.objects.select_related('owner').get(owner_id=self.request.user.id)
+            self.market = Market.objects.select_related('owner').filter(owner_id=self.request.user.id).first()
         return self.market
 
 
@@ -357,7 +357,7 @@ class MarketView(generic.detail.SingleObjectMixin, generic.ListView):
     paginate_by = 36
 
     def get(self, request, *args, **kwargs):
-        self.object = Market.objects.get(pk=self.kwargs['pk'])
+        self.object = Market.objects.select_related('owner').get(pk=self.kwargs['pk'])
         return super(MarketView, self).get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
