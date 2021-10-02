@@ -306,6 +306,11 @@ class MarketCreateViewsTest(ViewTestMixin, BaseMarketTestCase):
         self.assertIsInstance(self.created_market, Market)
         self.assertEqual(self.created_market.owner.id, self.user.id)
 
+    def test_redirects_after_create(self):
+        self.log_in_as_seller()
+        response = self.post_to_market_create()
+        self.assertRedirects(response, MarketCreateView.success_url)
+
     def test_one_user_cannot_create_two_markets(self):
         self.log_in_as_seller()
         self.post_to_market_create()

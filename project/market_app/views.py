@@ -142,6 +142,7 @@ class ProductPageView(generic.FormView):
 class MarketCreateView(LoginRequiredMixin, generic.CreateView):
     template_name = 'market_app/market_create.html'
     form_class = MarketForm
+    success_url = reverse_lazy('market_app:user_market')
 
     def setup(self, request, *args, **kwargs):
         super(MarketCreateView, self).setup(request, *args, **kwargs)
