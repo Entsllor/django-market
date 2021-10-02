@@ -8,6 +8,7 @@ from django.test import TestCase
 
 from currencies.services import create_currencies_from_settings
 from ..models import Product, Market, ProductCategory, ProductType, Coupon, Cart, Balance
+from ..services import prepare_order
 
 
 class FailedToCreateObject(Exception):
@@ -80,9 +81,6 @@ class BaseMarketTestCase(TestCase):
     def create_seller(self, username='seller', password=None):
         seller = self.create_customer(username=username, password=password)
         return seller
-
-    def post_data(self, url, data, **kwargs):
-        return self.client.post(path=url, data=data, **kwargs)
 
     def assertObjectDoesNotExist(self, query_set, **kwargs):
         """Fail if an object matching the given keyword arguments exists"""
@@ -205,3 +203,10 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
         for product_type_id, units_count in types_to_add.items():
             cart.set_item(product_type_pk=product_type_id, quantity=units_count, commit=False)
         cart.save()
+
+    def prepare_order(self, order_items: dict = None):
+        if order_items is None:
+            order_items = {}
+        Cart.objects.filter(pk=self.cart.pk).update(items=order_items)
+        self.order = prepare_order(self.cart)
+        return self.order

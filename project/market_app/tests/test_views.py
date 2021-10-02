@@ -1,10 +1,13 @@
 from django.core.exceptions import ObjectDoesNotExist
+from django.test import TestCase
 from django.urls import reverse_lazy
 
 from currencies.services import DEFAULT_CURRENCY, exchange_to
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue, FailedToCreateObject
-from ..models import Market, Product, ProductCategory, Operation, ProductType, Order, Cart
+from ..models import Market, Product, ProductCategory, Operation, ProductType, Order
 from ..services import top_up_balance, make_purchase, prepare_order
+from ..views import ProductCreateView, ProductEditView, CatalogueView, MarketEditView, MarketCreateView, \
+    CartView, CheckOutView, TopUpView, OperationHistoryView, OrderDetail, ProductTypeEdit
 
 
 def prepare_product_data_to_post(data) -> dict:
@@ -18,8 +21,50 @@ def prepare_product_data_to_post(data) -> dict:
     return data
 
 
-class ProductCreateTest(BaseMarketTestCase):
-    product_create_url = reverse_lazy('market_app:create_product')
+class ViewTestMixin(TestCase):
+    ViewClass = None
+    page_url = None
+
+    def post_to_page(self, url=None, data=None, **kwargs):
+        if url is None:
+            url = self.get_url()
+        return self.client.post(path=url, data=data, **kwargs)
+
+    def get_from_page(self, url=None, **kwargs):
+        if url is None:
+            url = self.get_url()
+        return self.client.get(path=url, **kwargs)
+
+    def assertRedirectsAuth(self, response):
+        self.assertRedirects(response, reverse_lazy('accounts:log_in') + '?next=' + self.get_url())
+
+    def checkUsedTemplate(self, response):
+        self.assertTemplateUsed(response, self.ViewClass.template_name)
+
+    def _test_redirect_if_not_logged_in(self):
+        self.client.logout()
+        response = self.get_from_page()
+        self.assertRedirectsAuth(response)
+
+    def _test_correct_template(self):
+        response = self.get_from_page()
+        self.checkUsedTemplate(response)
+
+    def get_url(self):
+        return self.page_url
+
+
+class CatalogueTest(ViewTestMixin):
+    ViewClass = CatalogueView
+    page_url = reverse_lazy('market_app:catalogue')
+
+    def test_correct_template(self):
+        self._test_correct_template()
+
+
+class ProductCreateTest(ViewTestMixin, BaseMarketTestCase):
+    ViewClass = ProductCreateView
+    page_url = reverse_lazy('market_app:create_product')
 
     def setUp(self) -> None:
         self.create_currencies()
@@ -42,7 +87,7 @@ class ProductCreateTest(BaseMarketTestCase):
         data = prepare_product_data_to_post(data)
         if check_unique:
             self.assertObjectDoesNotExist(Product.objects, name=data['name'])
-        response = self.post_data(self.product_create_url, data=data | {'currency_code': currency_code}, **kwargs)
+        response = self.post_to_page(self.page_url, data=data | {'currency_code': currency_code}, **kwargs)
         try:
             self.try_to_set_created_product(name=data['name'])
         except ObjectDoesNotExist:
@@ -74,8 +119,20 @@ class ProductCreateTest(BaseMarketTestCase):
         real_price = self.created_product.original_price
         self.assertEqual(expected_price, real_price)
 
+    def test_redirect_if_not_logged_in(self):
+        self._test_redirect_if_not_logged_in()
 
-class ProductEditTest(BaseMarketTestCase):
+    def test_correct_template(self):
+        self.log_in_as_customer()
+        self._test_correct_template()
+
+
+class ProductEditTest(ViewTestMixin, BaseMarketTestCase):
+    ViewClass = ProductEditView
+
+    def get_url(self):
+        return reverse_lazy('market_app:edit_product', kwargs={'pk': self.product.pk})
+
     def setUp(self) -> None:
         self.create_currencies()
         super(ProductEditTest, self).setUp()
@@ -93,13 +150,12 @@ class ProductEditTest(BaseMarketTestCase):
 
     @property
     def product(self):
-        self._product.refresh_from_db()
-        return self._product
+        return Product.objects.get(pk=self._product.pk)
 
     def post_to_product_edit(self, product_id: int, data_to_update: dict, currency_code=DEFAULT_CURRENCY, **kwargs):
         data_to_post = prepare_product_data_to_post(self.old_data.copy() | data_to_update)
         data_to_post.update({'currency_code': currency_code})
-        return self.post_data(
+        return self.post_to_page(
             reverse_lazy('market_app:edit_product', args=[product_id]),
             data=data_to_post, **kwargs)
 
@@ -144,10 +200,20 @@ class ProductEditTest(BaseMarketTestCase):
         new_price = self.product.original_price
         self.assertEqual(new_price, expected_price)
 
+    def test_redirect_if_not_logged_in(self):
+        self._test_redirect_if_not_logged_in()
 
-class MarketEditTest(BaseMarketTestCase):
+    def test_correct_template(self):
+        self.log_in_as_seller()
+        self._test_correct_template()
+
+
+class MarketEditTest(ViewTestMixin, BaseMarketTestCase):
+    ViewClass = MarketEditView
+
     def setUp(self) -> None:
         super(MarketEditTest, self).setUp()
+        self.create_currencies()
         self.old_data = {'name': 'OldName', 'description': 'OldDescription'}
         self.new_data = {'name': 'NewName', 'description': 'NewDescription'}
         self.market = self.seller.market
@@ -155,10 +221,13 @@ class MarketEditTest(BaseMarketTestCase):
             setattr(self.market, key, value)
         self.market.save()
 
+    def get_url(self):
+        return reverse_lazy('market_app:edit_market', kwargs={'pk': self.market.pk})
+
     def post_to_market_edit(self, market: Market, data_to_update: dict = None, **kwargs):
         if data_to_update is None:
             data_to_update = self.new_data
-        response = self.post_data(
+        response = self.post_to_page(
             reverse_lazy('market_app:edit_market', args=[market.id]),
             data=self.old_data.copy() | data_to_update, **kwargs
         )
@@ -195,14 +264,24 @@ class MarketEditTest(BaseMarketTestCase):
             self.assertNotEqual(getattr(self.market, key), self.new_data[key])
         self.assertEqual(response.status_code, 403)
 
+    def test_redirect_if_not_logged_in(self):
+        self.log_in_as_seller()
+        self._test_redirect_if_not_logged_in()
 
-class MarketCreateViewsTest(BaseMarketTestCase):
-    market_create_url = reverse_lazy('market_app:create_market')
+    def test_correct_template(self):
+        self.log_in_as_seller()
+        self._test_correct_template()
+
+
+class MarketCreateViewsTest(ViewTestMixin, BaseMarketTestCase):
+    ViewClass = MarketCreateView
+    page_url = reverse_lazy('market_app:create_market')
 
     def setUp(self) -> None:
         self.market_data = {'name': 'TestMarketName', 'description': 'some text'}
         self.customer = self.create_customer()
         self.seller = self.create_seller()
+        self.create_currencies()
 
     def post_to_market_create(self, data: dict = None, extra_data: dict = None, check_unique=True, **kwargs):
         if data is None:
@@ -213,7 +292,7 @@ class MarketCreateViewsTest(BaseMarketTestCase):
 
         if check_unique:
             self.assertObjectDoesNotExist(Market.objects, name=data['name'])
-        response = self.post_data(self.market_create_url, data=data, **kwargs)
+        response = self.post_to_page(self.page_url, data=data, **kwargs)
         self.try_set_created_market(**data)
         return response
 
@@ -238,28 +317,39 @@ class MarketCreateViewsTest(BaseMarketTestCase):
     def test_redirects_if_user_already_have_account(self):
         self.log_in_as_seller()
         self.post_to_market_create()
-        response = self.client.get(path=reverse_lazy('market_app:create_market'))
+        response = self.get_from_page()
         self.assertRedirects(response, reverse_lazy('market_app:my_market'), target_status_code=302)
 
+    def test_redirect_if_not_logged_in(self):
+        self._test_redirect_if_not_logged_in()
 
-class ProductTypeUnitsTest(BaseMarketTestCase):
+    def test_correct_template(self):
+        self.log_in_as_customer()
+        self._test_correct_template()
+
+
+class ProductTypeEditTest(ViewTestMixin, BaseMarketTestCase):
+    ViewClass = ProductTypeEdit
+
     def setUp(self) -> None:
-        super(ProductTypeUnitsTest, self).setUp()
+        super(ProductTypeEditTest, self).setUp()
+        self.create_currencies()
         self._product = self.create_product()
         self._product_type = self._product.create_product_type(units_count=0)
 
+    def get_url(self):
+        return reverse_lazy('market_app:edit_type', kwargs={'pk': self.product_type.pk})
+
     @property
     def product(self) -> Product:
-        self._product.refresh_from_db()
-        return self._product
+        return Product.objects.get(pk=self._product.pk)
 
     @property
     def product_type(self):
-        self._product_type.refresh_from_db()
-        return self._product_type
+        return ProductType.objects.get(pk=self._product_type.pk)
 
     def post_to_edit_type(self, pk, **kwargs):
-        return self.post_data(
+        return self.post_to_page(
             reverse_lazy('market_app:edit_type', kwargs={'pk': pk}),
             data=kwargs
         )
@@ -288,8 +378,16 @@ class ProductTypeUnitsTest(BaseMarketTestCase):
         response = self.post_to_edit_type(pk=self.product.pk, units_count=units_count)
         self.assertEqual(response.status_code, 403)
 
+    def test_redirect_if_not_logged_in(self):
+        self._test_redirect_if_not_logged_in()
 
-class CartViewTest(TestBaseWithFilledCatalogue):
+    def test_correct_template(self):
+        self.log_in_as_seller()
+        self._test_correct_template()
+
+
+class CartViewTest(ViewTestMixin, TestBaseWithFilledCatalogue):
+    ViewClass = CartView
     page_url = reverse_lazy('market_app:cart')
     success_url_name = 'market_app:checkout'
 
@@ -300,17 +398,6 @@ class CartViewTest(TestBaseWithFilledCatalogue):
         super(CartViewTest, self).setUp()
         self.create_currencies()
         self.log_in_as_customer()
-
-    def get_from_page(self, **kwargs):
-        return self.client.get(self.page_url, **kwargs)
-
-    def post_to_page(self, data: dict = None, **kwargs):
-        return self.post_data(url=self.page_url, data=data, **kwargs)
-
-    def test_redirect_if_not_logged_in(self):
-        self.client.logout()
-        response = self.get_from_page()
-        self.assertRedirects(response, reverse_lazy('accounts:log_in') + '?next=' + self.page_url)
 
     def test_can_change_order_at_cart_page(self):
         order_items = {'1': 5, '2': 3, '4': 5}
@@ -328,24 +415,26 @@ class CartViewTest(TestBaseWithFilledCatalogue):
         order = self.user.orders.first()
         self.assertRedirects(response, self.get_success_url(pk=order.pk))
 
+    def test_redirect_if_not_logged_in(self):
+        self._test_redirect_if_not_logged_in()
 
-class CheckOutPage(TestBaseWithFilledCatalogue):
-    check_out_page_url = reverse_lazy('market_app:checkout')
-    top_up_page_url = reverse_lazy('market_app:top_up')
-    cart_page_url = reverse_lazy('market_app:cart')
+    def test_correct_template(self):
+        self.log_in_as_customer()
+        self._test_correct_template()
+
+
+class CheckOutPageTest(ViewTestMixin, TestBaseWithFilledCatalogue):
+    ViewClass = CheckOutView
     orders_list_url = reverse_lazy('market_app:orders')
-    confirmation_page_url = reverse_lazy('market_app:order_confirmation')
+    top_up_page_url = reverse_lazy('market_app:top_up')
 
     def setUp(self) -> None:
-        super(CheckOutPage, self).setUp()
+        super(CheckOutPageTest, self).setUp()
         self.create_currencies()
         self.log_in_as_customer()
 
     def get_url(self):
         return reverse_lazy('market_app:checkout', kwargs={'pk': self.order.pk})
-
-    def get_from_page(self, **kwargs):
-        return self.client.get(path=self.get_url(), **kwargs)
 
     def post_to_page(self, data: dict = None, **kwargs):
         if data is None:
@@ -354,12 +443,16 @@ class CheckOutPage(TestBaseWithFilledCatalogue):
             data['address'] = 'Some user shipped address'
         return self.client.post(path=self.get_url(), data=data, **kwargs)
 
-    def prepare_order(self, order_items: dict = None):
-        if order_items is None:
-            order_items = {}
-        Cart.objects.filter(pk=self.cart.pk).update(items=order_items)
-        self.order = prepare_order(self.cart)
-        return self.order
+    def test_redirect_if_not_logged_in(self):
+        top_up_balance(self.user, 5000)
+        self.prepare_order({'1': 5, '4': 5})
+        self._test_redirect_if_not_logged_in()
+
+    def test_correct_template(self):
+        self.log_in_as_customer()
+        top_up_balance(self.user, 5000)
+        self.prepare_order({'1': 5, '4': 5})
+        self._test_correct_template()
 
     def test_redirect_if_user_do_not_have_enough_money(self):
         top_up_balance(self.user, 500)
@@ -379,7 +472,7 @@ class CheckOutPage(TestBaseWithFilledCatalogue):
         top_up_balance(self.user, 1000)
         self.prepare_order({'1': 5, '4': 5})
         response = self.post_to_page(data={'agreement': 'on'})
-        self.assertRedirects(response, self.confirmation_page_url)
+        self.assertRedirects(response, self.ViewClass.success_url)
 
     def test_redirect_if_user_does_not_agree(self):
         top_up_balance(self.user, 1000)
@@ -397,7 +490,7 @@ class CheckOutPage(TestBaseWithFilledCatalogue):
         self.assertEqual(self.user.balance.amount, 9000)
         self.assertEqual(self.sellers.get(id=1).balance.amount, 800)
         self.assertEqual(self.sellers.get(id=2).balance.amount, 200)
-        self.assertRedirects(response, self.confirmation_page_url)
+        self.assertRedirects(response, self.ViewClass.success_url)
 
     def test_cart_is_empty_after_purchasing(self):
         top_up_balance(self.user, 10000)
@@ -437,23 +530,21 @@ class CheckOutPage(TestBaseWithFilledCatalogue):
         self.assertEqual(self.sellers.get(pk=2).balance.amount, 400)
 
 
-class TopUpViewTest(BaseMarketTestCase):
-    top_up_page_url = reverse_lazy('market_app:top_up')
+class TopUpViewTest(ViewTestMixin, BaseMarketTestCase):
+    ViewClass = TopUpView
+    page_url = reverse_lazy('market_app:top_up')
     catalogue_url = reverse_lazy('market_app:catalogue')
 
     def setUp(self) -> None:
         self.create_currencies()
         super(TopUpViewTest, self).setUp()
 
-    def get_from_page(self, **kwargs):
-        return self.client.get(path=self.top_up_page_url, **kwargs)
-
-    def post_to_page(self, **kwargs):
-        return self.client.post(path=self.top_up_page_url, **kwargs)
-
     def test_redirect_if_not_logged_in(self):
-        response = self.get_from_page()
-        self.assertRedirects(response, reverse_lazy('accounts:log_in') + '?next=' + self.top_up_page_url)
+        self._test_redirect_if_not_logged_in()
+
+    def test_correct_template(self):
+        self.log_in_as_customer()
+        self._test_correct_template()
 
     def test_can_top_up_balance(self):
         self.log_in_as_customer()
@@ -470,11 +561,9 @@ class TopUpViewTest(BaseMarketTestCase):
         self.assertRedirects(response, self.catalogue_url)
 
 
-class OperationHistoryTest(TestBaseWithFilledCatalogue):
-    operation_history_url = reverse_lazy('market_app:operation_history')
-
-    def get_from_url(self):
-        return self.client.get(self.operation_history_url)
+class OperationHistoryTest(ViewTestMixin, TestBaseWithFilledCatalogue):
+    ViewClass = OperationHistoryView
+    page_url = reverse_lazy('market_app:operation_history')
 
     def setUp(self) -> None:
         super(OperationHistoryTest, self).setUp()
@@ -486,19 +575,18 @@ class OperationHistoryTest(TestBaseWithFilledCatalogue):
         make_purchase(order, self.user)
 
     def test_redirect_if_not_logged_in(self):
-        self.client.logout()
-        response = self.get_from_url()
-        self.assertRedirects(response, reverse_lazy('accounts:log_in') + '?next=' + self.operation_history_url)
+        self._test_redirect_if_not_logged_in()
 
     def test_correct_template(self):
-        response = self.get_from_url()
-        self.assertTemplateUsed(response, 'market_app/operation_history.html')
+        self.log_in_as_customer()
+        self._test_correct_template()
 
 
-class OrderDetailTest(TestBaseWithFilledCatalogue):
+class OrderDetailTest(ViewTestMixin, TestBaseWithFilledCatalogue):
+    ViewClass = OrderDetail
+
     def setUp(self) -> None:
         super(OrderDetailTest, self).setUp()
-        self.create_currencies()
         self.log_in_as_customer()
         top_up_balance(self.user, 10000)
         self.fill_cart({'1': 2, '3': 1, '5': 1})
@@ -509,22 +597,17 @@ class OrderDetailTest(TestBaseWithFilledCatalogue):
             return self.order.get_absolute_url()
         return Operation.objects.get(pk=pk).get_absolute_url()
 
-    def get_from_url(self):
-        return self.client.get(self.get_url())
-
     def test_redirect_if_not_logged_in(self):
-        self.client.logout()
-        response = self.get_from_url()
-        self.assertRedirects(response, reverse_lazy('accounts:log_in') + '?next=' + self.get_url())
+        self._test_redirect_if_not_logged_in()
 
     def test_correct_template(self):
-        response = self.get_from_url()
-        self.assertTemplateUsed(response, 'market_app/order_detail.html')
+        self.log_in_as_customer()
+        self._test_correct_template()
 
     def test_another_user_cant_see_details(self):
         another_user_data = {'username': 'AnotherCustomer', 'password': self.password}
         self.client.logout()
         self.create_customer(**another_user_data)
         self.client.login(**another_user_data)
-        response = self.get_from_url()
+        response = self.get_from_page()
         self.assertEqual(response.status_code, 403)
