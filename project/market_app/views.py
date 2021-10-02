@@ -335,6 +335,10 @@ class MarketsList(generic.ListView):
     context_object_name = 'markets'
     paginate_by = 18
 
+    def get_queryset(self):
+        queryset = super(MarketsList, self).get_queryset()
+        return queryset.prefetch_related('product_set')
+
 
 class UserMarketView(LoginRequiredMixin, generic.DetailView):
     template_name = 'market_app/user_market.html'
