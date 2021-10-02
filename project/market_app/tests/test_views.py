@@ -213,7 +213,6 @@ class MarketEditTest(ViewTestMixin, BaseMarketTestCase):
 
     def setUp(self) -> None:
         super(MarketEditTest, self).setUp()
-        self.create_currencies()
         self.old_data = {'name': 'OldName', 'description': 'OldDescription'}
         self.new_data = {'name': 'NewName', 'description': 'NewDescription'}
         self.market = self.seller.market
@@ -281,7 +280,6 @@ class MarketCreateViewsTest(ViewTestMixin, BaseMarketTestCase):
         self.market_data = {'name': 'TestMarketName', 'description': 'some text'}
         self.customer = self.create_customer()
         self.seller = self.create_seller()
-        self.create_currencies()
 
     def post_to_market_create(self, data: dict = None, extra_data: dict = None, check_unique=True, **kwargs):
         if data is None:
@@ -333,7 +331,6 @@ class ProductTypeEditTest(ViewTestMixin, BaseMarketTestCase):
 
     def setUp(self) -> None:
         super(ProductTypeEditTest, self).setUp()
-        self.create_currencies()
         self._product = self.create_product()
         self._product_type = self._product.create_product_type(units_count=0)
 
@@ -396,7 +393,6 @@ class CartViewTest(ViewTestMixin, TestBaseWithFilledCatalogue):
 
     def setUp(self) -> None:
         super(CartViewTest, self).setUp()
-        self.create_currencies()
         self.log_in_as_customer()
 
     def test_can_change_order_at_cart_page(self):
@@ -430,7 +426,6 @@ class CheckOutPageTest(ViewTestMixin, TestBaseWithFilledCatalogue):
 
     def setUp(self) -> None:
         super(CheckOutPageTest, self).setUp()
-        self.create_currencies()
         self.log_in_as_customer()
 
     def get_url(self):
@@ -567,7 +562,6 @@ class OperationHistoryTest(ViewTestMixin, TestBaseWithFilledCatalogue):
 
     def setUp(self) -> None:
         super(OperationHistoryTest, self).setUp()
-        self.create_currencies()
         self.log_in_as_customer()
         top_up_balance(self.user, 10000)
         self.fill_cart({'1': 2, '3': 1, '5': 1})

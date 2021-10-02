@@ -9,6 +9,12 @@ CURRENCY_CHOICES = []
 LOCAL_CURRENCIES = settings.LOCAL_CURRENCIES
 
 
+class DefaultCurrency:
+    code = settings.DEFAULT_CURRENCY
+    sym = settings.CURRENCIES_SYMBOLS.get(settings.DEFAULT_CURRENCY, '?')
+    rate = 1
+
+
 def get_currency_choices():
     if not CURRENCY_CHOICES:
         CURRENCY_CHOICES.extend(
@@ -28,6 +34,8 @@ def create_currencies_from_settings():
 
 
 def get_currency_by_code(code: str):
+    if code == settings.DEFAULT_CURRENCY:
+        return DefaultCurrency
     return Currency.objects.get(code=code)
 
 
