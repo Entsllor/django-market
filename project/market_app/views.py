@@ -464,6 +464,5 @@ class ShippingPage(MarketOwnerRequiredMixin, generic.ListView):
                if isinstance(pk, str) and pk.startswith('item_') and value == 'on']
         if self.queryset is None:
             self.get_queryset()
-        self.queryset.filter(~Q(id__in=pks)).update(is_shipped=False)
         self.queryset.filter(id__in=pks).update(is_shipped=True)
         return HttpResponseRedirect(reverse_lazy('market_app:shipping', kwargs=self.kwargs))

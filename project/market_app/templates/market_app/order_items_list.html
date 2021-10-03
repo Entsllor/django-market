@@ -11,17 +11,19 @@
       <form action="{% url 'market_app:shipping' pk=view.kwargs.pk %}" method="post">
         {% csrf_token %}
         {% for item in orders_items %}
-          <div class="list-group-item">
+          <div class="list-group-item" id="order_item_{{ item.pk }}">
             <div class="row row-cols-5">
               <div class="col col-3">{{ item.product_type.product.name }}</div>
               <div class="col col-3">{{ item.product_type.str_attributes }}</div>
-              <div class="col col-1">{{ item.amount }}</div>
+              <div class="col col-1" id="amount_order_item_{{ item.pk }}">
+                {{ item.amount }}
+              </div>
               <div class="col col-4">
                 {{ item.payment.transaction_time }}
               </div>
               <div class="col col-1">
                 <input type="checkbox" name="item_{{ item.pk }}" id="item_{{ item.pk }}"
-                  {% if item.is_shipped %} checked {% endif %}>
+                  {% if item.is_shipped %} checked disabled {% endif %}>
               </div>
             </div>
             <div>{% trans 'Address' %}: {{ item.order.address }}</div>
