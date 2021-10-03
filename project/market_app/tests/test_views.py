@@ -7,7 +7,7 @@ from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilled
 from ..models import Market, Product, ProductCategory, Operation, ProductType, Order
 from ..services import top_up_balance, make_purchase, prepare_order
 from ..views import ProductCreateView, ProductEditView, CatalogueView, MarketEditView, MarketCreateView, \
-    CartView, CheckOutView, TopUpView, OperationHistoryView, OrderDetail, ProductTypeEdit, UserMarketView
+    CartView, CheckOutView, TopUpView, OperationHistoryView, OrderDetail, ProductTypeEdit, UserMarketView, ShippingPage
 
 
 def prepare_product_data_to_post(data) -> dict:
@@ -401,17 +401,17 @@ class CartViewTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.log_in_as_customer()
 
     def test_can_change_order_at_cart_page(self):
-        order_items = {'1': 5, '2': 3, '4': 5}
+        order_items = {'1': 5, '2': 3, '7': 5}
         self.fill_cart(order_items)
-        changed_order_items = {'1': 8, '2': 0, '4': 2}
+        changed_order_items = {'1': 8, '2': 0, '7': 2}
         self.post_to_page(data=changed_order_items)
         order: Order = self.user.orders.first()
         self.assertEqual(order.get_units_count_of('1'), 8)
-        self.assertEqual(order.get_units_count_of('4'), 2)
+        self.assertEqual(order.get_units_count_of('7'), 2)
         self.assertFalse(order.items.filter(product_type_id='2').exists())
 
     def test_redirect_if_form_is_valid(self):
-        order_items = {'1': 5, '2': 3, '4': 5}
+        order_items = {'1': 5, '2': 3, '7': 5}
         response = self.post_to_page(data=order_items)
         order = self.user.orders.first()
         self.assertRedirects(response, self.get_success_url(pk=order.pk))
@@ -445,44 +445,44 @@ class CheckOutPageTest(ViewTestMixin, TestBaseWithFilledCatalogue):
 
     def test_redirect_if_not_logged_in(self):
         top_up_balance(self.user, 5000)
-        self.prepare_order({'1': 5, '4': 5})
+        self.prepare_order({'1': 5, '7': 5})
         self._test_redirect_if_not_logged_in()
 
     def test_correct_template(self):
         self.log_in_as_customer()
         top_up_balance(self.user, 5000)
-        self.prepare_order({'1': 5, '4': 5})
+        self.prepare_order({'1': 5, '7': 5})
         self._test_correct_template()
 
     def test_redirect_if_user_do_not_have_enough_money(self):
         top_up_balance(self.user, 500)
-        self.prepare_order({'1': 5, '4': 5})
+        self.prepare_order({'1': 5, '7': 5})
         response = self.get_from_page()
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, self.top_up_page_url)
 
     def test_do_not_redirect_if_enough_money(self):
         top_up_balance(self.user, 5000)
-        self.prepare_order({'1': 5, '4': 5})
+        self.prepare_order({'1': 5, '7': 5})
         response = self.get_from_page()
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'market_app/checkout_page.html')
 
     def test_do_purchase_if_user_agrees(self):
         top_up_balance(self.user, 1000)
-        self.prepare_order({'1': 5, '4': 5})
+        self.prepare_order({'1': 5, '7': 5})
         response = self.post_to_page(data={'agreement': 'on'})
         self.assertRedirects(response, self.ViewClass.success_url)
 
     def test_redirect_if_user_does_not_agree(self):
         top_up_balance(self.user, 1000)
-        self.prepare_order({'1': 5, '4': 5})
+        self.prepare_order({'1': 5, '7': 5})
         response = self.post_to_page(data={})
         self.assertRedirects(response, self.orders_list_url)
 
     def test_is_purchasing_successful(self):
         top_up_balance(self.user, 10000)
-        self.prepare_order({'1': 5, '2': 3, '4': 2})
+        self.prepare_order({'1': 5, '2': 3, '7': 2})
         self.assertEqual(self.user.balance.amount, 10000)
         self.assertEqual(self.sellers.get(id=1).balance.amount, 0)
         self.assertEqual(self.sellers.get(id=2).balance.amount, 0)
@@ -494,7 +494,7 @@ class CheckOutPageTest(ViewTestMixin, TestBaseWithFilledCatalogue):
 
     def test_cart_is_empty_after_purchasing(self):
         top_up_balance(self.user, 10000)
-        self.prepare_order({'1': 5, '4': 5})
+        self.prepare_order({'1': 5, '7': 5})
         self.assertEqual(self.user.balance.amount, 10000)
         self.post_to_page(data={'agreement': 'False'})
         self.assertEqual(self.cart.items, {})
@@ -503,7 +503,7 @@ class CheckOutPageTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.log_in_as_seller()
         top_up_balance(self.user, 2000)
         own_product_type_units_count_at_start = ProductType.objects.get(pk=1).units_count
-        units_to_buy = {'1': 5, '5': 3}
+        units_to_buy = {'1': 5, '7': 3}
         self.prepare_order(units_to_buy)
         self.post_to_page()
         own_product_type_units_count_at_end = ProductType.objects.get(pk=1).units_count
@@ -512,7 +512,7 @@ class CheckOutPageTest(ViewTestMixin, TestBaseWithFilledCatalogue):
 
     def _test_use_coupon(self, expected_amount, max_discount=None):
         top_up_balance(self.user, 2000)
-        units_to_add = {'1': 5, '3': 1, '4': 4}
+        units_to_add = {'1': 5, '4': 1, '8': 4}
         self.create_and_set_coupon(discount_percent=10, max_discount=max_discount)
         self.prepare_order(units_to_add)
         self.post_to_page(data={'agreement': 'on', 'coupon': 1})
@@ -569,7 +569,7 @@ class OperationHistoryTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         super(OperationHistoryTest, self).setUp()
         self.log_in_as_customer()
         top_up_balance(self.user, 10000)
-        self.fill_cart({'1': 2, '3': 1, '5': 1})
+        self.fill_cart({'1': 2, '3': 1, '7': 1})
         order = prepare_order(self.cart)
         make_purchase(order, self.user)
 

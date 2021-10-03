@@ -122,27 +122,119 @@ def _create_coupon(discount_percent, max_discount):
 
 class TestBaseWithFilledCatalogue(BaseMarketTestCase):
     DEFAULT_PRODUCT_PRICE = 100
-    catalogue_data = {
-        # 'product_name': {'type_id': 'type_data'}
-        '1': {'1': {'units_count': 10}, '2': {'units_count': 10}, '3': {'units_count': 10}},
-        '2': {'4': {'units_count': 10}, '5': {'units_count': 10}, '6': {'units_count': 10}},
-        '3': {'7': {'units_count': 5}, '8': {'units_count': 5}, '9': {'units_count': 5}},
-        '4': {'10': {'units_count': 1}, '11': {'units_count': 1}, '12': {'units_count': 1}},
-        '5': {'13': {'units_count': 0}, '14': {'units_count': 0}, '15': {'units_count': 0}},
+    PRODUCT_DATA = {
+        # product_id: {**product_data}
+        '1': {
+            'product_data': {
+                'market_id': 1,
+                'category_id': 1,
+                'original_price': DEFAULT_PRODUCT_PRICE
+            },
+            'types_data': {
+                # type_id: {**product_type_data}
+                '1': {'units_count': 10},
+                '2': {'units_count': 5},
+                '3': {'units_count': 0}
+            }
+        },
+        '2': {
+            'product_data': {
+                'market_id': 1,
+                'category_id': 1,
+                'original_price': DEFAULT_PRODUCT_PRICE
+            },
+            'types_data': {
+                '4': {'units_count': 10},
+                '5': {'units_count': 5},
+                '6': {'units_count': 0}
+            }
+        },
+        '3': {
+            'product_data': {
+                'market_id': 2,
+                'category_id': 1,
+                'original_price': DEFAULT_PRODUCT_PRICE
+            },
+            'types_data': {
+                '7': {'units_count': 10},
+                '8': {'units_count': 5},
+                '9': {'units_count': 0}
+            }
+        },
+        '4': {
+            'product_data': {
+                'market_id': 2,
+                'category_id': 2,
+                'original_price': DEFAULT_PRODUCT_PRICE
+            },
+            'types_data': {
+                '10': {'units_count': 10},
+                '11': {'units_count': 5},
+                '12': {'units_count': 0}
+            }
+        },
+        '5': {
+            'product_data': {
+                'market_id': 3,
+                'category_id': 2,
+                'original_price': DEFAULT_PRODUCT_PRICE
+            },
+            'types_data': {
+                '13': {'units_count': 10},
+                '14': {'units_count': 5},
+                '15': {'units_count': 0}
+            }
+        },
+        '6': {
+            'product_data': {
+                'market_id': 3,
+                'category_id': 2,
+                'original_price': DEFAULT_PRODUCT_PRICE
+            },
+            'types_data': {
+                '16': {'units_count': 10},
+                '17': {'units_count': 5},
+                '18': {'units_count': 0}
+            }
+        },
+        '7': {
+            'product_data': {
+                'market_id': 4,
+                'category_id': 2,
+                'original_price': DEFAULT_PRODUCT_PRICE
+            },
+            'types_data': {
+                '19': {'units_count': 10},
+                '20': {'units_count': 5},
+                '21': {'units_count': 0}
+            }
+        },
+        '8': {
+            'product_data': {
+                'market_id': 4,
+                'category_id': 3,
+                'original_price': DEFAULT_PRODUCT_PRICE
+            },
+            'types_data': {
+                '22': {'units_count': 10},
+                '23': {'units_count': 5},
+                '24': {'units_count': 0}
+            }
+        },
     }
 
     def setUp(self) -> None:
         assert not User.objects.exists()
         assert not ProductType.objects.exists()
         assert not Product.objects.exists()
-        assert not Market.objects.all().exists()
+        assert not Market.objects.exists()
+        self._init_categories(range(1, 4))
         self.category = self.create_category()
-        self._init_users(range(1, 6), name_prefix='seller_')
-        self._init_markets(range(1, 6))
+        sellers = self._init_users(range(1, 5), name_prefix='seller_')
+        self._init_markets(sellers)
         self.seller = self.sellers.get(id=1)
-        self.market = self.markets.get(id=1)
-        self._init_products(self.catalogue_data)
-        self._init_product_types(self.catalogue_data)
+        self._init_products(self.PRODUCT_DATA)
+        self._init_product_types(self.PRODUCT_DATA)
         self._init_users([6, 7], name_prefix='customer_')
         self.customer = self.customers.get(pk=6)
 
@@ -153,23 +245,39 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
         )
         for user in users:
             post_save.send(user.__class__, instance=user, created=datetime.datetime.now())
+        return users
 
-    def _init_products(self, data):
-        products = [Product(id=i_id, name=f'product_{i_id}', category_id=1, market_id=i_id,
-                            original_price=self.DEFAULT_PRODUCT_PRICE) for i_id in data.keys()]
+    @staticmethod
+    def _init_products(data):
+        products = [
+            Product(
+                id=product_id,
+                name=f'product_{product_id}',
+                **values['product_data']
+            ) for product_id, values in data.items()]
         Product.objects.bulk_create(objs=products)
 
     @staticmethod
-    def _init_markets(id_list):
-        Market.objects.bulk_create(
-            objs=[Market(id=i_id, name=f'market_{i_id}', owner_id=i_id) for i_id in id_list]
-        )
+    def _init_markets(sellers):
+        markets = [
+            Market(id=seller.pk, name=f'market_{seller.pk}', owner=seller) for seller in sellers
+        ]
+        Market.objects.bulk_create(markets)
+        return markets
+
+    @staticmethod
+    def _init_categories(id_range):
+        categories = [
+            ProductCategory(id=i_id, name=f'Category_{i_id}') for i_id in id_range
+        ]
+        ProductCategory.objects.bulk_create(categories)
+        return categories
 
     @staticmethod
     def _init_product_types(data):
         types = []
-        for product_id, types_data in data.items():
-            for type_id, type_data in types_data.items():
+        for product_id, values in data.items():
+            for type_id, type_data in values['types_data'].items():
                 types.append(ProductType(product_id=product_id, **type_data))
         ProductType.objects.bulk_create(types)
 
@@ -177,6 +285,10 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
         coupon = _create_coupon(discount_percent, max_discount)
         coupon.customers.add(self.user)
         return coupon
+
+    @property
+    def market(self):
+        return Market.objects.get(owner=self.seller)
 
     @property
     def markets(self):

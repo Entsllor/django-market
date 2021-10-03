@@ -95,7 +95,7 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
     @assert_difference(2000)
     def test_sellers_get_money_after_purchase(self):
         top_up_balance(self.user, 2000)
-        units_to_buy = {'1': 5, '2': 3, '4': 5}
+        units_to_buy = {'1': 5, '2': 3, '7': 5}
         self.fill_cart(units_to_buy)
         order = prepare_order(self.cart)
         make_purchase(order, self.user)
@@ -106,7 +106,7 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
     @assert_difference(2000)
     def test_will_customer_balance_be_reduced(self):
         top_up_balance(self.user, 2000)
-        units_to_buy = {'1': 5, '2': 3, '4': 5}
+        units_to_buy = {'1': 5, '2': 3, '7': 5}
         self.fill_cart(units_to_buy)
         order = prepare_order(self.cart)
         make_purchase(order, self.user)
@@ -115,7 +115,7 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
     def test_will_cart_be_cleaned_after_purchase(self):
         top_up_balance(self.user, 2000)
         self.assertEqual(self.user.cart.items, {})
-        units_to_buy = {'1': 5, '2': 3, '4': 5}
+        units_to_buy = {'1': 5, '2': 3, '7': 5}
         self.fill_cart(units_to_buy)
         self.assertNotEqual(self.user.cart.items, {})
         order = prepare_order(self.cart)
@@ -135,19 +135,19 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
     def test_pay_only_for_enable_product_units(self):
         top_up_balance(self.user, 5000)
         self.assertEqual(self.user.cart.items, {})
-        units_to_buy = {'1': 5, '10': 10}
+        units_to_buy = {'1': 5, '11': 6}
         self.fill_cart(units_to_buy)
         balance_before_purchase = self.balance.amount
         order = prepare_order(self.cart)
         make_purchase(order, self.user)
         balance_after_purchase = self.balance.amount
-        self.assertEqual(balance_after_purchase, balance_before_purchase - 600)
-        self.assertEqual(self.sellers.get(pk=4).balance.amount, 100)
+        self.assertEqual(balance_after_purchase, balance_before_purchase - 1000)
+        self.assertEqual(self.sellers.get(pk=2).balance.amount, 500)
 
     @assert_difference(500)
     def test_user_has_not_enough_money_to_purchase(self):
         top_up_balance(self.user, 500)
-        units_to_buy = {'1': 5, '2': 3, '4': 5}
+        units_to_buy = {'1': 5, '2': 3, '7': 5}
         self.fill_cart(units_to_buy)
         order = prepare_order(self.cart)
         with self.assertRaises(NotEnoughMoneyError):
@@ -157,7 +157,7 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
 
     def test_get_operation_object_after_purchase(self):
         top_up_balance(self.user, 2000)
-        units_to_buy = {'1': 5, '2': 3, '4': 5}
+        units_to_buy = {'1': 5, '2': 3, '7': 5}
         self.fill_cart(units_to_buy)
         order = prepare_order(self.cart)
         total_price = order.total_price
@@ -166,7 +166,7 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
 
     def test_check_order_items(self):
         top_up_balance(self.user, 2000)
-        units_to_buy = {'1': 5, '2': 3, '4': 5}
+        units_to_buy = {'1': 5, '2': 3, '7': 5}
         self.fill_cart(units_to_buy)
         order = prepare_order(self.cart)
         self.assertEqual(order.items.count(), len(units_to_buy))
@@ -226,11 +226,11 @@ class TakeUnitsFromDBTest(TestBaseWithFilledCatalogue):
     def check_data_to_compare(self):
         return {i_type.pk: i_type.units_count for i_type in self.product_types.only('units_count')}
 
-    @assert_difference({1: 0, 2: 2, 5: 6})
+    @assert_difference({1: 0, 2: 0, 8: 1})
     def test_take_units_from_db(self):
         self.assertEqual(_take_units_from_db(1, 10), 10)
-        self.assertEqual(_take_units_from_db(2, 8), 8)
-        self.assertEqual(_take_units_from_db(5, 4), 4)
+        self.assertEqual(_take_units_from_db(2, 5), 5)
+        self.assertEqual(_take_units_from_db(8, 4), 4)
 
     @assert_difference({1: 10})
     def test_take_zero_units_from_db(self):
@@ -257,7 +257,7 @@ class PrepareOrderTest(TestBaseWithFilledCatalogue):
         self.log_in_as_customer()
 
     def test_return_order_object(self):
-        self.fill_cart({'1': 5, '2': 3, '4': 5})
+        self.fill_cart({'1': 5, '2': 3, '7': 5})
         order = prepare_order(self.cart)
         self.assertIsInstance(order, Order)
 
@@ -276,14 +276,14 @@ class CancelOrderTest(TestBaseWithFilledCatalogue):
         return units_count
 
     def test_can_cancel_order(self):
-        self.fill_cart({'1': 3, '2': 5, '4': 2})
+        self.fill_cart({'1': 3, '2': 5, '7': 2})
         order: Order = prepare_order(self.cart)
-        self.assertEqual(order.get_units_count(), {'1': 3, '2': 5, '4': 2})
+        self.assertEqual(order.get_units_count(), {'1': 3, '2': 5, '7': 2})
         _cancel_order(order)
         self.assertEqual(order.get_units_count(), {})
 
     def test_add_units_from_canceled_order_to_db(self):
-        units_to_add = {'1': 3, '2': 5, '4': 2}
+        units_to_add = {'1': 3, '2': 5, '7': 2}
         product_types_pks = units_to_add.keys()
         global_units_count_at_start = self.get_global_units_count(product_types_pks)
         self.fill_cart(units_to_add)
