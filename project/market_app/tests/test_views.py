@@ -1,10 +1,11 @@
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from django.test import TestCase
 from django.urls import reverse_lazy
 
 from currencies.services import DEFAULT_CURRENCY, exchange_to
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue, FailedToCreateObject
-from ..models import Market, Product, ProductCategory, Operation, ProductType, Order
+from ..models import Market, Product, ProductCategory, Operation, ProductType, Order, User, OrderItem
 from ..services import top_up_balance, make_purchase, prepare_order
 from ..views import ProductCreateView, ProductEditView, CatalogueView, MarketEditView, MarketCreateView, \
     CartView, CheckOutView, TopUpView, OperationHistoryView, OrderDetail, ProductTypeEdit, UserMarketView, ShippingPage
@@ -627,3 +628,59 @@ class UserMarketViewTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.log_in_as_customer()
         response = self.get_from_page()
         self.assertRedirects(response, reverse_lazy('market_app:create_market'))
+
+
+class ShippingPageView(ViewTestMixin, TestBaseWithFilledCatalogue):
+    ViewClass = ShippingPage
+
+    def get_url(self):
+        return reverse_lazy('market_app:shipping', kwargs={'pk': self.market.pk})
+
+    def test_redirect_if_not_logged_in(self):
+        self._test_redirect_if_not_logged_in()
+
+    def test_correct_template(self):
+        self.log_in_as_seller()
+        self._test_correct_template()
+
+    def test_display_order_items(self):
+        self._init_orders()
+        self.log_in_as_seller()
+        order_items = self.get_order_items()
+        response = self.get_from_page()
+        self.assertTrue(order_items)
+        for order_item in order_items:
+            self.assertContains(response, f'id="order_item_{order_item.pk}"')
+            self.assertContains(response, f'{order_item.product_type.str_attributes}')
+
+    def test_do_not_display_order_items_from_other_markets(self):
+        self._init_orders()
+        self.log_in_as_seller()
+        other_order_items_pks = OrderItem.objects.filter(
+            ~Q(payment__user_id=self.market.pk)).values_list('pk', flat=True)
+        response = self.get_from_page()
+        self.assertTrue(other_order_items_pks)
+        for pk in other_order_items_pks:
+            self.assertNotContains(response, f'id="order_item_{pk}"')
+
+    def test_can_mark_as_shipped(self):
+        self._init_orders()
+        self.log_in_as_seller()
+        order_items = self.get_order_items()
+        self.assertFalse(self.all_items_are_shipped(order_items.values_list('pk', flat=True)))
+        items_to_mark_pks = order_items.filter(product_type_id__in=(3, 5)).values_list('pk', flat=True)
+        items_not_to_mark_pks = order_items.exclude(product_type_id__in=(3, 5)).values_list('pk', flat=True)
+        self.assertTrue(items_to_mark_pks)
+        self.assertTrue(items_not_to_mark_pks)
+        self.post_to_page(data={f'item_{pk}': 'on' for pk in items_to_mark_pks})
+        self.assertTrue(self.all_items_are_shipped(items_to_mark_pks))
+        self.assertFalse(self.all_items_are_shipped(items_not_to_mark_pks))
+
+    def test_cannot_mark_as_shipped(self):
+        self._init_orders()
+        self.log_in_as_seller()
+        order_items = self.get_order_items()
+        order_items.update(is_shipped=True)
+        items_to_unmark_pks = order_items.filter(product_type_id__in=(3, 5)).values_list('pk', flat=True)
+        self.post_to_page(data={f'item_{pk}': 'off' for pk in items_to_unmark_pks})
+        self.assertTrue(self.all_items_are_shipped(items_to_unmark_pks))

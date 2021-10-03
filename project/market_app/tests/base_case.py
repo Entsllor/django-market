@@ -7,8 +7,8 @@ from django.db.models.signals import post_save
 from django.test import TestCase
 
 from currencies.services import create_currencies_from_settings
-from ..models import Product, Market, ProductCategory, ProductType, Coupon, Cart, Balance
-from ..services import prepare_order
+from ..models import Product, Market, ProductCategory, ProductType, Coupon, Cart, Balance, OrderItem
+from ..services import prepare_order, top_up_balance, make_purchase
 
 
 class FailedToCreateObject(Exception):
@@ -309,6 +309,30 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
     @property
     def product_types(self):
         return ProductType.objects.all()
+
+    def get_order_items(self):
+        return OrderItem.objects.select_related(
+            'product_type', 'product_type__product', 'product_type__product__market', 'payment', 'order'
+        ).filter(payment__user_id=self.market.owner_id)
+
+    @staticmethod
+    def all_items_are_shipped(ids):
+        return not OrderItem.objects.filter(id__in=ids, is_shipped=False).exists()
+
+    def _init_orders(self):
+        cur_user = self._user
+        self._log_in(User.objects.get(username='customer_6'))
+        top_up_balance(self.user, 10000)
+        self.order_1 = self.prepare_order({'1': 2, '3': 1})
+        make_purchase(self.order_1, self.user)
+        self.order_2 = self.prepare_order({'1': 5, '3': 2, '5': 4, '8': 4})
+        make_purchase(self.order_2, self.user)
+        self._log_in(User.objects.get(username='customer_7'))
+        top_up_balance(self.user, 700)
+        self.order_3 = self.prepare_order({'4': 3, '13': 3})
+        make_purchase(self.order_3, self.user)
+        if cur_user:
+            self._log_in(cur_user)
 
     def fill_cart(self, types_to_add):
         cart = self.cart
