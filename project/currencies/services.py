@@ -36,7 +36,7 @@ def create_currencies_from_settings():
 def get_currency_by_code(code: str):
     if code == settings.DEFAULT_CURRENCY:
         return DefaultCurrency
-    return Currency.objects.get(code=code)
+    return Currency.objects.filter(code=code).first() or DefaultCurrency
 
 
 def get_currency_code_by_language(language_str: str):
