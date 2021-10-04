@@ -80,11 +80,11 @@ def _cancel_order(order: Order) -> None:
     order.delete()
 
 
-def try_to_cancel_order(order, user_id):
+def try_to_cancel_order(order: Order, user_id):
     customer_id = Order.objects.filter(pk=order.pk).values_list('user_id', flat=True).first()
     if customer_id != user_id:
         raise OrderCannotBeCancelledError(f"User(id={user_id}) cannot cancel Order(id={order.id})")
-    elif not order.is_unpaid:
+    elif order.has_paid:
         raise OrderCannotBeCancelledError("The order cannot be cancelled because of its status.")
     _cancel_order(order)
 
@@ -148,7 +148,6 @@ def make_purchase(order: Order, user: User, coupon: Coupon = None) -> Operation:
     purchase_operation = _change_balance_amount(user, SUBTRACT, order.total_price)
     _send_money_to_sellers(order)
     _set_order_operation(purchase_operation, order)
-    order.status = order.OrderStatusChoices.HAS_PAID.name
     order.save()
     return purchase_operation
 

@@ -1,7 +1,8 @@
 from decimal import Decimal
 
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue
-from ..services import top_up_balance, withdraw_money
+from ..models import OrderStatusChoices, Order
+from ..services import top_up_balance, withdraw_money, make_purchase
 
 
 class ProductTest(BaseMarketTestCase):
@@ -156,3 +157,19 @@ class CartTest(TestBaseWithFilledCatalogue):
         self.cart.set_item('10', 3)
         self.cart.set_item('2', 1)
         self.cart._remove_own_products_types_from_cart()
+
+
+class OrderTest(TestBaseWithFilledCatalogue):
+    def setUp(self) -> None:
+        super(OrderTest, self).setUp()
+        self.log_in_as_customer()
+        top_up_balance(self.user, 10000)
+        self.prepare_order({'1': 5, '3': 2, '5': 4, '8': 4})
+
+    def test_change_status(self):
+        self.assertEqual(self.order.status, OrderStatusChoices.UNPAID)
+        make_purchase(self.order, self.user)
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, OrderStatusChoices.HAS_PAID)
+        self.order.items.update(is_shipped=True)
+        self.assertEqual(self.order.status, OrderStatusChoices.SHIPPED)

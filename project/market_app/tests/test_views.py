@@ -5,7 +5,7 @@ from django.urls import reverse_lazy
 
 from currencies.services import DEFAULT_CURRENCY, exchange_to
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue, FailedToCreateObject
-from ..models import Market, Product, ProductCategory, Operation, ProductType, Order, User, OrderItem
+from ..models import Market, Product, ProductCategory, Operation, ProductType, Order, OrderItem, OrderStatusChoices
 from ..services import top_up_balance, make_purchase, prepare_order
 from ..views import ProductCreateView, ProductEditView, CatalogueView, MarketEditView, MarketCreateView, \
     CartView, CheckOutView, TopUpView, OperationHistoryView, OrderDetail, ProductTypeEdit, UserMarketView, ShippingPage
@@ -676,7 +676,7 @@ class ShippingPageView(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.assertTrue(self.all_items_are_shipped(items_to_mark_pks))
         self.assertFalse(self.all_items_are_shipped(items_not_to_mark_pks))
 
-    def test_cannot_mark_as_shipped(self):
+    def test_cannot_mark_as_unshipped(self):
         self._init_orders()
         self.log_in_as_seller()
         order_items = self.get_order_items()
@@ -684,3 +684,11 @@ class ShippingPageView(ViewTestMixin, TestBaseWithFilledCatalogue):
         items_to_unmark_pks = order_items.filter(product_type_id__in=(3, 5)).values_list('pk', flat=True)
         self.post_to_page(data={f'item_{pk}': 'off' for pk in items_to_unmark_pks})
         self.assertTrue(self.all_items_are_shipped(items_to_unmark_pks))
+
+    def test_order_changed_his_status(self):
+        self._init_orders()
+        self.log_in_as_seller()
+        self.assertEqual(self.order_1.status, OrderStatusChoices.HAS_PAID)
+        items_to_mark_pks = self.order_1.items.values_list('pk', flat=True)
+        self.post_to_page(data={f'item_{pk}': 'on' for pk in items_to_mark_pks})
+        self.assertEqual(self.order_1.status, OrderStatusChoices.SHIPPED)

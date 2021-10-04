@@ -32,10 +32,10 @@
         {% trans "Address" %}: {{ order.address }}<br>
         {% trans 'Total price' %}: {% to_local_currency order.total_price %}
       </p>
-      {% if order.is_unpaid %}
+      {% if not order.has_paid %}
         <div class="d-flex flex-row justify-content-between">
           <p>
-            {% trans "Status" %}: {{ order.get_status_display }}
+            {% trans "Status" %}: {% trans "awaiting for payment" %}
           </p>
           <div>
             <a href="{% url 'market_app:order_cancel' pk=order.pk %}" class="btn btn-danger">

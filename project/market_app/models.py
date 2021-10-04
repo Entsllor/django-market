@@ -16,6 +16,14 @@ MONEY_DECIMAL_QUANTIZE = Decimal('1.' + '0' * MONEY_DECIMAL_PLACES)
 MAX_OPERATION_DIGITS_COUNT = MAX_BALANCE_DIGITS_COUNT
 
 
+class OrderStatusChoices(models.TextChoices):
+    UNPAID = 'UNPAID', _("awaiting for payment")
+    CANCELED = "CANCEL", _("canceled")
+    HAS_PAID = "HAS_PAID", _("has successfully paid")
+    SHIPPED = 'SHIPPED', _("Shipped")
+    DELIVERED = 'DELIVERED', _("successfully completed")
+
+
 class ProductCategory(models.Model):
     name = models.CharField(verbose_name=_('category'), max_length=63)
 
@@ -330,24 +338,12 @@ class Operation(models.Model):
 
 
 class Order(models.Model):
-    class OrderStatusChoices(models.TextChoices):
-        UNPAID = 'UNPAID', _("awaiting for payment")
-        CANCELED = "CANCEL", _("canceled")
-        HAS_PAID = "HAS_PAID", _("has successfully paid")
-        SHIPPED = 'SHIPPED', _("Shipped")
-        DELIVERED = 'DELIVERED', _("successfully completed")
-
     operation = models.OneToOneField(
         to=Operation,
         verbose_name=_('operation'),
         on_delete=models.CASCADE,
         null=True,
         related_name='order'
-    )
-    status = models.CharField(
-        max_length=15,
-        choices=OrderStatusChoices.choices,
-        default=OrderStatusChoices.UNPAID,
     )
     activated_coupon = models.ForeignKey(
         to='Coupon',
@@ -371,8 +367,17 @@ class Order(models.Model):
     )
 
     @property
-    def is_unpaid(self):
-        return self.status == self.OrderStatusChoices.UNPAID.name
+    def has_paid(self):
+        return self.operation_id is not None
+
+    @property
+    def status(self):
+        if not self.has_paid:
+            return OrderStatusChoices.UNPAID
+        elif self.items.filter(is_shipped=False):
+            return OrderStatusChoices.HAS_PAID
+        else:
+            return OrderStatusChoices.SHIPPED
 
     def get_units_count(self):
         return {str(pk): amount for pk, amount in self.items.values_list('product_type_id', 'amount')}
