@@ -13,13 +13,15 @@ product_attributes_placeholder = _(
 
 
 class MoneyExchangerMixin(forms.Form):
-    currency_code = forms.ChoiceField(choices=get_currency_choices, initial=DEFAULT_CURRENCY)
+    currency_code = forms.ChoiceField(choices=get_currency_choices, initial=DEFAULT_CURRENCY, required=False)
 
     def _clean_field_with_money_exchanging(self, field_name):
+        currency_code: str = self.data.get('currency_code', DEFAULT_CURRENCY)
+        amount = self.data[field_name]
         return exchange_to(
             DEFAULT_CURRENCY,
-            amount=self.data[field_name],
-            _from=self.data['currency_code']
+            amount=amount,
+            _from=currency_code
         )
 
 

@@ -63,6 +63,8 @@ def _exchange(amount, exchange_rate):
 
 
 def _get_exchange_rate(to_currency, from_currency=DEFAULT_CURRENCY):
+    if to_currency.upper() == from_currency.upper():
+        return 1
     currencies_set = Currency.objects.only('rate', 'code').filter(code__in=(to_currency, from_currency))
     to_currency_rate = currencies_set.get(code=to_currency).rate
     from_currency_rate = currencies_set.get(code=from_currency).rate
