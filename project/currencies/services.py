@@ -20,6 +20,8 @@ def get_currency_choices():
         CURRENCY_CHOICES.extend(
             (currency.code, currency.sym) for currency in Currency.objects.filter(code__in=settings.CURRENCIES)
         )
+        if not CURRENCY_CHOICES:
+            return (DEFAULT_CURRENCY, settings.CURRENCIES_SYMBOLS[DEFAULT_CURRENCY]),
     return CURRENCY_CHOICES
 
 
