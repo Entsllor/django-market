@@ -107,7 +107,7 @@ class CreditCardForm(MoneyExchangerMixin, forms.Form):
         min_value=1000_0000_0000_0000,
         max_value=9999_9999_9999_9999
     )
-    top_up_amount = forms.IntegerField(min_value=1, max_value=1000000)
+    top_up_amount = forms.DecimalField(min_value=1, max_value=1000000)
 
     def clean_top_up_amount(self):
         return self._clean_field_with_money_exchanging('top_up_amount')
