@@ -17,10 +17,10 @@
             </a>
           </h4>
           {% trans "Amount" %}: {{ order_item.amount }}<br class="p">
-          {% trans 'Sale price' %}: {% to_local_currency order_item.total_price %}<br>
           {% for prop, value in order_item.product_type.dict_attributes.items %}
             {{ prop }}: {{ value }}<br>
           {% endfor %}
+          {% trans 'Sale price' %}: {% to_local_currency order_item.total_price %}<br>
         </li>
       {% endfor %}
     </ul>

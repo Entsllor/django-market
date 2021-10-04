@@ -271,7 +271,17 @@ class CheckOutView(PermissionRequiredMixin, generic.FormView):
 
     def setup(self, request, *args, **kwargs):
         super(CheckOutView, self).setup(request, *args, **kwargs)
-        self.object = Order.objects.select_related('user').filter(pk=kwargs['pk']).first()
+        order_pk = self.kwargs['pk']
+        self.object = Order.objects.prefetch_related(
+            Prefetch('items', OrderItem.objects.only(
+                'product_type__product__name', 'amount', 'payment__amount',
+                'order', 'product_type__properties', 'product_type__markup_percent',
+                'product_type__product__discount_percent',
+                'product_type__product__original_price'
+            ).filter(order_id=order_pk).select_related(
+                'product_type', 'product_type__product', 'payment'
+            ))
+        ).select_related('operation').get(pk=order_pk)
         self.user = self.request.user
 
     def get_form_kwargs(self):
