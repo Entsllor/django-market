@@ -21,6 +21,11 @@
             {{ prop }}: {{ value }}<br>
           {% endfor %}
           {% trans 'Sale price' %}: {% to_local_currency order_item.total_price %}<br>
+          <span class="text-success">
+            {% if order_item.is_shipped %}
+              {% trans 'Is already shipped' %}.
+            {% endif %}
+          </span>
         </li>
       {% endfor %}
     </ul>
@@ -29,13 +34,14 @@
         {% trans 'Activated coupon' %}: {{ order.activated_coupon }}
       {% endif %}
       <p class="mb-0">
-        {% trans "Address" %}: {{ order.address }}<br>
         {% trans 'Total price' %}: {% to_local_currency order.total_price %}
       </p>
-      {% if not order.has_paid %}
+      {% if order.has_paid %}
+        {% trans "Address" %}: {{ order.address }}<br>
+      {% else %}
         <div class="d-flex flex-row justify-content-between">
           <p>
-            {% trans "Status" %}: {% trans "awaiting for payment" %}
+            {% trans "Status" %}: {{ order.status }}
           </p>
           <div>
             <a href="{% url 'market_app:order_cancel' pk=order.pk %}" class="btn btn-danger">
