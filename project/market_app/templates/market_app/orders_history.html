@@ -17,16 +17,16 @@
               </a>
             </div>
             <div class="col col-12 col-md-4 text-center">
-              {% if order.operation %}
-                {{ order.operation.transaction_time }}
-              {% else %}
+              {% if not order.has_paid %}
                 <span class="text-secondary">
-                {{ order.get_status_display }}
+                  {{ order.status }}
                 </span>
+              {% else %}
+                {{ order.status }}
               {% endif %}
             </div>
             <div class="col col-12 col-md-4 text-end">
-              {% if order.operation %}
+              {% if order.operation_id %}
                 <span class="text-success">
                   {% to_local_currency order.operation.amount %}
                 </span>

@@ -17,11 +17,11 @@ MAX_OPERATION_DIGITS_COUNT = MAX_BALANCE_DIGITS_COUNT
 
 
 class OrderStatusChoices(models.TextChoices):
-    UNPAID = 'UNPAID', _("awaiting for payment")
-    CANCELED = "CANCEL", _("canceled")
-    HAS_PAID = "HAS_PAID", _("has successfully paid")
-    SHIPPED = 'SHIPPED', _("Shipped")
-    DELIVERED = 'DELIVERED', _("successfully completed")
+    UNPAID = _("awaiting for payment")
+    CANCELED = _("canceled")
+    HAS_PAID = _("has successfully paid")
+    SHIPPED = _("Shipped")
+    DELIVERED = _("successfully completed")
 
 
 class ProductCategory(models.Model):
@@ -374,7 +374,7 @@ class Order(models.Model):
     def status(self):
         if not self.has_paid:
             return OrderStatusChoices.UNPAID
-        elif self.items.filter(is_shipped=False):
+        elif not all(item.is_shipped for item in self.items.all()):
             return OrderStatusChoices.HAS_PAID
         else:
             return OrderStatusChoices.SHIPPED

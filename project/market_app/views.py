@@ -226,7 +226,7 @@ class OrderDetail(PermissionRequiredMixin, generic.DetailView):
                     'product_type__product__name', 'amount', 'payment__amount',
                     'order', 'product_type__properties', 'product_type__markup_percent',
                     'product_type__product__discount_percent',
-                    'product_type__product__original_price'
+                    'product_type__product__original_price', 'is_shipped'
                 ).filter(order_id=order_pk).select_related(
                     'product_type', 'product_type__product', 'payment'
                 ))
@@ -247,7 +247,11 @@ class OrderListView(generic.ListView):
         return Order.objects.filter(user_id=user_id).prefetch_related(
             Prefetch(
                 'items',
-                OrderItem.objects.select_related(
+                OrderItem.objects.only(
+                    'product_type__product__name', 'amount', 'payment__amount',
+                    'order', 'product_type__markup_percent',
+                    'product_type__product__discount_percent',
+                    'product_type__product__original_price', 'is_shipped').select_related(
                     'product_type', 'product_type__product'
                 )
             )
