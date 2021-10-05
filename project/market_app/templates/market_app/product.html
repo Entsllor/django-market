@@ -33,14 +33,35 @@
         {% include 'core_app/include/pretty_form.html' with form=form without_button=True %}
         {% csrf_token %}
         <div class="d-flex">
-          {% if product.discount_percent %}
-            <span>price: <b>{% to_local_currency  product.sale_price %}</b>
-              <s>{% to_local_currency product.original_price %}</s></span>
-          {% else %}
-            <span>{% trans "price" %}: {% to_local_currency product.original_price %}</span>
-          {% endif %}
+          <div>
+            {% if product.discount_percent %}
+              <span>{% trans "Unit price" %}:
+              <b id="sale_price">
+                {% to_local_currency product.sale_price %}
+              </b>
+              <s id="original_price">
+                {% to_local_currency product.original_price %}
+              </s>
+            </span>
+            {% else %}
+              <span>
+              {% trans "Unit price" %}:
+              <span id="sale_price">
+                {% to_local_currency product.original_price %}
+              </span>
+            </span>
+            {% endif %}
+            <br>
+            <div id="total_price" style="display: none">
+              {% trans 'Total price' %}:
+              <b id="total_sale_price"></b>
+              {% if product.discount_percent %}
+                <s id="total_original_price"></s>
+              {% endif %}
+            </div>
+          </div>
 
-          <div class="ms-auto">
+          <div class="ms-auto mt-auto">
             {% if is_market_owner %}
               <a href="{% url 'market_app:edit_product' pk=product.pk %}"
                  class="btn btn-dark">{% trans 'Edit product' %}
@@ -61,4 +82,42 @@
       </div>
     {% endif %}
   </div>
+
+  <script>
+      const MARKUPS = JSON.parse('{{ markup_percents }}'.replace(/&quot;/ig, '"'));
+      const LOCAL_CURRENCY_RATE = Number("{{ LOCAL_CURRENCY.rate }}".replace(',', '.'));
+      const LOCAL_CURRENCY_SYM = "{{ LOCAL_CURRENCY.sym }}";
+      const ORIGINAL_PRICE = Number("{{ product.original_price }}");
+      const SALE_PRICE = Number("{{ product.sale_price }}");
+      const salePriceElem = document.getElementById('sale_price');
+      const originalPriceElem = document.getElementById('original_price');
+      const totalSalePriceElem = document.getElementById('total_sale_price');
+      const totalOriginalPriceElem = document.getElementById('total_original_price');
+      const pTypeChoiceField = document.getElementById('id_product_type');
+      const pTypeCountField = document.getElementById('id_quantity');
+      const totalPriceElem = document.getElementById('total_price')
+
+
+      const toLocalCurrency = price => {
+          let local_price = (price * LOCAL_CURRENCY_RATE).toFixed(2)
+          return String(local_price) + LOCAL_CURRENCY_SYM
+      };
+
+      const onChangeCount = () => {
+          let markup = MARKUPS[pTypeChoiceField.value] || 0
+          let quantity = Number(pTypeCountField.value)
+          let unitSalePrice = SALE_PRICE * (1 + (markup) / 100)
+          let unitOriginalPrice = ORIGINAL_PRICE * (1 + (markup) / 100)
+          if (quantity > 1) {
+              totalPriceElem.style.display = ''
+          } else {
+              totalPriceElem.style.display = 'none'
+          }
+          totalSalePriceElem.textContent = toLocalCurrency(unitSalePrice * quantity);
+          totalOriginalPriceElem.textContent = toLocalCurrency(unitOriginalPrice * quantity);
+          salePriceElem.textContent = toLocalCurrency(unitSalePrice);
+          originalPriceElem.textContent = toLocalCurrency(unitOriginalPrice);
+      };
+      onload = onChangeCount
+  </script>
 {% endblock %}

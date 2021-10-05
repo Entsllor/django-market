@@ -101,10 +101,16 @@ class AddToCartForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.types = kwargs.pop('types')
         super(AddToCartForm, self).__init__(*args, **kwargs)
-        self.fields['product_type'] = forms.ModelChoiceField(
-            queryset=self.types, initial=0
+        choices = ((i_type.pk, str(i_type)) for i_type in self.types)
+        self.fields['product_type'] = forms.ChoiceField(
+            choices=choices, initial=1
         )
-
+        self.fields['product_type'].widget.attrs.update(
+            onchange='onChangeCount()'
+        )
+        self.fields['quantity'].widget.attrs.update(
+            onchange='onChangeCount()'
+        )
 
 class CreditCardForm(MoneyExchangerMixin, forms.Form):
     name_on_card = forms.CharField(max_length=63)

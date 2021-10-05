@@ -1,3 +1,4 @@
+import json
 import re
 
 from django.contrib import messages
@@ -120,6 +121,9 @@ class ProductPageView(generic.FormView):
     def get_context_data(self, **kwargs):
         context = super(ProductPageView, self).get_context_data(**kwargs)
         context['product'] = self.object
+        context['markup_percents'] = json.dumps(
+            {i_type.pk: str(i_type.markup_percent) for i_type in self.product_types}
+        )
         context['is_market_owner'] = self.object.market.owner_id == self.request.user.id
         return context
 
@@ -134,7 +138,7 @@ class ProductPageView(generic.FormView):
             form.add_error('product_type', _('Cannot buy your own product.'))
             return super(ProductPageView, self).form_invalid(form)
         self.request.user.cart.set_item(
-            product_type_pk=form.cleaned_data['product_type'].pk,
+            product_type_pk=form.cleaned_data['product_type'],
             quantity=quantity)
         return super(ProductPageView, self).form_valid(form)
 
