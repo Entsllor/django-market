@@ -1,5 +1,6 @@
 {% extends 'market_app/app_base.html' %}
 {% load i18n %}
+{% load l10n %}
 {% load currencies %}
 {% load market_app_blocks %}
 {% load market_app_utils %}
@@ -17,7 +18,7 @@
         <ul class="list-group list-group-flush">
           <script>
 
-              const LOCAL_CURRENCY_RATE = Number("{{ LOCAL_CURRENCY.rate }}".replace(',', '.'));
+              const LOCAL_CURRENCY_RATE = Number("{{ LOCAL_CURRENCY.rate|unlocalize }}");
               const LOCAL_CURRENCY_SYM = "{{ LOCAL_CURRENCY.sym }}";
               let prices = {}
               let original_prices = {}

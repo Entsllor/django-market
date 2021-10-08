@@ -1,6 +1,7 @@
 {% extends 'market_app/app_base.html' %}
 {% load i18n %}
 {% load currencies %}
+{% load l10n %}
 
 {% block main_center_card %}
   <div class="card-header content-title">
@@ -84,11 +85,11 @@
   </div>
 
   <script>
-      const MARKUPS = JSON.parse('{{ markup_percents }}'.replace(/&quot;/ig, '"'));
-      const LOCAL_CURRENCY_RATE = Number("{{ LOCAL_CURRENCY.rate }}".replace(',', '.'));
+      const MARKUPS = JSON.parse('{{ markup_percents|unlocalize }}'.replace(/&quot;/ig, '"'));
+      const LOCAL_CURRENCY_RATE = Number("{{ LOCAL_CURRENCY.rate|unlocalize }}");
       const LOCAL_CURRENCY_SYM = "{{ LOCAL_CURRENCY.sym }}";
-      const ORIGINAL_PRICE = Number("{{ product.original_price }}");
-      const SALE_PRICE = Number("{{ product.sale_price }}");
+      const ORIGINAL_PRICE = Number("{{ product.original_price|unlocalize }}");
+      const SALE_PRICE = Number("{{ product.sale_price|unlocalize }}");
       const salePriceElem = document.getElementById('sale_price');
       const originalPriceElem = document.getElementById('original_price');
       const totalSalePriceElem = document.getElementById('total_sale_price');
