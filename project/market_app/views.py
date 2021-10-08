@@ -12,6 +12,7 @@ from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views import generic
 
+from currencies.models import Currency
 from currencies.services import get_currency_code_by_language, DEFAULT_CURRENCY, \
     get_exchanger
 from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, ProductTypeForm, CreditCardForm, \
@@ -420,20 +421,27 @@ class SearchProducts(CatalogueView, generic.edit.FormMixin):
         if not show_if_sold_out or show_if_sold_out in ('0', 'False', 'false'):
             query_params['product_types__isnull'] = False
 
-        market = self.request.GET.get('market')
-        if market:
-            query_params['market__name'] = market
+        market_name = self.request.GET.get('market')
+        if market_name:
+            query_params['market__name'] = market_name
 
         category = self.request.GET.get('category')
         if category:
             query_params['category'] = category
 
         currency_code = self.request.GET.get('currency_code', DEFAULT_CURRENCY)
-        exchange_to_default = get_exchanger(to=DEFAULT_CURRENCY, _from=currency_code)
+        try:
+            exchange_to_default = get_exchanger(to=DEFAULT_CURRENCY, _from=currency_code)
+        except Currency.DoesNotExist:
+            exchange_to_default = get_exchanger(DEFAULT_CURRENCY, DEFAULT_CURRENCY)
+            messages.warning(
+                self.request,
+                _('Sorry, but we cannot find current rate for this currency: {}').format(currency_code)
+            )
+
         min_price = self.request.GET.get('min_price')
         if min_price and re.fullmatch(r'[0-9]+(\.[0-9]{1,2})?', min_price):
             query_params['original_price__gte'] = exchange_to_default(min_price)
-
         max_price = self.request.GET.get('max_price')
         if max_price and re.fullmatch(r'[0-9]+(\.[0-9]{1,2})?', max_price):
             query_params['original_price__lte'] = exchange_to_default(max_price)
