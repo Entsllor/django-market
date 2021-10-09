@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import Iterable, Union
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -14,6 +15,7 @@ MAX_BALANCE_DIGITS_COUNT = settings.MAX_BALANCE_DIGITS_COUNT
 MONEY_DECIMAL_PLACES = settings.MONEY_DECIMAL_PLACES
 MONEY_DECIMAL_QUANTIZE = Decimal('1.' + '0' * MONEY_DECIMAL_PLACES)
 MAX_OPERATION_DIGITS_COUNT = MAX_BALANCE_DIGITS_COUNT
+Money = Union[Decimal, int]
 
 
 class OrderStatusChoices(models.TextChoices):
@@ -117,14 +119,14 @@ class Product(models.Model):
     attributes = models.TextField(verbose_name=_('attributes'), blank=True)
 
     @property
-    def get_attributes(self):
+    def get_attributes(self) -> Iterable:
         return map(str.strip, self.attributes.split('\n'))
 
     def get_types(self) -> QuerySet['ProductType']:
         return getattr(self, 'product_types')
 
     @property
-    def sale_price(self):
+    def sale_price(self) -> Money:
         return round(self.original_price * ((100 - self.discount_percent) / 100), MONEY_DECIMAL_PLACES)
 
     @property
@@ -167,11 +169,11 @@ class ProductType(models.Model):
     )
 
     @property
-    def original_price(self):
+    def original_price(self) -> Money:
         return round(self.product.original_price * (1 + (self.markup_percent / 100)), MONEY_DECIMAL_PLACES)
 
     @property
-    def sale_price(self):
+    def sale_price(self) -> Money:
         return round(self.product.sale_price * (1 + (self.markup_percent / 100)), MONEY_DECIMAL_PLACES)
 
     @property
@@ -189,11 +191,11 @@ class ProductType(models.Model):
         return bool(status_code)
 
     @property
-    def str_attributes(self):
+    def str_attributes(self) -> str:
         return ', '.join(f'{key}: {value}' for key, value in self.properties.items())
 
     @property
-    def dict_attributes(self):
+    def dict_attributes(self) -> dict:
         return {attr: value for attr, value in self.properties.items()}
 
     def __str__(self):
@@ -213,7 +215,7 @@ class ProductImage(models.Model):
         verbose_name_plural = _('products images')
 
 
-def _validate_units_quantity(quantity):
+def _validate_units_quantity(quantity) -> None:
     if not isinstance(quantity, int) or quantity < 0:
         raise ValueError(f'Expected a natural number, got {quantity} instead')
 
@@ -241,13 +243,13 @@ class Cart(models.Model):
         )
         return items
 
-    def get_count(self, pk):
+    def get_count(self, pk) -> int:
         return self.items[str(pk)]
 
-    def get_types_pks(self):
+    def get_types_pks(self) -> tuple:
         return tuple(self.items.keys())
 
-    def set_item(self, product_type_pk, quantity, commit=True):
+    def set_item(self, product_type_pk, quantity: int, commit: bool = True) -> None:
         _validate_units_quantity(quantity)
         product_type_pk = str(product_type_pk)
         if quantity == 0:
@@ -260,10 +262,10 @@ class Cart(models.Model):
         if commit:
             self.save(update_fields=['items'])
 
-    def clear(self):
+    def clear(self) -> int:
         return Cart.objects.filter(pk=self.pk).update(items=self._default_cart_value())
 
-    def _remove_nonexistent_product_types(self):
+    def _remove_nonexistent_product_types(self) -> None:
         old_pks = self.get_types_pks()
         new_pks = ProductType.objects.values_list('pk', flat=True)
         for pk in old_pks:
@@ -271,24 +273,20 @@ class Cart(models.Model):
                 del self.items[str(pk)]
         self.save(update_fields=['items'])
 
-    def _remove_own_products_types_from_cart(self):
+    def _remove_own_products_types_from_cart(self) -> None:
         own_products_types_pks = ProductType.objects.filter(
             product__market__owner=self.user).values_list('pk', flat=True)
         self.items = {pk: count for pk, count in self.items.items() if int(pk) not in own_products_types_pks}
         self.save(update_fields=['items'])
 
-    def _to_valid_units_count(self):
+    def _to_valid_units_count(self) -> int:
         valid_items = {item: count for item, count in self.items.items()}
-        Cart.objects.filter(pk=self.pk).update(items=valid_items)
+        return Cart.objects.filter(pk=self.pk).update(items=valid_items)
 
-    def prepare_items(self):
+    def prepare_items(self) -> None:
         self._remove_nonexistent_product_types()
         self._remove_own_products_types_from_cart()
         self._to_valid_units_count()
-
-
-def _create_cart():
-    return Cart.objects.create()
 
 
 class Balance(models.Model):
@@ -306,7 +304,7 @@ class Balance(models.Model):
         default=0
     )
 
-    def get_operations_amount_sum(self):
+    def get_operations_amount_sum(self) -> Decimal:
         result = getattr(self.user, 'operations').aggregate(sum=Sum('amount'))['sum'] or Decimal('0.00')
         return result.quantize(Decimal('1.00'))
 
@@ -367,11 +365,11 @@ class Order(models.Model):
     )
 
     @property
-    def has_paid(self):
+    def has_paid(self) -> bool:
         return self.operation_id is not None
 
     @property
-    def status(self):
+    def status(self) -> str:
         if not self.has_paid:
             return OrderStatusChoices.UNPAID
         elif not all(item.is_shipped for item in self.items.all()):
@@ -379,7 +377,7 @@ class Order(models.Model):
         else:
             return OrderStatusChoices.SHIPPED
 
-    def get_units_count(self):
+    def get_units_count(self) -> dict:
         return {str(pk): amount for pk, amount in self.items.values_list('product_type_id', 'amount')}
 
     def get_units_count_of(self, product_type_pk) -> int:
@@ -391,18 +389,18 @@ class Order(models.Model):
     def get_absolute_url(self):
         return reverse_lazy('market_app:order_detail', kwargs={'pk': self.pk})
 
-    def _get_coupon_discount(self, total_price):
+    def _get_coupon_discount(self, total_price: Money) -> Money:
         coupon = self.activated_coupon
         coupon_discount = total_price * coupon.discount_percent / 100
         if coupon.max_discount:
             coupon_discount = min(coupon_discount, coupon.max_discount)
         return coupon_discount
 
-    def set_coupon(self, coupon):
-        Order.objects.filter(pk=self.pk).update(activated_coupon=coupon)
+    def set_coupon(self, coupon: 'Coupon') -> int:
+        return Order.objects.filter(pk=self.pk).update(activated_coupon=coupon)
 
     @property
-    def total_price(self):
+    def total_price(self) -> Money:
         if not self.operation_id:
             total_price = 0
             items = self.items.all()
@@ -442,7 +440,7 @@ class OrderItem(models.Model):
     is_shipped = models.BooleanField(verbose_name=_('is shipped'), default=False)
 
     @property
-    def total_price(self):
+    def total_price(self) -> Money:
         if self.payment_id:
             return self.payment.amount
         return self.product_type.sale_price * self.amount

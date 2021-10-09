@@ -24,11 +24,11 @@ class OrderCannotBeCancelledError(BaseException):
     """Raise if the order cannot be cancelled"""
 
 
-def _set_order_operation(operation: Operation, order: Order):
+def _set_order_operation(operation: Operation, order: Order) -> None:
     order.operation = operation
 
 
-def _take_units_from_db(product_type, expected_count):
+def _take_units_from_db(product_type: ProductType, expected_count: int) -> int:
     total_units = product_type.units_count
     if expected_count < 1:
         return 0
@@ -40,14 +40,14 @@ def _take_units_from_db(product_type, expected_count):
     return taken_units
 
 
-def validate_money_amount(money_amount):
+def validate_money_amount(money_amount: Decimal) -> None:
     if not isinstance(money_amount, (Decimal, int)):
         raise TypeError(f'Expected a decimal or integer number, got "{money_amount}" instead.')
     elif money_amount < 0:
         raise ValueError(f'Expected a positive number, got "{money_amount}" instead.')
 
 
-def prepare_order(cart: Cart):
+def prepare_order(cart: Cart) -> Order:
     cart.prepare_items()
     product_types = cart.get_cart_items()
     order = Order.objects.create(user_id=cart.user_id)
@@ -78,7 +78,7 @@ def _cancel_order(order: Order) -> None:
     order.delete()
 
 
-def try_to_cancel_order(order: Order, user_id):
+def try_to_cancel_order(order: Order, user_id: int) -> None:
     customer_id = Order.objects.filter(pk=order.pk).values_list('user_id', flat=True).first()
     if customer_id != user_id:
         raise OrderCannotBeCancelledError(f"User(id={user_id}) cannot cancel Order(id={order.id})")
@@ -87,14 +87,14 @@ def try_to_cancel_order(order: Order, user_id):
     _cancel_order(order)
 
 
-def activate_coupon_to_order(order: Order, user: User, coupon: Coupon):
+def activate_coupon_to_order(order: Order, user: User, coupon: Coupon) -> None:
     if user.coupon_set.filter(pk=coupon.pk).exists():
         order.set_coupon(coupon)
         coupon.customers.remove(user)
         order.refresh_from_db()
 
 
-def _send_money_to_sellers(order: Order):
+def _send_money_to_sellers(order: Order) -> None:
     operations = []
     order_items = order.items.only(
         'amount', 'product_type__product__original_price', 'product_type__product__discount_percent',
@@ -117,19 +117,21 @@ def _send_money_to_sellers(order: Order):
     OrderItem.objects.bulk_update(order_items, fields=['payment'])
 
 
-def _check_if_already_paid(order: Order, raise_error=True):
-    if order.operation:
-        if raise_error:
-            raise PermissionDenied('Cannot pay twice for one order.')
-        return order.operation
+def _check_if_already_paid(order: Order) -> None:
+    if order.operation_id:
+        raise PermissionDenied('Cannot pay twice for one order.')
 
 
-def _check_if_order_empty(order: Order):
-    if not order.items:
+def _check_if_order_empty(order: Order, use_exists=False) -> None:
+    if use_exists:
+        is_empty = not order.items.exists()
+    else:
+        is_empty = not order.items
+    if is_empty:
         raise EmptyOrderError('This order is empty.')
 
 
-def _validate_order(order: Order):
+def _validate_order(order: Order) -> None:
     """Check if order is ready do purchase."""
     order.refresh_from_db()
     _check_if_order_empty(order)
@@ -148,7 +150,7 @@ def make_purchase(order: Order, user: User, coupon: Coupon = None) -> Operation:
     return purchase_operation
 
 
-def _change_balance_amount(user: User, operation_type: str, amount_of_money, commit=True):
+def _change_balance_amount(user: User, operation_type: str, amount_of_money: Decimal, commit=True) -> Operation:
     validate_money_amount(amount_of_money)
     balance = user.balance
     if operation_type == SUBTRACT:
@@ -168,13 +170,13 @@ def _change_balance_amount(user: User, operation_type: str, amount_of_money, com
     return operation
 
 
-def withdraw_money(user: User, amount_of_money):
+def withdraw_money(user: User, amount_of_money: Decimal) -> Operation:
     logger.info(f'Try to withdraw User(pk={user.pk}) balance. Amount: {amount_of_money}.')
     operation = _change_balance_amount(user, SUBTRACT, amount_of_money)
     return operation
 
 
-def top_up_balance(user: User, amount_of_money):
+def top_up_balance(user: User, amount_of_money) -> Operation:
     logger.info(f"Try to top-up User(pk={user.pk}) balance. Amount: {amount_of_money}.")
     operation = _change_balance_amount(user, ADD, amount_of_money)
     return operation

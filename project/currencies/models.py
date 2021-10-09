@@ -36,7 +36,7 @@ class CurrencyManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset()
 
-    def update_rates(self, codes):
+    def update_rates(self, codes: str) -> None:
         if not codes:
             currencies_to_update = self.filter(code__in=codes)
         else:
@@ -46,16 +46,13 @@ class CurrencyManager(models.Manager):
             cur_to_update.rate = rates[cur_to_update.code]
         currencies_to_update.bulk_update(currencies_to_update, fields=['rate'])
 
-    def refresh(self):
-        self.filter()
-
 
 class Currency(models.Model):
     code = models.CharField(verbose_name=_('currency code'), max_length=5, primary_key=True)
     sym = models.CharField(verbose_name=_('currency symbol'), max_length=1)
     rate = models.DecimalField(verbose_name=_('exchange rate'), max_digits=5, decimal_places=2)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.code
 
     class Meta:
