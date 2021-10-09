@@ -10,6 +10,10 @@ from ..services import (
 )
 
 
+def get_product_type(pk):
+    return ProductType.objects.get(pk=pk)
+
+
 class ChangeBalanceTest(BaseMarketTestCase):
     def setUp(self) -> None:
         self.customer = self.create_customer()
@@ -228,25 +232,25 @@ class TakeUnitsFromDBTest(TestBaseWithFilledCatalogue):
 
     @assert_difference({1: 0, 2: 0, 8: 1})
     def test_take_units_from_db(self):
-        self.assertEqual(_take_units_from_db(1, 10), 10)
-        self.assertEqual(_take_units_from_db(2, 5), 5)
-        self.assertEqual(_take_units_from_db(8, 4), 4)
+        self.assertEqual(_take_units_from_db(get_product_type(1), 10), 10)
+        self.assertEqual(_take_units_from_db(get_product_type(2), 5), 5)
+        self.assertEqual(_take_units_from_db(get_product_type(8), 4), 4)
 
     @assert_difference({1: 10})
     def test_take_zero_units_from_db(self):
-        taken_count = _take_units_from_db(1, 0)
+        taken_count = _take_units_from_db(get_product_type(1), 0)
         self.assertEqual(taken_count, 0)
 
     @assert_difference({1: 10})
     def test_try_take_negative_count_from_db(self):
-        taken_count = _take_units_from_db(1, -5)
+        taken_count = _take_units_from_db(get_product_type(1), -5)
         self.assertEqual(taken_count, 0)
 
     @assert_difference({1: 0})
     def test_take_enable_counts_if_cant_take_expected_count(self):
         start_count = self.product_types.get(pk=1).units_count
         expected_count = 100
-        taken_count = _take_units_from_db(1, expected_count)
+        taken_count = _take_units_from_db(get_product_type(1), expected_count)
         self.assertEqual(start_count, taken_count)
         self.assertLess(taken_count, expected_count)
 

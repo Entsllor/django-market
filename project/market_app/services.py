@@ -29,8 +29,6 @@ def _set_order_operation(operation: Operation, order: Order):
 
 
 def _take_units_from_db(product_type, expected_count):
-    if not isinstance(product_type, ProductType):
-        product_type = ProductType.objects.only('units_count').get(pk=product_type)
     total_units = product_type.units_count
     if expected_count < 1:
         return 0
@@ -90,8 +88,6 @@ def try_to_cancel_order(order: Order, user_id):
 
 
 def activate_coupon_to_order(order: Order, user: User, coupon: Coupon):
-    if not isinstance(coupon, Coupon):
-        coupon = Coupon.objects.get(pk=coupon)
     if user.coupon_set.filter(pk=coupon.pk).exists():
         order.set_coupon(coupon)
         coupon.customers.remove(user)
