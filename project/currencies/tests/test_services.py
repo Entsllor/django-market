@@ -23,9 +23,9 @@ class CurrencyTest(TestCase):
             self.assertEqual(currency.code, currency_code)
 
     def test_return_default_if_unexpected_language(self):
-        self.assertNotEqual('TEST_CODE', settings.DEFAULT_CURRENCY)
+        self.assertNotEqual('TEST_CODE', settings.DEFAULT_CURRENCY_CODE)
         currency = get_currency_by_language('TEST_CODE')
-        self.assertEqual(currency.code, settings.DEFAULT_CURRENCY)
+        self.assertEqual(currency.code, settings.DEFAULT_CURRENCY_CODE)
 
     def test_exchange_to(self):
         amount_to_exchange = 100
@@ -45,5 +45,5 @@ class CurrencyTest(TestCase):
         amount_to_exchange = 100
         rate_of_test_currency = Decimal('5')
         create_currency(code='TEST', sym='T', rate=rate_of_test_currency)
-        exchanged_amount = exchange_to(settings.DEFAULT_CURRENCY, amount_to_exchange, _from='TEST')
+        exchanged_amount = exchange_to(settings.DEFAULT_CURRENCY_CODE, amount_to_exchange, _from='TEST')
         self.assertEqual(exchanged_amount, 20)

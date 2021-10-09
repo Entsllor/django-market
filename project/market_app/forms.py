@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from currencies.services import exchange_to, get_currency_choices
 from .models import Product, Market, ProductType, ProductCategory, Cart
 
-DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY
+DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY_CODE
 product_attributes_placeholder = _(
     'Enter product attributes separated by newline here. \nFor example:\nheight\ncolor\nmaterial\n\n'
     'You will set value to these attributes while creating new product types.'

@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 
 from currencies.services import update_rates
 
-DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY
+DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY_CODE
 SITE_URL = f'https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/{DEFAULT_CURRENCY.lower()}.json'
 
 

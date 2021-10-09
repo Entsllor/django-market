@@ -3,7 +3,7 @@ from django.db.models import Q
 from django.test import TestCase
 from django.urls import reverse_lazy
 
-from currencies.services import DEFAULT_CURRENCY, exchange_to
+from currencies.services import DEFAULT_CURRENCY_CODE, exchange_to
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue, FailedToCreateObject
 from ..models import Market, Product, ProductCategory, Operation, ProductType, Order, OrderItem, OrderStatusChoices
 from ..services import top_up_balance, make_purchase, prepare_order
@@ -79,7 +79,7 @@ class ProductCreateTest(ViewTestMixin, BaseMarketTestCase):
 
     def post_to_product_create(
             self, data: dict = None, extra_data: dict = None,
-            check_unique=True, currency_code=DEFAULT_CURRENCY, **kwargs):
+            check_unique=True, currency_code=DEFAULT_CURRENCY_CODE, **kwargs):
         if data is None:
             data = self.product_data
         data = data.copy()
@@ -106,15 +106,15 @@ class ProductCreateTest(ViewTestMixin, BaseMarketTestCase):
 
     def test_create_in_default_currency(self):
         self.log_in_as_seller()
-        expected_price = exchange_to(DEFAULT_CURRENCY, 1000)
+        expected_price = exchange_to(DEFAULT_CURRENCY_CODE, 1000)
         self.assertNotEqual(expected_price, self.product_data['original_price'])
-        self.post_to_product_create(extra_data={'original_price': 1000}, currency_code=DEFAULT_CURRENCY)
+        self.post_to_product_create(extra_data={'original_price': 1000}, currency_code=DEFAULT_CURRENCY_CODE)
         real_price = self.created_product.original_price
         self.assertEqual(expected_price, real_price)
 
     def test_create_in_another_currency(self):
         self.log_in_as_seller()
-        expected_price = exchange_to(DEFAULT_CURRENCY, 1000, _from='RUB')
+        expected_price = exchange_to(DEFAULT_CURRENCY_CODE, 1000, _from='RUB')
         self.assertNotEqual(expected_price, self.product_data['original_price'])
         self.post_to_product_create(extra_data={'original_price': 1000}, currency_code='RUB')
         real_price = self.created_product.original_price
@@ -153,7 +153,7 @@ class ProductEditTest(ViewTestMixin, BaseMarketTestCase):
     def product(self):
         return Product.objects.get(pk=self._product.pk)
 
-    def post_to_product_edit(self, product_id: int, data_to_update: dict, currency_code=DEFAULT_CURRENCY, **kwargs):
+    def post_to_product_edit(self, product_id: int, data_to_update: dict, currency_code=DEFAULT_CURRENCY_CODE, **kwargs):
         data_to_post = prepare_product_data_to_post(self.old_data.copy() | data_to_update)
         data_to_post.update({'currency_code': currency_code})
         return self.post_to_page(
@@ -185,16 +185,16 @@ class ProductEditTest(ViewTestMixin, BaseMarketTestCase):
             self.assertEqual(getattr(self.product, key), self.old_data[key])
 
     def test_edit_price_in_default_currency(self):
-        expected_price = exchange_to(DEFAULT_CURRENCY, 1000)
+        expected_price = exchange_to(DEFAULT_CURRENCY_CODE, 1000)
         self.assertNotEqual(expected_price, self.product.original_price)
         self.log_in_as_seller()
         self.post_to_product_edit(self.product.id, data_to_update={'original_price': 1000},
-                                  currency_code=DEFAULT_CURRENCY)
+                                  currency_code=DEFAULT_CURRENCY_CODE)
         new_price = self.product.original_price
         self.assertEqual(new_price, expected_price)
 
     def test_edit_price_in_another_currency(self):
-        expected_price = exchange_to(DEFAULT_CURRENCY, 100, _from='RUB')
+        expected_price = exchange_to(DEFAULT_CURRENCY_CODE, 100, _from='RUB')
         self.assertNotEqual(expected_price, self.product.original_price)
         self.log_in_as_seller()
         self.post_to_product_edit(self.product.id, data_to_update={'original_price': 100}, currency_code='RUB')
@@ -553,7 +553,7 @@ class TopUpViewTest(ViewTestMixin, BaseMarketTestCase):
             'name_on_card': 'FULL NAME',
             'card_number': 9999999999999999,
             'top_up_amount': 1000,
-            'currency_code': DEFAULT_CURRENCY
+            'currency_code': DEFAULT_CURRENCY_CODE
         }
         self.assertEqual(self.user.balance.amount, 0)
         response = self.post_to_page(data=data)

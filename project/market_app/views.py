@@ -13,7 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views import generic
 
 from currencies.models import Currency
-from currencies.services import get_currency_code_by_language, DEFAULT_CURRENCY, \
+from currencies.services import get_currency_code_by_language, DEFAULT_CURRENCY_CODE, \
     get_exchanger
 from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, ProductTypeForm, CreditCardForm, \
     AdvancedSearchForm, CartForm, CheckOutForm
@@ -429,11 +429,11 @@ class SearchProducts(CatalogueView, generic.edit.FormMixin):
         if category:
             query_params['category'] = category
 
-        currency_code = self.request.GET.get('currency_code', DEFAULT_CURRENCY)
+        currency_code = self.request.GET.get('currency_code', DEFAULT_CURRENCY_CODE)
         try:
-            exchange_to_default = get_exchanger(to=DEFAULT_CURRENCY, _from=currency_code)
+            exchange_to_default = get_exchanger(to=DEFAULT_CURRENCY_CODE, _from=currency_code)
         except Currency.DoesNotExist:
-            exchange_to_default = get_exchanger(DEFAULT_CURRENCY, DEFAULT_CURRENCY)
+            exchange_to_default = get_exchanger(DEFAULT_CURRENCY_CODE, DEFAULT_CURRENCY_CODE)
             messages.warning(
                 self.request,
                 _('Sorry, but we cannot find current rate for this currency: {}').format(currency_code)

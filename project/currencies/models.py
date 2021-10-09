@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 logger = logging.getLogger('debug')
 
-DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY
+DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY_CODE
 SITE_URL = f'https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/{DEFAULT_CURRENCY.lower()}.json'
 
 
