@@ -28,7 +28,7 @@
             <div class="col col-12 col-md-4 text-end">
               {% if order.operation_id %}
                 <span class="text-success">
-                  {% to_local_currency order.operation.amount %}
+                  {% to_local_currency order.total_price %}
                 </span>
               {% else %}
                 <span class="text-secondary">

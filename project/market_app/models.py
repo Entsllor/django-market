@@ -330,6 +330,10 @@ class Operation(models.Model):
     def get_absolute_url(self):
         return reverse_lazy('market_app:order_detail', kwargs={'pk': self.pk})
 
+    @property
+    def absolute_amount(self) -> Money:
+        return abs(self.amount)
+
     class Meta:
         verbose_name = _('operation')
         verbose_name_plural = _('operations')
@@ -410,7 +414,7 @@ class Order(models.Model):
                 coupon_discount = self._get_coupon_discount(total_price)
                 total_price -= coupon_discount
         else:
-            total_price = self.operation.amount
+            total_price = self.operation.absolute_amount
         return round(total_price, MONEY_DECIMAL_PLACES)
 
 
