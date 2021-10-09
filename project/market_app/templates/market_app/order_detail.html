@@ -9,7 +9,7 @@
       {% trans 'Order №' %}{{ order.id }}
     </div>
     <ul class="list-group list-group-flush">
-      {% for order_item in order_items %}
+      {% for order_item in order.items.all %}
         <li class="list-group-item">
           <h4 class="text-center">
             <a href="{{ order_item.product_type.product.get_absolute_url }}">
@@ -17,7 +17,7 @@
             </a>
           </h4>
           {% trans "Amount" %}: {{ order_item.amount }}<br class="p">
-          {% for prop, value in order_item.product_type.dict_attributes.items %}
+          {% for prop, value in order_item.product_type.properties_as_dict.items %}
             {{ prop }}: {{ value }}<br>
           {% endfor %}
           {% trans 'Sale price' %}: {% to_local_currency order_item.total_price %}<br>

@@ -14,7 +14,7 @@
           <div class="list-group-item" id="order_item_{{ item.pk }}">
             <div class="row row-cols-5">
               <div class="col col-3">{{ item.product_type.product.name }}</div>
-              <div class="col col-3">{{ item.product_type.str_attributes }}</div>
+              <div class="col col-3">{{ item.product_type.properties_as_str }}</div>
               <div class="col col-1" id="amount_order_item_{{ item.pk }}">
                 {{ item.amount }}
               </div>

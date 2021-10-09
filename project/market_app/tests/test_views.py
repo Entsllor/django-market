@@ -651,7 +651,7 @@ class ShippingPageView(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.assertTrue(order_items)
         for order_item in order_items:
             self.assertContains(response, f'id="order_item_{order_item.pk}"')
-            self.assertContains(response, f'{order_item.product_type.str_attributes}')
+            self.assertContains(response, f'{order_item.product_type.properties_as_str}')
 
     def test_do_not_display_order_items_from_other_markets(self):
         self._init_orders()

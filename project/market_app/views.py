@@ -220,7 +220,6 @@ class OrderDetail(PermissionRequiredMixin, generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(OrderDetail, self).get_context_data(**kwargs)
-        context['order_items'] = self.object.items.all()
         return context
 
     def get_object(self, queryset=None):

@@ -68,7 +68,7 @@
                 <a href="{% url 'market_app:product' pk=item.product_id %}">
                   <h3>{{ item.product.name }}</h3>
                 </a>
-                {% for attr, value in item.dict_attributes.items %}
+                {% for attr, value in item.properties_as_dict.items %}
                   {{ attr }}: {{ value }} <br>
                 {% endfor %}
                 <div>

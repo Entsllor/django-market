@@ -191,15 +191,15 @@ class ProductType(models.Model):
         return bool(status_code)
 
     @property
-    def str_attributes(self) -> str:
+    def properties_as_str(self) -> str:
         return ', '.join(f'{key}: {value}' for key, value in self.properties.items())
 
     @property
-    def dict_attributes(self) -> dict:
+    def properties_as_dict(self) -> dict:
         return {attr: value for attr, value in self.properties.items()}
 
     def __str__(self):
-        return f'{self.str_attributes or f"id={self.id}"}'
+        return f'{self.properties_as_str or f"id={self.id}"}'
 
     class Meta:
         verbose_name = _('Product type')

@@ -29,7 +29,7 @@
       {% for product_type in product.product_types.all %}
         <tr>
           <th>{{ product_type.units_count }}</th>
-          {% for value in product_type.dict_attributes.values %}
+          {% for value in product_type.properties_as_dict.values %}
             <td>
               {{ value }}
             </td>
