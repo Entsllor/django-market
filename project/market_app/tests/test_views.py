@@ -153,7 +153,8 @@ class ProductEditTest(ViewTestMixin, BaseMarketTestCase):
     def product(self):
         return Product.objects.get(pk=self._product.pk)
 
-    def post_to_product_edit(self, product_id: int, data_to_update: dict, currency_code=DEFAULT_CURRENCY_CODE, **kwargs):
+    def post_to_product_edit(self, product_id: int, data_to_update: dict,
+                             currency_code: str = DEFAULT_CURRENCY_CODE, **kwargs):
         data_to_post = prepare_product_data_to_post(self.old_data.copy() | data_to_update)
         data_to_post.update({'currency_code': currency_code})
         return self.post_to_page(
@@ -416,6 +417,12 @@ class CartViewTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         response = self.post_to_page(data=order_items)
         order = self.user.orders.first()
         self.assertRedirects(response, self.get_success_url(pk=order.pk))
+
+    def test_redirect_if_user_have_unpaid_order(self):
+        self.post_to_page(data={'1': 5, '2': 3, '7': 5})
+        first_order: Order = self.user.orders.first()
+        response = self.post_to_page(data={'1': 2, '17': 1})
+        self.assertRedirects(response, first_order.get_absolute_url())
 
     def test_redirect_if_not_logged_in(self):
         self._test_redirect_if_not_logged_in()

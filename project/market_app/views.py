@@ -192,6 +192,11 @@ class CartView(LoginRequiredMixin, generic.FormView):
         return kwargs
 
     def form_valid(self, form):
+        if unpaid_order := Order.objects.filter(user=self.request.user, operation__isnull=True).first():
+            message = _('Sorry, but you can not create a new order because you have an unpaid order. '
+                        'Please pay for this unpaid order or cancel it')
+            messages.warning(self.request, message)
+            return HttpResponseRedirect(unpaid_order.get_absolute_url(), status=302)
         cart = self.request.user.cart
         cart.items = form.cleaned_data
         order: Order = prepare_order(cart)
