@@ -112,8 +112,10 @@ class ProductPageView(generic.FormView):
 
     def setup(self, request, *args, **kwargs):
         super(ProductPageView, self).setup(request, *args, **kwargs)
-        self.object = Product.objects.select_related('market').get(pk=self.kwargs['pk'])
-        self.product_types = self.object.product_types.filter(units_count__gt=0)
+        self.object = Product.objects.prefetch_related(
+            Prefetch('product_types', ProductType.objects.filter(units_count__gt=0))
+        ).select_related('market').get(pk=self.kwargs['pk'])
+        self.product_types = self.object.product_types.all()
 
     def get_context_data(self, **kwargs):
         context = super(ProductPageView, self).get_context_data(**kwargs)
