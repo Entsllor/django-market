@@ -19,7 +19,7 @@ from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, Pr
     AdvancedSearchForm, CartForm, CheckOutForm
 from .models import Product, Market, ProductType, Operation, Order, OrderItem
 from .services import top_up_balance, make_purchase, prepare_order, EmptyOrderError, OrderCannotBeCancelledError, \
-    try_to_cancel_order, get_products
+    try_to_cancel_order, get_products, get_order_price_if_use_coupon
 
 
 class MarketOwnerRequiredMixin(PermissionRequiredMixin):
@@ -303,13 +303,6 @@ class CheckOutView(PermissionRequiredMixin, generic.FormView):
         context['order'] = self.object
         return context
 
-    def get(self, request, *args, **kwargs):
-        user = self.user
-        if user.balance.amount < self.object.total_price:
-            return HttpResponseRedirect(
-                reverse_lazy('market_app:top_up'))
-        return super(CheckOutView, self).get(request, *args, **kwargs)
-
     def has_permission(self):
         user = self.request.user
         return user.id == self.object.user_id
@@ -319,6 +312,9 @@ class CheckOutView(PermissionRequiredMixin, generic.FormView):
         self.object.save(update_fields=['address'])
         Order.objects.filter(pk=self.kwargs['pk']).update(address=form.cleaned_data['address'])
         if form.cleaned_data['agreement']:
+            if self.user.balance.amount < get_order_price_if_use_coupon(self.object, coupon):
+                return HttpResponseRedirect(
+                    reverse_lazy('market_app:top_up'))
             try:
                 make_purchase(self.object, self.user, coupon)
             except PermissionDenied as exc:

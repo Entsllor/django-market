@@ -131,6 +131,14 @@ def _check_if_order_empty(order: Order, use_exists=False) -> None:
         raise EmptyOrderError('This order is empty.')
 
 
+def get_order_price_if_use_coupon(order: Order, coupon: Coupon):
+    order_coupon_at_start = order.activated_coupon
+    order.activated_coupon = coupon
+    total_price = order.total_price
+    order.activated_coupon = order_coupon_at_start
+    return total_price
+
+
 def _validate_order(order: Order) -> None:
     """Check if order is ready do purchase."""
     order.refresh_from_db()

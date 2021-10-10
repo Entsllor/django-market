@@ -465,7 +465,7 @@ class CheckOutPageTest(ViewTestMixin, TestBaseWithFilledCatalogue):
     def test_redirect_if_user_do_not_have_enough_money(self):
         top_up_balance(self.user, 500)
         self.prepare_order({'1': 5, '7': 5})
-        response = self.get_from_page()
+        response = self.post_to_page(data={'agreement': 'on'})
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, self.top_up_page_url)
 
