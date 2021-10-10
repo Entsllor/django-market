@@ -3,9 +3,9 @@ from decimal import Decimal
 
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, QuerySet
 
-from .models import ProductType, Order, Operation, Cart, Coupon, OrderItem, User
+from .models import ProductType, Order, Operation, Cart, Coupon, OrderItem, User, Product
 
 logger = logging.getLogger(__name__)
 SUBTRACT = '-'
@@ -180,3 +180,11 @@ def top_up_balance(user: User, amount_of_money) -> Operation:
     logger.info(f"Try to top-up User(pk={user.pk}) balance. Amount: {amount_of_money}.")
     operation = _change_balance_amount(user, ADD, amount_of_money)
     return operation
+
+
+def get_products(ordering: str = 'discount_percent') -> QuerySet(Product):
+    fields = ('image', 'original_price', 'discount_percent', 'name', 'image')
+    queryset = Product.objects.distinct().only(*fields).select_related(
+        'productimage').filter(
+        available=True, product_types__isnull=False).order_by(ordering)
+    return queryset

@@ -1,5 +1,6 @@
 {% extends 'market_app/app_base.html' %}
+{% load market_app_blocks %}
 
 {% block main_center_block %}
-  {% include 'market_app/include/catalogue.html' with products=products %}
+  {% products_catalogue page_size=36 %}
 {% endblock %}

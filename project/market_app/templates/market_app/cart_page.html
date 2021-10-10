@@ -17,7 +17,6 @@
         {% csrf_token %}
         <ul class="list-group list-group-flush">
           <script>
-
               const LOCAL_CURRENCY_RATE = Number("{{ LOCAL_CURRENCY.rate|unlocalize }}");
               const LOCAL_CURRENCY_SYM = "{{ LOCAL_CURRENCY.sym }}";
               let prices = {}
@@ -114,6 +113,6 @@
     <div class="display-6">
       {% trans 'But these products will interest you' %}
     </div>
-    {% products_catalogue 36 %}
+    {% products_catalogue limit=12 %}
   {% endif %}
 {% endblock %}

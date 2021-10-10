@@ -1,5 +1,6 @@
 {% extends 'market_app/app_base.html' %}
 {% load i18n %}
+{% load market_app_blocks %}
 
 {% block main_center_block %}
   <div class="card my-2">
@@ -16,7 +17,7 @@
               {% trans 'Description' %} {{ market.description }} <br>
             {% endif %}
             {% trans 'Market owner' %}: {{ market.owner.username }} <br>
-            {% trans 'Product count' %}: {{ paginator.count }}
+            {% trans 'Product count' %}: {{ products|length }}
           </p>
         </div>
         <div class="col col-12 col-md-6">
@@ -27,6 +28,5 @@
       </div>
     </div>
   </div>
-
-  {% include 'market_app/include/catalogue.html' with products=object_list %}
+  {% products_catalogue products page_size=36 %}
 {% endblock %}

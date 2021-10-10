@@ -19,7 +19,7 @@ from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, Pr
     AdvancedSearchForm, CartForm, CheckOutForm
 from .models import Product, Market, ProductType, Operation, Order, OrderItem
 from .services import top_up_balance, make_purchase, prepare_order, EmptyOrderError, OrderCannotBeCancelledError, \
-    try_to_cancel_order
+    try_to_cancel_order, get_products
 
 
 class MarketOwnerRequiredMixin(PermissionRequiredMixin):
@@ -96,16 +96,8 @@ class ProductTypeEdit(MarketOwnerRequiredMixin, generic.UpdateView):
         return ProductType.objects.filter(pk=self.kwargs['pk']).values_list('product__market__owner_id', flat=True)[0]
 
 
-class CatalogueView(generic.ListView):
-    model = Product
+class CatalogueView(generic.TemplateView):
     template_name = 'market_app/catalogue.html'
-    context_object_name = 'products'
-    paginate_by = 36
-
-    def get_queryset(self):
-        fields = ('image', 'original_price', 'discount_percent', 'name')
-        queryset = self.model.objects.distinct().only(*fields).filter(available=True, product_types__isnull=False)
-        return queryset
 
 
 class ProductPageView(generic.FormView):
@@ -374,10 +366,10 @@ class UserMarketView(LoginRequiredMixin, generic.DetailView):
         return self.market
 
 
-class MarketView(generic.detail.SingleObjectMixin, generic.ListView):
+class MarketView(generic.DetailView):
     template_name = 'market_app/market_page.html'
     context_object_name = 'market'
-    paginate_by = 36
+    model = Market
 
     def get(self, request, *args, **kwargs):
         self.object = Market.objects.select_related('owner').get(pk=self.kwargs['pk'])
@@ -385,11 +377,8 @@ class MarketView(generic.detail.SingleObjectMixin, generic.ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['market'] = self.object
+        context['products'] = get_products().filter(market_id=self.object.pk).select_related('productimage').all()
         return context
-
-    def get_queryset(self):
-        return self.object.product_set.all()
 
 
 class SearchProducts(CatalogueView, generic.edit.FormMixin):
