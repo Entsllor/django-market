@@ -96,8 +96,12 @@ class ProductTypeEdit(MarketOwnerRequiredMixin, generic.UpdateView):
         return ProductType.objects.filter(pk=self.kwargs['pk']).values_list('product__market__owner_id', flat=True)[0]
 
 
-class CatalogueView(generic.TemplateView):
+class CatalogueView(generic.ListView):
     template_name = 'market_app/catalogue.html'
+    context_object_name = 'products'
+
+    def get_queryset(self):
+        return get_products()
 
 
 class ProductPageView(generic.FormView):
@@ -361,9 +365,14 @@ class UserMarketView(LoginRequiredMixin, generic.DetailView):
         return super(UserMarketView, self).get(request, *args, **kwargs)
 
     def get_object(self, queryset=None):
-        if not hasattr(self, 'market'):
-            self.market = Market.objects.select_related('owner').filter(owner_id=self.request.user.id).first()
-        return self.market
+        if not hasattr(self, 'object'):
+            self.object = Market.objects.select_related('owner').filter(owner_id=self.request.user.id).first()
+        return self.object
+
+    def get_context_data(self, **kwargs):
+        context = super(UserMarketView, self).get_context_data(**kwargs)
+        context['products'] = Product.objects.select_related('productimage').filter(market_id=self.object.pk)
+        return context
 
 
 class MarketView(generic.DetailView):

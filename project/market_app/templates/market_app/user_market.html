@@ -1,5 +1,6 @@
 {% extends 'market_app/app_base.html' %}
 {% load i18n %}
+{% load market_app_blocks %}
 
 {% block main_center_block %}
   <div class="card my-2">
@@ -10,7 +11,7 @@
     <div class="card-body">
       <div class="row">
         <div class="col col-12 col-md-6">
-          {% trans 'Product count' %}: {{ market.product_set.count }}
+          {% trans 'Product count' %}: {{ products|length }}
         </div>
         <div class="col col-12 col-md-6">
           <img class="img-fluid float-end"
@@ -33,4 +34,5 @@
     </div>
   </div>
 
+  {% products_catalogue products page_size=36 %}
 {% endblock %}
