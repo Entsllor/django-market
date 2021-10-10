@@ -335,6 +335,11 @@ class TopUpView(LoginRequiredMixin, generic.FormView):
     def form_valid(self, form):
         amount = form.cleaned_data['top_up_amount']
         top_up_balance(self.request.user, amount)
+        unpaid_order_pk = Order.objects.values_list('pk', flat=True).filter(
+            user_id=self.request.user, operation__isnull=True).first()
+        if unpaid_order_pk:
+            return HttpResponseRedirect(
+                reverse_lazy('market_app:checkout', kwargs={'pk': unpaid_order_pk}))
         return super(TopUpView, self).form_valid(form)
 
 

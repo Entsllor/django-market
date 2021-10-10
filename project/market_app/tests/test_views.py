@@ -538,10 +538,9 @@ class CheckOutPageTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.assertEqual(self.sellers.get(pk=2).balance.amount, 400)
 
 
-class TopUpViewTest(ViewTestMixin, BaseMarketTestCase):
+class TopUpViewTest(ViewTestMixin, TestBaseWithFilledCatalogue):
     ViewClass = TopUpView
     page_url = reverse_lazy('market_app:top_up')
-    catalogue_url = reverse_lazy('market_app:catalogue')
 
     def setUp(self) -> None:
         self.create_currencies()
@@ -554,19 +553,31 @@ class TopUpViewTest(ViewTestMixin, BaseMarketTestCase):
         self.log_in_as_customer()
         self._test_correct_template()
 
-    def test_can_top_up_balance(self):
-        self.log_in_as_customer()
-        data = {
+    @staticmethod
+    def get_top_up_form_data(amount):
+        return {
             'name_on_card': 'FULL NAME',
             'card_number': 9999999999999999,
-            'top_up_amount': 1000,
+            'top_up_amount': amount,
             'currency_code': DEFAULT_CURRENCY_CODE
         }
+
+    def test_can_top_up_balance(self):
+        self.log_in_as_customer()
+        data = self.get_top_up_form_data(1000)
         self.assertEqual(self.user.balance.amount, 0)
         response = self.post_to_page(data=data)
         self.user.refresh_from_db()
         self.assertEqual(self.user.balance.amount, 1000)
-        self.assertRedirects(response, self.catalogue_url)
+        self.assertRedirects(response, self.ViewClass.success_url)
+
+    def test_redirect_to_unpaid_order_if_exists(self):
+        self.log_in_as_customer()
+        self.fill_cart({'1': 2, '7': 3})
+        order = prepare_order(self.cart)
+        top_up_form_data = self.get_top_up_form_data(1000)
+        response = self.post_to_page(data=top_up_form_data)
+        self.assertRedirects(response, reverse_lazy('market_app:checkout', kwargs={'pk': order.pk}))
 
 
 class OperationHistoryTest(ViewTestMixin, TestBaseWithFilledCatalogue):
