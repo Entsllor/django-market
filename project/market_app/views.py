@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q, Prefetch
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
@@ -228,16 +228,19 @@ class OrderDetail(PermissionRequiredMixin, generic.DetailView):
     def get_object(self, queryset=None):
         order_pk = self.kwargs['pk']
         if not hasattr(self, 'object'):
-            self.object = Order.objects.prefetch_related(
-                Prefetch('items', OrderItem.objects.only(
-                    'product_type__product__name', 'amount', 'payment__amount',
-                    'order', 'product_type__properties', 'product_type__markup_percent',
-                    'product_type__product__discount_percent',
-                    'product_type__product__original_price', 'is_shipped'
-                ).filter(order_id=order_pk).select_related(
-                    'product_type', 'product_type__product', 'payment'
-                ))
-            ).select_related('operation').get(pk=self.kwargs['pk'])
+            try:
+                self.object = Order.objects.prefetch_related(
+                    Prefetch('items', OrderItem.objects.only(
+                        'product_type__product__name', 'amount', 'payment__amount',
+                        'order', 'product_type__properties', 'product_type__markup_percent',
+                        'product_type__product__discount_percent',
+                        'product_type__product__original_price', 'is_shipped'
+                    ).filter(order_id=order_pk).select_related(
+                        'product_type', 'product_type__product', 'payment'
+                    ))
+                ).select_related('operation').get(pk=self.kwargs['pk'])
+            except Order.DoesNotExist:
+                raise Http404(f"Order(pk={order_pk}) does not exists")
         return self.object
 
     def has_permission(self):
