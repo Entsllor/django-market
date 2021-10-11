@@ -5,9 +5,9 @@
   {% trans 'Top up' %}
 {% endblock %}
 
-{% block form_block%}
+{% block form_block %}
   <form action="{% url 'market_app:top_up' %}" method="post">
-  {% include 'core_app/include/pretty_form.html' with form=form %}
-  {% csrf_token %}
-</form>
+    {% include 'core_app/include/pretty_form.html' with form=form %}
+    {% csrf_token %}
+  </form>
 {% endblock %}
