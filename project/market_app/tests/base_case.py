@@ -7,8 +7,8 @@ from django.db.models.signals import post_save
 from django.test import TestCase
 
 from currencies.services import create_currencies_from_settings
-from ..models import Product, Market, ProductCategory, ProductType, Coupon, Cart, Balance, OrderItem
-from ..services import prepare_order, top_up_balance, make_purchase
+from market_app.models import Product, Market, ProductCategory, ProductType, Coupon, Cart, Balance, OrderItem, Order
+from market_app.services import prepare_order, top_up_balance, make_purchase
 
 
 class FailedToCreateObject(Exception):
