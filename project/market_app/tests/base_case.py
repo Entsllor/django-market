@@ -55,18 +55,19 @@ class BaseMarketTestCase(TestCase):
     def create_currencies():
         create_currencies_from_settings()
 
-    def log_in_as_customer(self):
-        self._log_in(self.customer)
+    def log_in_as_customer(self) -> bool:
+        return self._log_in(self.customer)
 
-    def log_in_as_seller(self):
-        self._log_in(self.seller)
+    def log_in_as_seller(self) -> bool:
+        return self._log_in(self.seller)
 
-    def _log_in(self, user):
+    def _log_in(self, user) -> bool:
         if not user.password:
             user.set_password(self.password)
             user.save()
-        self.client.login(username=user.username, password=self.password)
+        logged_in = self.client.login(username=user.username, password=self.password)
         self._user = user
+        return logged_in
 
     @property
     def user(self) -> User:
