@@ -288,6 +288,11 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
         return coupon
 
     @property
+    def order(self):
+        if hasattr(self, '_order'):
+            return Order.objects.get(pk=self._order.pk)
+
+    @property
     def market(self):
         return Market.objects.get(owner=self.seller)
 
@@ -341,9 +346,9 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
             cart.set_item(product_type_pk=product_type_id, quantity=units_count, commit=False)
         cart.save()
 
-    def prepare_order(self, order_items: dict = None):
+    def prepare_order(self, order_items: dict = None) -> Order:
         if order_items is None:
             order_items = {}
         Cart.objects.filter(pk=self.cart.pk).update(items=order_items)
-        self.order = prepare_order(self.cart)
-        return self.order
+        self._order = prepare_order(self.cart)
+        return self._order
