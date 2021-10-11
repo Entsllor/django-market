@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.test import TestCase
@@ -5,10 +7,12 @@ from django.urls import reverse_lazy
 
 from currencies.services import DEFAULT_CURRENCY_CODE, exchange_to
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue, FailedToCreateObject
-from ..models import Market, Product, ProductCategory, Operation, ProductType, Order, OrderItem, OrderStatusChoices
+from ..models import Market, Product, ProductCategory, Operation, ProductType, Order, OrderItem, OrderStatusChoices, \
+    User
 from ..services import top_up_balance, make_purchase, prepare_order
 from ..views import ProductCreateView, ProductEditView, CatalogueView, MarketEditView, MarketCreateView, \
-    CartView, CheckOutView, TopUpView, OperationHistoryView, OrderDetail, ProductTypeEdit, UserMarketView, ShippingPage
+    CartView, CheckOutView, TopUpView, OperationHistoryView, OrderDetail, ProductTypeEdit, UserMarketView, ShippingPage, \
+    PayingView
 
 
 def prepare_product_data_to_post(data) -> dict:
@@ -436,106 +440,38 @@ class CheckOutPageTest(ViewTestMixin, TestBaseWithFilledCatalogue):
     ViewClass = CheckOutView
     orders_list_url = reverse_lazy('market_app:orders')
     top_up_page_url = reverse_lazy('market_app:top_up')
+    post_data = {
+        'address': 'Some valid order address'
+    }
 
     def setUp(self) -> None:
         super(CheckOutPageTest, self).setUp()
         self.log_in_as_customer()
+        self.create_and_set_coupon(10, 100)
+        self.create_and_set_coupon(20, 100)
+        self.create_and_set_coupon(30, 100)
+        self.prepare_order({'1': 5, '7': 5})
 
     def get_url(self):
         return reverse_lazy('market_app:checkout', kwargs={'pk': self.order.pk})
 
-    def post_to_page(self, data: dict = None, **kwargs):
+    def post_to_page(self, data: dict = None, extra_data: dict = None, **kwargs):
         if data is None:
-            data = {}
-        elif 'address' not in data:
-            data['address'] = 'Some user shipped address'
-        return self.client.post(path=self.get_url(), data=data, **kwargs)
+            data = self.post_data
+        if isinstance(extra_data, dict):
+            data.update(extra_data)
+        return super(CheckOutPageTest, self).post_to_page(data=data)
 
     def test_redirect_if_not_logged_in(self):
-        top_up_balance(self.user, 5000)
-        self.prepare_order({'1': 5, '7': 5})
         self._test_redirect_if_not_logged_in()
 
     def test_correct_template(self):
-        self.log_in_as_customer()
-        top_up_balance(self.user, 5000)
-        self.prepare_order({'1': 5, '7': 5})
         self._test_correct_template()
 
-    def test_redirect_if_user_do_not_have_enough_money(self):
-        top_up_balance(self.user, 500)
-        self.prepare_order({'1': 5, '7': 5})
-        response = self.post_to_page(data={'agreement': 'on'})
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, self.top_up_page_url)
-
-    def test_do_not_redirect_if_enough_money(self):
-        top_up_balance(self.user, 5000)
-        self.prepare_order({'1': 5, '7': 5})
-        response = self.get_from_page()
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'market_app/checkout_page.html')
-
-    def test_do_purchase_if_user_agrees(self):
-        top_up_balance(self.user, 1000)
-        self.prepare_order({'1': 5, '7': 5})
-        response = self.post_to_page(data={'agreement': 'on'})
-        self.assertRedirects(response, self.ViewClass.success_url)
-
-    def test_redirect_if_user_does_not_agree(self):
-        top_up_balance(self.user, 1000)
-        self.prepare_order({'1': 5, '7': 5})
-        response = self.post_to_page(data={})
-        self.assertRedirects(response, self.orders_list_url)
-
-    def test_is_purchasing_successful(self):
-        top_up_balance(self.user, 10000)
-        self.prepare_order({'1': 5, '2': 3, '7': 2})
-        self.assertEqual(self.user.balance.amount, 10000)
-        self.assertEqual(self.sellers.get(id=1).balance.amount, 0)
-        self.assertEqual(self.sellers.get(id=2).balance.amount, 0)
-        response = self.post_to_page(data={'agreement': 'on'})
-        self.assertEqual(self.user.balance.amount, 9000)
-        self.assertEqual(self.sellers.get(id=1).balance.amount, 800)
-        self.assertEqual(self.sellers.get(id=2).balance.amount, 200)
-        self.assertRedirects(response, self.ViewClass.success_url)
-
-    def test_cart_is_empty_after_purchasing(self):
-        top_up_balance(self.user, 10000)
-        self.prepare_order({'1': 5, '7': 5})
-        self.assertEqual(self.user.balance.amount, 10000)
-        self.post_to_page(data={'agreement': 'False'})
-        self.assertEqual(self.cart.items, {})
-
-    def test_sellers_cant_buy_their_own_products(self):
-        self.log_in_as_seller()
-        top_up_balance(self.user, 2000)
-        own_product_type_units_count_at_start = ProductType.objects.get(pk=1).units_count
-        units_to_buy = {'1': 5, '7': 3}
-        self.prepare_order(units_to_buy)
-        self.post_to_page()
-        own_product_type_units_count_at_end = ProductType.objects.get(pk=1).units_count
-        self.assertEqual(own_product_type_units_count_at_start, own_product_type_units_count_at_end)
-        self.assertEqual(self.user.orders.first().total_price, 300)
-
-    def _test_use_coupon(self, expected_amount, max_discount=None):
-        top_up_balance(self.user, 2000)
-        units_to_add = {'1': 5, '4': 1, '8': 4}
-        self.create_and_set_coupon(discount_percent=10, max_discount=max_discount)
-        self.prepare_order(units_to_add)
-        self.post_to_page(data={'agreement': 'on', 'coupon': 1})
-        self.assertEqual(self.balance.amount, expected_amount)
-
-    def test_use_coupon_without_discount_limit(self):
-        self._test_use_coupon(1100)
-
-    def test_use_coupon_with_discount_limit(self):
-        self._test_use_coupon(1080, max_discount=80)
-
-    def test_coupon_discount_dont_affect_to_seller_top_up_operation(self):
-        self._test_use_coupon(1080, max_discount=80)
-        self.assertEqual(self.sellers.get(pk=1).balance.amount, 600)
-        self.assertEqual(self.sellers.get(pk=2).balance.amount, 400)
+    def test_can_change_activated_coupon(self):
+        self.assertFalse(self.order.activated_coupon)
+        self.post_to_page(extra_data={'activated_coupon': '1'})
+        self.assertTrue(self.order.activated_coupon)
 
 
 class TopUpViewTest(ViewTestMixin, TestBaseWithFilledCatalogue):
@@ -580,6 +516,121 @@ class TopUpViewTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.assertRedirects(response, reverse_lazy('market_app:checkout', kwargs={'pk': order.pk}))
 
 
+class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
+    ViewClass = PayingView
+    post_data = {
+        'name_on_card': 'SURNAME FIRSTNAME',
+        'card_number': '9999_9999_9999_9999',
+    }
+
+    def setUp(self) -> None:
+        super(PayingTest, self).setUp()
+        self.unpaid_order = None
+        self.log_in_as_customer()
+
+    def get_url(self):
+        return reverse_lazy('market_app:paying', kwargs={'pk': 1})
+
+    def test_redirect_if_order_is_empty(self):
+        self.unpaid_order = prepare_order(self.cart)
+        response = self.get_from_page()
+        self.assertRedirects(response, reverse_lazy('market_app:cart'))
+
+    def test_get_404_error_if_order_does_not_exist(self):
+        response = self.get_from_page()
+        self.assertEqual(response.status_code, 404)
+
+    def test_permission_denied_if_not_logged_in(self):
+        self.log_in_as_customer()
+        self.unpaid_order = prepare_order(self.cart)
+        self.client.logout()
+        response = self.get_from_page()
+        self.assertEqual(response.status_code, 403)
+
+    def test_permission_denied_if_user_id_does_not_equal_order_owner_id(self):
+        self.unpaid_order = prepare_order(self.cart)
+        self.customer = User.objects.get(username='customer_7')
+        self.assertTrue(self.log_in_as_customer())
+        response = self.get_from_page()
+        self.assertEqual(response.status_code, 403)
+
+    def test_correct_template(self):
+        self.fill_cart({'1': 1})
+        self.unpaid_order = prepare_order(self.cart)
+        self._test_correct_template()
+
+    def test_can_post_valid_data(self):
+        self.fill_cart({'1': 1})
+        top_up_balance(self.user, Decimal('32.13333'))
+        self.unpaid_order = prepare_order(self.cart)
+        self.assertFalse(self.unpaid_order.operation_id)
+        self.post_to_page(data=self.post_data)
+        self.unpaid_order.refresh_from_db()
+        self.assertTrue(self.unpaid_order.operation_id)
+        self.assertEqual(self.user.balance.amount, 0)
+
+    def test_cannot_post_if_user_id_does_not_equal_order_owner_id(self):
+        self.fill_cart({'1': 1})
+        self.unpaid_order = prepare_order(self.cart)
+        self.customer = User.objects.get(username='customer_7')
+        self.assertTrue(self.log_in_as_customer())
+        self.assertFalse(self.unpaid_order.operation_id)
+        response = self.post_to_page(data=self.post_data)
+        self.unpaid_order.refresh_from_db()
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(self.unpaid_order.operation_id)
+
+    def test_is_purchasing_successful(self):
+        top_up_balance(self.user, 10000)
+        self.prepare_order({'1': 5, '2': 3, '7': 2})
+        self.assertEqual(self.user.balance.amount, 10000)
+        self.assertEqual(self.sellers.get(id=1).balance.amount, 0)
+        self.assertEqual(self.sellers.get(id=2).balance.amount, 0)
+        response = self.post_to_page(data=self.post_data)
+        self.assertEqual(self.user.balance.amount, 9000)
+        self.assertEqual(self.sellers.get(id=1).balance.amount, 800)
+        self.assertEqual(self.sellers.get(id=2).balance.amount, 200)
+        self.assertRedirects(response, self.ViewClass.success_url)
+
+    def test_top_up_if_user_does_not_have_enough_money(self):
+        self.assertFalse(self.user.operations.exists())
+        top_up_balance(self.user, 300)
+        self.prepare_order({'1': 5, '7': 2})
+        self.post_to_page(data=self.post_data)
+        self.assertTrue(self.user.operations.filter(amount=400).exists())
+
+    def test_sellers_cant_buy_their_own_products(self):
+        self.log_in_as_seller()
+        top_up_balance(self.user, 2000)
+        own_product_type_units_count_at_start = ProductType.objects.get(pk=1).units_count
+        units_to_buy = {'1': 5, '7': 3}
+        self.prepare_order(units_to_buy)
+        self.post_to_page(data=self.post_data)
+        own_product_type_units_count_at_end = ProductType.objects.get(pk=1).units_count
+        self.assertEqual(own_product_type_units_count_at_start, own_product_type_units_count_at_end)
+        self.assertEqual(self.user.orders.first().total_price, 300)
+
+    def _test_use_coupon(self, expected_balance_amount, max_discount=None):
+        top_up_balance(self.user, 2000)
+        units_to_add = {'1': 5, '4': 1, '8': 4}
+        coupon = self.create_and_set_coupon(discount_percent=10, max_discount=max_discount)
+        order = self.prepare_order(units_to_add)
+        order.set_coupon(coupon)
+        self.post_to_page(data=self.post_data)
+        self.assertEqual(self.balance.amount, expected_balance_amount)
+
+    def test_use_coupon_without_discount_limit(self):
+        self._test_use_coupon(1100)
+
+    def test_use_coupon_with_discount_limit(self):
+        self._test_use_coupon(1080, max_discount=80)
+
+    def test_coupon_discount_dont_affect_to_seller_top_up_operation(self):
+        self._test_use_coupon(1080, max_discount=80)
+        self.assertEqual(self.sellers.get(pk=1).balance.amount, 600)
+        self.assertEqual(self.sellers.get(pk=2).balance.amount, 400)
+
+
 class OperationHistoryTest(ViewTestMixin, TestBaseWithFilledCatalogue):
     ViewClass = OperationHistoryView
     page_url = reverse_lazy('market_app:operation_history')
@@ -608,7 +659,7 @@ class OrderDetailTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.log_in_as_customer()
         top_up_balance(self.user, 10000)
         self.fill_cart({'1': 2, '3': 1, '5': 1})
-        self.order = prepare_order(self.cart)
+        self._order = prepare_order(self.cart)
 
     def get_url(self, pk=None):
         if pk is None:

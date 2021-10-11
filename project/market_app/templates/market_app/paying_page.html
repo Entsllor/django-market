@@ -1,0 +1,16 @@
+{% extends 'market_app/top_up_page.html' %}
+{% load i18n %}
+{% load currencies %}
+
+{% block page_title %}
+  {% trans 'Paying' %}
+{% endblock %}
+
+{% block form_block %}
+  <form method="post" action="{% url 'market_app:paying' pk=unpaid_order.pk %}">
+    <label for="amount">{% trans 'Amount' %}</label>
+    <input id="amount" class="form-control" type="text" value="{% to_local_currency total_order_price %}" disabled>
+    {% include 'core_app/include/pretty_form.html' with form=form %}
+    {% csrf_token %}
+  </form>
+{% endblock %}

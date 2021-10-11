@@ -18,6 +18,7 @@ urlpatterns = [
     path('market/<int:pk>', views.MarketView.as_view(), name='market'),
     path('check_out/<int:pk>', views.CheckOutView.as_view(), name='checkout'),
     path('top_up', views.TopUpView.as_view(), name='top_up'),
+    path('paying/<int:pk>', views.PayingView.as_view(), name='paying'),
     path('order_confirmation/', views.OrderConfirmationView.as_view(), name='order_confirmation'),
     path('search/', views.SearchProducts.as_view(), name='search_products'),
     path('operations/', views.OperationHistoryView.as_view(), name='operation_history'),

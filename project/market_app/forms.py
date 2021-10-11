@@ -3,7 +3,7 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 from currencies.services import exchange_to, get_currency_choices
-from .models import Product, Market, ProductType, ProductCategory, Cart
+from .models import Product, Market, ProductType, ProductCategory, Cart, Order, Coupon
 
 DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY_CODE
 product_attributes_placeholder = _(
@@ -112,36 +112,29 @@ class AddToCartForm(forms.Form):
             onchange='onChangeCount()'
         )
 
-class CreditCardForm(MoneyExchangerMixin, forms.Form):
+
+class CreditCardForm(forms.Form):
     name_on_card = forms.CharField(max_length=63)
-    card_number = forms.IntegerField(
-        min_value=1000_0000_0000_0000,
-        max_value=9999_9999_9999_9999
-    )
+    card_number = forms.IntegerField(min_value=1000_0000_0000_0000, max_value=9999_9999_9999_9999)
+
+
+class TopUpForm(MoneyExchangerMixin, CreditCardForm):
     top_up_amount = forms.DecimalField(min_value=1, max_value=1000000)
 
     def clean_top_up_amount(self):
         return self._clean_field_with_money_exchanging('top_up_amount')
 
 
-class CheckOutForm(forms.Form):
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user')
-        self.coupons = self.user.coupon_set
-        super(CheckOutForm, self).__init__(*args, **kwargs)
-        self.fields['coupon'] = forms.ModelChoiceField(
-            label=_('Select a coupon'),
-            initial=self.coupons.first(),
-            queryset=self.coupons,
-            required=False
-        )
-        self.order_fields(['coupon', 'address', 'agreement'])
+class CheckOutForm(forms.ModelForm):
+    class Meta:
+        model = Order
+        fields = ['activated_coupon', 'address']
 
-    agreement = forms.BooleanField(label=_('Do you agree?'), required=False)
-    address = forms.CharField(
-        label=_('Shipping address'), min_length=15, max_length=255,
-        widget=forms.Textarea(attrs={'rows': 2})
-    )
+    def __init__(self, *args, **kwargs):
+        super(CheckOutForm, self).__init__(*args, **kwargs)
+        coupons = Coupon.objects.filter(customers__exact=self.instance.user_id)
+        self.fields['activated_coupon'].queryset = coupons
+        self.order_fields(['address', 'activated_coupon'])
 
 
 class CartForm(forms.Form):

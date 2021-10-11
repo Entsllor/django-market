@@ -32,9 +32,7 @@
       <p>
         balance: {% to_local_currency user.balance.amount %}
       </p>
-
-      <form method="post" action="{% url 'market_app:checkout' pk=order.pk %}">
-        {% include 'core_app/include/pretty_form.html' with form=coupon_form without_button=True %}
+      <form method="post" name="check_out" action="{% url 'market_app:checkout' pk=order.pk %}">
         {% include 'core_app/include/pretty_form.html' with form=form %}
         {% csrf_token %}
       </form>

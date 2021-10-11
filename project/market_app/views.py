@@ -16,10 +16,10 @@ from currencies.models import Currency
 from currencies.services import get_currency_code_by_language, DEFAULT_CURRENCY_CODE, \
     get_exchanger
 from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, ProductTypeForm, CreditCardForm, \
-    AdvancedSearchForm, CartForm, CheckOutForm
+    AdvancedSearchForm, CartForm, CheckOutForm, TopUpForm
 from .models import Product, Market, ProductType, Operation, Order, OrderItem
 from .services import top_up_balance, make_purchase, prepare_order, EmptyOrderError, OrderCannotBeCancelledError, \
-    try_to_cancel_order, get_products, get_order_price_if_use_coupon
+    try_to_cancel_order, get_products
 
 
 class MarketOwnerRequiredMixin(PermissionRequiredMixin):
@@ -278,30 +278,28 @@ def cancel_order_view(request, pk):
         raise PermissionDenied(exc)
 
 
-class CheckOutView(PermissionRequiredMixin, generic.FormView):
+class CheckOutView(PermissionRequiredMixin, generic.UpdateView):
     template_name = 'market_app/checkout_page.html'
-    success_url = reverse_lazy('market_app:order_confirmation')
     form_class = CheckOutForm
+    model = Order
 
-    def setup(self, request, *args, **kwargs):
-        super(CheckOutView, self).setup(request, *args, **kwargs)
-        order_pk = self.kwargs['pk']
-        self.object = Order.objects.prefetch_related(
-            Prefetch('items', OrderItem.objects.only(
-                'product_type__product__name', 'amount', 'payment__amount',
-                'order', 'product_type__properties', 'product_type__markup_percent',
-                'product_type__product__discount_percent',
-                'product_type__product__original_price'
-            ).filter(order_id=order_pk).select_related(
-                'product_type', 'product_type__product', 'payment'
-            ))
-        ).select_related('operation').get(pk=order_pk)
-        self.user = self.request.user
+    def get_success_url(self):
+        return reverse_lazy('market_app:paying', kwargs={'pk': self.object.pk})
 
-    def get_form_kwargs(self):
-        kwargs = super(CheckOutView, self).get_form_kwargs()
-        kwargs['user'] = self.user
-        return kwargs
+    def get_object(self, queryset=None):
+        if not hasattr(self, 'object'):
+            order_pk = self.kwargs['pk']
+            self.object = Order.objects.prefetch_related(
+                Prefetch('items', OrderItem.objects.only(
+                    'product_type__product__name', 'amount', 'payment__amount',
+                    'order', 'product_type__properties', 'product_type__markup_percent',
+                    'product_type__product__discount_percent',
+                    'product_type__product__original_price'
+                ).filter(order_id=order_pk).select_related(
+                    'product_type', 'product_type__product', 'payment'
+                ))
+            ).select_related('operation').get(pk=order_pk)
+        return self.object
 
     def get_context_data(self, **kwargs):
         context = super(CheckOutView, self).get_context_data(**kwargs)
@@ -310,30 +308,65 @@ class CheckOutView(PermissionRequiredMixin, generic.FormView):
 
     def has_permission(self):
         user = self.request.user
-        return user.id == self.object.user_id
+        return user.id == self.get_object().user_id
+
+
+class PayingView(LoginRequiredMixin, generic.FormView):
+    template_name = 'market_app/paying_page.html'
+    form_class = CreditCardForm
+    success_url = reverse_lazy('market_app:order_confirmation')
+
+    def setup(self, request, *args, **kwargs):
+        super(PayingView, self).setup(request, *args, **kwargs)
+        self.unpaid_order: Order = Order.objects.prefetch_related(
+            Prefetch('items', OrderItem.objects.only(
+                'amount', 'order', 'product_type__markup_percent',
+                'product_type__product__discount_percent',
+                'product_type__product__original_price', 'payment_id'
+            ).select_related(
+                'product_type', 'product_type__product'
+            ))
+        ).filter(
+            operation_id=None, pk=kwargs['pk']).first()
+        if not self.unpaid_order:
+            raise Http404(f"Order({kwargs['pk']}) does not exist")
+        if self.unpaid_order.user_id != request.user.id:
+            raise PermissionDenied()
+        self.total_order_price = self.unpaid_order.total_price
+        self.top_up_amount = max(0, self.total_order_price - self.request.user.balance.amount)
+
+    def try_to_make_order(self):
+        try:
+            make_purchase(self.unpaid_order, self.request.user)
+        except PermissionDenied as exc:
+            raise exc
+        except EmptyOrderError:
+            messages.warning(self.request, 'Cannot perform empty order')
+            return HttpResponseRedirect(reverse_lazy('market_app:cart'))
+        return HttpResponseRedirect(self.success_url)
+
+    def get_context_data(self, **kwargs):
+        context = super(PayingView, self).get_context_data(**kwargs)
+        context['unpaid_order'] = self.unpaid_order
+        context['total_order_price'] = self.total_order_price
+        return context
+
+    def get(self, request, *args, **kwargs):
+        if not len(self.unpaid_order.items.all()):
+            messages.info(request, 'The order is empty')
+            return HttpResponseRedirect(reverse_lazy('market_app:cart'), status=302)
+        if not self.top_up_amount:
+            return self.try_to_make_order()
+        return super(PayingView, self).get(request, *args, **kwargs)
 
     def form_valid(self, form):
-        coupon = form.cleaned_data.get('coupon')
-        self.object.save(update_fields=['address'])
-        Order.objects.filter(pk=self.kwargs['pk']).update(address=form.cleaned_data['address'])
-        if form.cleaned_data['agreement']:
-            if self.user.balance.amount < get_order_price_if_use_coupon(self.object, coupon):
-                return HttpResponseRedirect(
-                    reverse_lazy('market_app:top_up'))
-            try:
-                make_purchase(self.object, self.user, coupon)
-            except PermissionDenied as exc:
-                raise exc
-            except EmptyOrderError:
-                messages.warning(self.request, 'Cannot perform empty order')
-                return HttpResponseRedirect(reverse_lazy('market_app:cart'))
-            return HttpResponseRedirect(self.success_url)
-        else:
-            return HttpResponseRedirect(reverse_lazy('market_app:orders'))
+        top_up_balance(self.request.user, self.top_up_amount)
+        self.request.user.refresh_from_db()
+        return self.try_to_make_order()
 
 
 class TopUpView(LoginRequiredMixin, generic.FormView):
-    form_class = CreditCardForm
+    form_class = TopUpForm
     template_name = 'market_app/top_up_page.html'
     success_url = reverse_lazy('market_app:catalogue')
 
