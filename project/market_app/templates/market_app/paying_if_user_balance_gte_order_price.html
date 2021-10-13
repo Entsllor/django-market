@@ -1,0 +1,32 @@
+{% extends 'market_app/top_up_page.html' %}
+{% load i18n %}
+{% load currencies %}
+
+{% block page_title %}
+  {% trans 'Paying' %}
+{% endblock %}
+
+{% block form_block %}
+  <form method="post" action="{% url 'market_app:paying' pk=unpaid_order.pk %}">
+    <div>
+      {% trans 'You are paying' %}
+      {% to_local_currency total_order_price %}
+      {% trans "for order №" %}{{ unpaid_order.pk }}
+    </div>
+    <p>
+      {% trans 'Your balance' %}: {% to_local_currency user.balance.amount %}
+    </p>
+    {% include 'core_app/include/pretty_form.html' with form=form without_button=True %}
+    {% csrf_token %}
+    <div class="d-flex flex-row justify-content-end">
+      <div>
+        <a href="{{ unpaid_order.get_absolute_url }}" class="btn btn-danger">
+          {% trans "Cancel" %}
+        </a>
+        <button type="submit" class="btn btn-primary">
+          {% trans "Confirm" %}
+        </button>
+      </div>
+    </div>
+  </form>
+{% endblock %}

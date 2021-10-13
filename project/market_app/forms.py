@@ -113,6 +113,10 @@ class AddToCartForm(forms.Form):
         )
 
 
+class AgreementForm(forms.Form):
+    agreement = forms.BooleanField(label=_('I am sure'), required=True)
+
+
 class CreditCardForm(forms.Form):
     name_on_card = forms.CharField(max_length=63)
     card_number = forms.IntegerField(min_value=1000_0000_0000_0000, max_value=9999_9999_9999_9999)

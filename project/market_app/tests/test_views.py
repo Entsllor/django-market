@@ -518,7 +518,8 @@ class TopUpViewTest(ViewTestMixin, TestBaseWithFilledCatalogue):
 
 class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
     ViewClass = PayingView
-    post_data = {
+    agreement_post_data = {'agreement': 'on'}
+    test_credit_cart_data = {
         'name_on_card': 'SURNAME FIRSTNAME',
         'card_number': '9999_9999_9999_9999',
     }
@@ -530,11 +531,6 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
 
     def get_url(self):
         return reverse_lazy('market_app:paying', kwargs={'pk': 1})
-
-    def test_redirect_if_order_is_empty(self):
-        self.unpaid_order = prepare_order(self.cart)
-        response = self.get_from_page()
-        self.assertRedirects(response, reverse_lazy('market_app:cart'))
 
     def test_get_404_error_if_order_does_not_exist(self):
         response = self.get_from_page()
@@ -564,7 +560,7 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         top_up_balance(self.user, Decimal('32.13333'))
         self.unpaid_order = prepare_order(self.cart)
         self.assertFalse(self.unpaid_order.operation_id)
-        self.post_to_page(data=self.post_data)
+        self.post_to_page(data=self.test_credit_cart_data)
         self.unpaid_order.refresh_from_db()
         self.assertTrue(self.unpaid_order.operation_id)
         self.assertEqual(self.user.balance.amount, 0)
@@ -575,7 +571,7 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.customer = User.objects.get(username='customer_7')
         self.assertTrue(self.log_in_as_customer())
         self.assertFalse(self.unpaid_order.operation_id)
-        response = self.post_to_page(data=self.post_data)
+        response = self.post_to_page(data=self.test_credit_cart_data)
         self.unpaid_order.refresh_from_db()
         self.assertEqual(response.status_code, 403)
         self.assertFalse(self.unpaid_order.operation_id)
@@ -586,7 +582,7 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.assertEqual(self.user.balance.amount, 10000)
         self.assertEqual(self.sellers.get(id=1).balance.amount, 0)
         self.assertEqual(self.sellers.get(id=2).balance.amount, 0)
-        response = self.post_to_page(data=self.post_data)
+        response = self.post_to_page(data=self.agreement_post_data)
         self.assertEqual(self.user.balance.amount, 9000)
         self.assertEqual(self.sellers.get(id=1).balance.amount, 800)
         self.assertEqual(self.sellers.get(id=2).balance.amount, 200)
@@ -596,8 +592,14 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.assertFalse(self.user.operations.exists())
         top_up_balance(self.user, 300)
         self.prepare_order({'1': 5, '7': 2})
-        self.post_to_page(data=self.post_data)
+        self.post_to_page(data=self.test_credit_cart_data)
         self.assertTrue(self.user.operations.filter(amount=400).exists())
+
+    def test_top_up_if_user_balance_is_absolutely_empty(self):
+        self.assertEqual(self.balance.amount, 0)
+        self.prepare_order({'1': 5, '7': 2})
+        self.post_to_page(data=self.test_credit_cart_data)
+        self.assertTrue(self.user.operations.filter(amount=700).exists())
 
     def test_sellers_cant_buy_their_own_products(self):
         self.log_in_as_seller()
@@ -605,7 +607,7 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         own_product_type_units_count_at_start = ProductType.objects.get(pk=1).units_count
         units_to_buy = {'1': 5, '7': 3}
         self.prepare_order(units_to_buy)
-        self.post_to_page(data=self.post_data)
+        self.post_to_page(data=self.agreement_post_data)
         own_product_type_units_count_at_end = ProductType.objects.get(pk=1).units_count
         self.assertEqual(own_product_type_units_count_at_start, own_product_type_units_count_at_end)
         self.assertEqual(self.user.orders.first().total_price, 300)
@@ -616,7 +618,7 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         coupon = self.create_and_set_coupon(discount_percent=10, max_discount=max_discount)
         order = self.prepare_order(units_to_add)
         order.set_coupon(coupon)
-        self.post_to_page(data=self.post_data)
+        self.post_to_page(data=self.agreement_post_data)
         self.assertEqual(self.balance.amount, expected_balance_amount)
 
     def test_use_coupon_without_discount_limit(self):

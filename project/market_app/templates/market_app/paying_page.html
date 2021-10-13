@@ -9,7 +9,7 @@
 {% block form_block %}
   <form method="post" action="{% url 'market_app:paying' pk=unpaid_order.pk %}">
     <label for="amount">{% trans 'Amount' %}</label>
-    <input id="amount" class="form-control" type="text" value="{% to_local_currency total_order_price %}" disabled>
+    <input id="amount" class="form-control" type="text" value="{% to_local_currency top_up_amount %}" disabled>
     {% include 'core_app/include/pretty_form.html' with form=form %}
     {% csrf_token %}
   </form>

@@ -16,7 +16,7 @@ from currencies.models import Currency
 from currencies.services import get_currency_code_by_language, DEFAULT_CURRENCY_CODE, \
     get_exchanger
 from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, ProductTypeForm, CreditCardForm, \
-    AdvancedSearchForm, CartForm, CheckOutForm, TopUpForm
+    AdvancedSearchForm, CartForm, CheckOutForm, TopUpForm, AgreementForm
 from .models import Product, Market, ProductType, Operation, Order, OrderItem
 from .services import top_up_balance, make_purchase, prepare_order, EmptyOrderError, OrderCannotBeCancelledError, \
     try_to_cancel_order, get_products
@@ -313,7 +313,6 @@ class CheckOutView(PermissionRequiredMixin, generic.UpdateView):
 
 class PayingView(LoginRequiredMixin, generic.FormView):
     template_name = 'market_app/paying_page.html'
-    form_class = CreditCardForm
     success_url = reverse_lazy('market_app:order_confirmation')
 
     def setup(self, request, *args, **kwargs):
@@ -345,23 +344,27 @@ class PayingView(LoginRequiredMixin, generic.FormView):
             return HttpResponseRedirect(reverse_lazy('market_app:cart'))
         return HttpResponseRedirect(self.success_url)
 
+    def get_form_class(self):
+        if self.top_up_amount:
+            return CreditCardForm
+        return AgreementForm
+
+    def get_template_names(self):
+        if self.top_up_amount:
+            return super(PayingView, self).get_template_names()
+        return 'market_app/paying_if_user_balance_gte_order_price.html'
+
     def get_context_data(self, **kwargs):
         context = super(PayingView, self).get_context_data(**kwargs)
         context['unpaid_order'] = self.unpaid_order
         context['total_order_price'] = self.total_order_price
+        context['top_up_amount'] = self.top_up_amount
         return context
 
-    def get(self, request, *args, **kwargs):
-        if not len(self.unpaid_order.items.all()):
-            messages.info(request, 'The order is empty')
-            return HttpResponseRedirect(reverse_lazy('market_app:cart'), status=302)
-        if not self.top_up_amount:
-            return self.try_to_make_order()
-        return super(PayingView, self).get(request, *args, **kwargs)
-
     def form_valid(self, form):
-        top_up_balance(self.request.user, self.top_up_amount)
-        self.request.user.refresh_from_db()
+        if isinstance(form, CreditCardForm):
+            top_up_balance(self.request.user, self.top_up_amount)
+            self.request.user.refresh_from_db()
         return self.try_to_make_order()
 
 
