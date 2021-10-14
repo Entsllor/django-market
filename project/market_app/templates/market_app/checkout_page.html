@@ -17,19 +17,32 @@
               {{ order_item.product_type.product.name }}
             </a>
           </h4>
-          {% trans "Amount" %}: {{ order_item.amount }}<br class="p">
+          {% trans "Amount" %}:
+          <b>
+            {{ order_item.amount }}
+          </b>
+          <br class="p">
           {% for prop, value in order_item.product_type.properties_as_dict.items %}
             {{ prop }}: {{ value }}<br>
           {% endfor %}
-          {% trans 'Sale price' %}: {% to_local_currency order_item.total_price %}<br>
+          {% trans 'Sale price' %}:
+          <span class="text-success">
+            {% to_local_currency order_item.total_price %}
+          </span>
+          <br>
         </li>
       {% endfor %}
     </ul>
     <div class="card-body">
 
       <p>
-        {% trans "Your balance" %}: {% to_local_currency user.balance.amount %} <br>
-        {% trans 'Order price' %}: {% to_local_currency total_price_without_coupon_discount %}
+        {% if user.balance.amount %}
+          {% trans "Your balance" %}: {% to_local_currency user.balance.amount %} <br>
+        {% endif %}
+        {% trans 'Order price' %}:
+        <b class="text-success">
+          {% to_local_currency total_price_without_coupon_discount %}
+        </b>
       </p>
       <div id="coupon_discount_block" style="display: none">
         <p class="text-success mb-0">
