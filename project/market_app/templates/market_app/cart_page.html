@@ -27,10 +27,6 @@
                   return String(local_price) + LOCAL_CURRENCY_SYM
               };
 
-              const countPrice = (unitsCount, unitPrice) => {
-                  return unitPrice * unitsCount
-              };
-
               const updateTotalPriceElem = (itemId) => {
                   let inputCountElem = document.getElementById("id_" + itemId)
                   let itemUnitCount = inputCountElem.value;
@@ -38,14 +34,20 @@
                       inputCountElem.value = 0;
                       itemUnitCount = 0;
                   }
-                  let totalTypePriceElem = document.getElementById("itemTotalPrice" + itemId);
-                  let totalSalePrice = countPrice(itemUnitCount, prices[itemId]);
-                  let totalOriginalPrice = countPrice(itemUnitCount, original_prices[itemId]);
-                  if (totalSalePrice !== totalOriginalPrice) {
-                      let totalTypeOriginalPriceElem = document.getElementById("itemTotalOriginalPrice" + itemId);
-                      totalTypeOriginalPriceElem.textContent = toLocalCurrency(totalOriginalPrice);
+                  let itemSalePrice = prices[itemId]
+                  let itemOriginalPrice = original_prices[itemId]
+                  let totalItemPriceElem = document.getElementById("itemTotalPrice" + itemId);
+                  let totalSalePrice = itemUnitCount * itemSalePrice;
+                  let totalOriginalPrice = itemUnitCount * itemOriginalPrice;
+                  if (itemOriginalPrice !== itemSalePrice) {
+                      let totalItemOriginalPriceElem = document.getElementById("itemTotalOriginalPrice" + itemId);
+                      if (itemUnitCount < 1) {
+                          totalItemOriginalPriceElem.textContent = "";
+                      } else {
+                          totalItemOriginalPriceElem.textContent = toLocalCurrency(totalOriginalPrice);
+                      }
                   }
-                  totalTypePriceElem.textContent = toLocalCurrency(totalSalePrice);
+                  totalItemPriceElem.textContent = toLocalCurrency(totalSalePrice);
                   return totalSalePrice
               }
 
@@ -60,9 +62,10 @@
           </script>
           {% for item in cart.get_cart_items %}
             {% with item.pk as pk %}
-
-              <script>prices[{{ pk }}] = {{ item.sale_price }};</script>
-              <script>original_prices[{{ pk }}] = {{ item.original_price }};</script>
+              <script>
+                  prices[{{ pk }}] = {{ item.sale_price }};
+                  original_prices[{{ pk }}] = {{ item.original_price }};
+              </script>
               <li class="list-group-item">
                 <a href="{% url 'market_app:product' pk=item.product_id %}">
                   <h3>{{ item.product.name }}</h3>
@@ -71,7 +74,10 @@
                   {{ attr }}: {{ value }} <br>
                 {% endfor %}
                 <div>
-                  {% trans 'Unit price' %}: {% to_local_currency item.sale_price %} <br>
+                  {% trans 'Unit price' %}:
+                  <b>
+                    {% to_local_currency item.sale_price %}
+                  </b> <br>
                   <label for="id_{{ pk }}">
                     {% trans 'Amount' %}:
                   </label>
@@ -80,9 +86,11 @@
                 </div>
                 <p>
                   {% trans 'Total order item price' %}:
-                  <span id="itemTotalPrice{{ pk }}">{% to_local_currency item.sale_price %}</span>
+                  <span id="itemTotalPrice{{ pk }}" class="text-success">
+                    {% to_local_currency item.sale_price %}
+                  </span>
                   {% if item.product.discount_percent %}
-                    <s id="itemTotalOriginalPrice{{ pk }}">
+                    <s id="itemTotalOriginalPrice{{ pk }}" class="text-secondary">
                       {% to_local_currency item.product.original_price %}
                     </s>
                   {% endif %}
@@ -95,7 +103,7 @@
         <div class="card-body">
           <p>
             {% trans "Total order price" %}:
-            <span id="total_sale_price"></span>
+            <b id="total_sale_price" class="text-success"></b>
           </p>
         </div>
         <div class="card-footer">
