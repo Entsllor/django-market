@@ -1,5 +1,6 @@
 {% extends 'market_app/app_base.html' %}
 {% load i18n %}
+{% load l10n %}
 
 {% load currencies %}
 
@@ -27,15 +28,59 @@
     <div class="card-body">
 
       <p>
-        total price: {% to_local_currency order.total_price %}
+        {% trans "Your balance" %}: {% to_local_currency user.balance.amount %} <br>
+        {% trans 'Order price' %}: {% to_local_currency total_price_without_coupon_discount %}
       </p>
-      <p>
-        balance: {% to_local_currency user.balance.amount %}
-      </p>
+      <div id="coupon_discount_block" style="display: none">
+        <p class="text-success mb-0">
+          {% trans 'Coupon discount' %}: <span id="coupon_discount_amount"></span>
+        </p>
+        <p class="fw-bold">
+          {% trans 'Total price' %} <span id="total_order_price"></span>
+        </p>
+      </div>
       <form method="post" name="check_out" action="{% url 'market_app:checkout' pk=order.pk %}">
         {% include 'core_app/include/pretty_form.html' with form=form %}
         {% csrf_token %}
       </form>
     </div>
   </div>
+  <script>
+      const TOTAL_ORDER_PRICE = "{{ total_price_without_coupon_discount|unlocalize }}"
+      const LOCAL_CURRENCY_RATE = Number("{{ LOCAL_CURRENCY.rate|unlocalize }}");
+      const LOCAL_CURRENCY_SYM = "{{ LOCAL_CURRENCY.sym }}";
+      const coupons = JSON.parse('{{ form.coupons_json }}'.replace(/&quot;/ig, '"'))
+      const totalOrderPriceElem = document.getElementById('total_order_price')
+      const couponChoiceForm = document.getElementById('id_activated_coupon')
+      const couponDiscountBlock = document.getElementById('coupon_discount_block')
+      const couponDiscountAmount = document.getElementById('coupon_discount_amount')
+
+      const toLocalCurrency = price => {
+          let local_price = (price * LOCAL_CURRENCY_RATE).toFixed(2)
+          return String(local_price) + LOCAL_CURRENCY_SYM
+      };
+
+      const getCouponDiscount = (coupon, price) => {
+          let discountAmount = price * coupon['discount_percent'] / 100;
+          if (coupon['max_discount']) {
+              discountAmount = Math.min(discountAmount, coupon['max_discount']);
+          }
+          return discountAmount
+      }
+
+      const onChangeActivatedCoupon = () => {
+          if (couponChoiceForm.value) {
+              let coupon = coupons[couponChoiceForm.value];
+              let discountAmount = getCouponDiscount(coupon, TOTAL_ORDER_PRICE);
+              let totalPrice = TOTAL_ORDER_PRICE - discountAmount;
+              couponDiscountBlock.style.display = 'block';
+              totalOrderPriceElem.textContent = toLocalCurrency(totalPrice);
+              couponDiscountAmount.textContent = toLocalCurrency(discountAmount);
+          } else {
+              totalOrderPriceElem.textContent = toLocalCurrency(TOTAL_ORDER_PRICE);
+              couponDiscountBlock.style.display = 'none';
+          }
+      }
+      onload = onChangeActivatedCoupon
+  </script>
 {% endblock %}

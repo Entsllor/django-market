@@ -10,11 +10,16 @@
   <form method="post" action="{% url 'market_app:paying' pk=unpaid_order.pk %}">
     <div>
       {% trans 'You are paying' %}
-      {% to_local_currency total_order_price %}
+      <b>
+        {% to_local_currency total_order_price %}
+      </b>
       {% trans "for order №" %}{{ unpaid_order.pk }}
     </div>
     <p>
-      {% trans 'Your balance' %}: {% to_local_currency user.balance.amount %}
+      {% trans 'Your balance' %}:
+      <b class="text-success">
+        {% to_local_currency user.balance.amount %}
+      </b>
     </p>
     {% include 'core_app/include/pretty_form.html' with form=form without_button=True %}
     {% csrf_token %}

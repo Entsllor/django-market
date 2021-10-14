@@ -393,7 +393,9 @@ class Order(models.Model):
     def get_absolute_url(self):
         return reverse_lazy('market_app:order_detail', kwargs={'pk': self.pk})
 
-    def _get_coupon_discount(self, total_price: Money) -> Money:
+    def get_coupon_discount(self, total_price: Money) -> Money:
+        if not self.activated_coupon_id:
+            return 0
         coupon = self.activated_coupon
         coupon_discount = total_price * coupon.discount_percent / 100
         if coupon.max_discount:
@@ -403,15 +405,19 @@ class Order(models.Model):
     def set_coupon(self, coupon: 'Coupon') -> int:
         return Order.objects.filter(pk=self.pk).update(activated_coupon=coupon)
 
+    def get_total_price_without_coupon_discount(self) -> Money:
+        total_price = 0
+        items = self.items.all()
+        for item in items:
+            total_price += item.total_price
+        return total_price
+
     @property
     def total_price(self) -> Money:
         if not self.operation_id:
-            total_price = 0
-            items = self.items.all()
-            for item in items:
-                total_price += item.total_price
-            if self.activated_coupon:
-                coupon_discount = self._get_coupon_discount(total_price)
+            total_price = self.get_total_price_without_coupon_discount()
+            if self.activated_coupon_id:
+                coupon_discount = self.get_coupon_discount(total_price)
                 total_price -= coupon_discount
         else:
             total_price = self.operation.absolute_amount

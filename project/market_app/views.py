@@ -282,14 +282,15 @@ class CheckOutView(PermissionRequiredMixin, generic.UpdateView):
     template_name = 'market_app/checkout_page.html'
     form_class = CheckOutForm
     model = Order
+    context_object_name = 'order'
 
     def get_success_url(self):
         return reverse_lazy('market_app:paying', kwargs={'pk': self.object.pk})
 
-    def get_object(self, queryset=None):
+    def get_object(self, queryset=None) -> Order:
         if not hasattr(self, 'object'):
             order_pk = self.kwargs['pk']
-            self.object = Order.objects.prefetch_related(
+            self.object: Order = Order.objects.prefetch_related(
                 Prefetch('items', OrderItem.objects.only(
                     'product_type__product__name', 'amount', 'payment__amount',
                     'order', 'product_type__properties', 'product_type__markup_percent',
@@ -303,7 +304,8 @@ class CheckOutView(PermissionRequiredMixin, generic.UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super(CheckOutView, self).get_context_data(**kwargs)
-        context['order'] = self.object
+        total_price_without_coupon_discount = self.object.get_total_price_without_coupon_discount()
+        context['total_price_without_coupon_discount'] = total_price_without_coupon_discount
         return context
 
     def has_permission(self):
