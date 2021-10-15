@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import F, QuerySet
 
-from .models import ProductType, Order, Operation, Cart, Coupon, OrderItem, User, Product
+from .models import ProductType, Order, Operation, Cart, Coupon, OrderItem, User, Product, Money
 
 logger = logging.getLogger(__name__)
 SUBTRACT = '-'
@@ -22,6 +22,10 @@ class EmptyOrderError(Exception):
 
 class OrderCannotBeCancelledError(BaseException):
     """Raise if the order cannot be cancelled"""
+
+
+class OrderCouponError(Exception):
+    """Raises if the order coupon cannot be used"""
 
 
 def _set_order_operation(operation: Operation, order: Order) -> None:
@@ -139,6 +143,13 @@ def get_order_price_if_use_coupon(order: Order, coupon: Coupon):
     return total_price
 
 
+def _check_if_user_cannot_use_order_coupon(order) -> None:
+    if not Coupon.objects.filter(customers__exact=order.user_id, pk=order.activated_coupon_id).exists():
+        raise OrderCouponError(
+            f"User(id={order.user_id}) cannot use Coupon(id={order.activated_coupon_id})"
+        )
+
+
 def _validate_order(order: Order) -> None:
     """Check if order is ready do purchase."""
     order.refresh_from_db()
@@ -146,14 +157,19 @@ def _validate_order(order: Order) -> None:
     _check_if_already_paid(order)
 
 
+def _remove_coupon_from_user_coupon_set(order: Order) -> None:
+    order.activated_coupon.customers.remove(order.user_id)
+
+
 @transaction.atomic
-def make_purchase(order: Order, user: User, coupon: Coupon = None) -> Operation:
+def make_purchase(order: Order, user: User) -> Operation:
     _validate_order(order)
-    if coupon:
-        activate_coupon_to_order(order, user, coupon)
     purchase_operation = _change_balance_amount(user, SUBTRACT, order.total_price)
     _send_money_to_sellers(order)
     _set_order_operation(purchase_operation, order)
+    if order.activated_coupon_id:
+        _check_if_user_cannot_use_order_coupon(order)
+        _remove_coupon_from_user_coupon_set(order)
     order.save()
     return purchase_operation
 
@@ -178,13 +194,13 @@ def _change_balance_amount(user: User, operation_type: str, amount_of_money: Dec
     return operation
 
 
-def withdraw_money(user: User, amount_of_money: Decimal) -> Operation:
+def withdraw_money(user: User, amount_of_money: Money) -> Operation:
     logger.info(f'Try to withdraw User(pk={user.pk}) balance. Amount: {amount_of_money}.')
     operation = _change_balance_amount(user, SUBTRACT, amount_of_money)
     return operation
 
 
-def top_up_balance(user: User, amount_of_money) -> Operation:
+def top_up_balance(user: User, amount_of_money: Money) -> Operation:
     logger.info(f"Try to top-up User(pk={user.pk}) balance. Amount: {amount_of_money}.")
     operation = _change_balance_amount(user, ADD, amount_of_money)
     return operation

@@ -198,9 +198,10 @@ class CouponTest(TestBaseWithFilledCatalogue):
         coupon = self.create_and_set_coupon(10)
         top_up_balance(self.user, 1000)
         self.fill_cart({'1': 1})
-        self.assertTrue(self.user.coupon_set.filter(pk=coupon.pk).exists())
         order = prepare_order(self.cart)
-        make_purchase(order, self.user, coupon)
+        order.set_coupon(coupon)
+        self.assertTrue(self.user.coupon_set.filter(pk=coupon.pk).exists())
+        make_purchase(order, self.user)
         self.assertFalse(self.user.coupon_set.filter(pk=coupon.pk).exists())
 
     def test_coupon_decreases_total_order_price(self):
@@ -208,7 +209,8 @@ class CouponTest(TestBaseWithFilledCatalogue):
         top_up_balance(self.user, 1000)
         self.fill_cart({'1': 1})
         order = prepare_order(self.cart)
-        make_purchase(order, self.user, coupon)
+        order.set_coupon(coupon)
+        make_purchase(order, self.user)
         self.assertEqual(self.balance.amount, 910)
 
     def test_coupon_dont_decrease_seller_income(self):
@@ -216,8 +218,9 @@ class CouponTest(TestBaseWithFilledCatalogue):
         top_up_balance(self.user, 1000)
         self.fill_cart({'1': 1})
         order = prepare_order(self.cart)
+        order.set_coupon(coupon)
         self.assertEqual(self.sellers.get(pk=1).balance.amount, 0)
-        make_purchase(order, self.user, coupon)
+        make_purchase(order, self.user)
         self.assertEqual(self.balance.amount, 910)
         self.assertEqual(self.sellers.get(pk=1).balance.amount, 100)
 

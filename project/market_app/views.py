@@ -19,7 +19,7 @@ from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, Pr
     AdvancedSearchForm, CartForm, CheckOutForm, TopUpForm, AgreementForm
 from .models import Product, Market, ProductType, Operation, Order, OrderItem
 from .services import top_up_balance, make_purchase, prepare_order, EmptyOrderError, OrderCannotBeCancelledError, \
-    try_to_cancel_order, get_products
+    try_to_cancel_order, get_products, OrderCouponError
 
 
 class MarketOwnerRequiredMixin(PermissionRequiredMixin):
@@ -344,6 +344,11 @@ class PayingView(LoginRequiredMixin, generic.FormView):
         except EmptyOrderError:
             messages.warning(self.request, 'Cannot perform empty order')
             return HttpResponseRedirect(reverse_lazy('market_app:cart'))
+        except OrderCouponError:
+            messages.warning(
+                self.request, f"You can't use this coupon '{self.unpaid_order.activated_coupon.description}'"
+            )
+            return HttpResponseRedirect(reverse_lazy('market_app:checkout', kwargs={'pk': self.unpaid_order.pk}))
         return HttpResponseRedirect(self.success_url)
 
     def get_form_class(self):

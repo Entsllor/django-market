@@ -8,11 +8,11 @@ from django.urls import reverse_lazy
 from currencies.services import DEFAULT_CURRENCY_CODE, exchange_to
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue, FailedToCreateObject
 from ..models import Market, Product, ProductCategory, Operation, ProductType, Order, OrderItem, OrderStatusChoices, \
-    User
+    User, Coupon
 from ..services import top_up_balance, make_purchase, prepare_order
-from ..views import ProductCreateView, ProductEditView, CatalogueView, MarketEditView, MarketCreateView, \
-    CartView, CheckOutView, TopUpView, OperationHistoryView, OrderDetail, ProductTypeEdit, UserMarketView, ShippingPage, \
-    PayingView
+from ..views import ProductCreateView, ProductEditView, CatalogueView, MarketEditView, \
+    MarketCreateView, CartView, CheckOutView, TopUpView, OperationHistoryView, \
+    OrderDetail, ProductTypeEdit, UserMarketView, ShippingPage, PayingView
 
 
 def prepare_product_data_to_post(data) -> dict:
@@ -529,6 +529,9 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.unpaid_order = None
         self.log_in_as_customer()
 
+    def check_data_to_compare(self):
+        return self.user.balance
+
     def get_url(self):
         return reverse_lazy('market_app:paying', kwargs={'pk': 1})
 
@@ -612,25 +615,43 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.assertEqual(own_product_type_units_count_at_start, own_product_type_units_count_at_end)
         self.assertEqual(self.user.orders.first().total_price, 300)
 
-    def _test_use_coupon(self, expected_balance_amount, max_discount=None):
-        top_up_balance(self.user, 2000)
-        units_to_add = {'1': 5, '4': 1, '8': 4}
-        coupon = self.create_and_set_coupon(discount_percent=10, max_discount=max_discount)
-        order = self.prepare_order(units_to_add)
-        order.set_coupon(coupon)
-        self.post_to_page(data=self.agreement_post_data)
-        self.assertEqual(self.balance.amount, expected_balance_amount)
+    def _test_use_coupon(self, coupon, expected_balance_amount):
+        try:
+            top_up_balance(self.user, 2000)
+            units_to_add = {'1': 5, '4': 1, '8': 4}
+            self.unpaid_order = self.prepare_order(units_to_add)
+            self.unpaid_order.set_coupon(coupon)
+            response = self.post_to_page(data=self.agreement_post_data)
+        finally:
+            self.assertEqual(self.balance.amount, expected_balance_amount)
+        return response
 
     def test_use_coupon_without_discount_limit(self):
-        self._test_use_coupon(1100)
+        coupon = self.create_and_set_coupon(discount_percent=10)
+        self._test_use_coupon(coupon, 1100)
 
     def test_use_coupon_with_discount_limit(self):
-        self._test_use_coupon(1080, max_discount=80)
+        coupon = self.create_and_set_coupon(discount_percent=10, max_discount=80)
+        self._test_use_coupon(coupon, 1080)
 
     def test_coupon_discount_dont_affect_to_seller_top_up_operation(self):
-        self._test_use_coupon(1080, max_discount=80)
+        coupon = self.create_and_set_coupon(discount_percent=10, max_discount=80)
+        self._test_use_coupon(coupon, 1080)
         self.assertEqual(self.sellers.get(pk=1).balance.amount, 600)
         self.assertEqual(self.sellers.get(pk=2).balance.amount, 400)
+
+    def test_cannot_use_coupon_if_user_have_no_access_to_the_coupon(self):
+        coupon = Coupon.objects.create(discount_percent=10, max_discount=80)
+        response = self._test_use_coupon(coupon, 2000)
+        self.assertRedirects(response, reverse_lazy('market_app:checkout', kwargs={'pk': self.unpaid_order.pk}))
+        self.assertEqual(self.sellers.get(pk=1).balance.amount, 0)
+        self.assertEqual(self.sellers.get(pk=2).balance.amount, 0)
+
+    def test_remove_coupon_from_user_coupon_set_after_purchasing(self):
+        coupon = self.create_and_set_coupon(discount_percent=10, max_discount=80)
+        self.assertTrue(self.user.coupon_set.filter(pk=coupon.pk).exists())
+        self._test_use_coupon(coupon, 1080)
+        self.assertFalse(self.user.coupon_set.filter(pk=coupon.pk).exists())
 
 
 class OperationHistoryTest(ViewTestMixin, TestBaseWithFilledCatalogue):
