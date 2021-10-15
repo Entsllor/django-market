@@ -93,7 +93,7 @@ def try_to_cancel_order(order: Order, user_id: int) -> None:
 
 def activate_coupon_to_order(order: Order, user: User, coupon: Coupon) -> None:
     if user.coupon_set.filter(pk=coupon.pk).exists():
-        order.set_coupon(coupon)
+        order.set_coupon(coupon.pk)
         coupon.customers.remove(user)
         order.refresh_from_db()
 
@@ -136,17 +136,17 @@ def _check_if_order_empty(order: Order, use_exists=False) -> None:
 
 
 def get_order_price_if_use_coupon(order: Order, coupon: Coupon):
-    order_coupon_at_start = order.activated_coupon
-    order.activated_coupon = coupon
+    order_coupon_at_start = order.coupon
+    order.coupon = coupon
     total_price = order.total_price
-    order.activated_coupon = order_coupon_at_start
+    order.coupon = order_coupon_at_start
     return total_price
 
 
-def _check_if_user_cannot_use_order_coupon(order) -> None:
-    if not Coupon.objects.filter(customers__exact=order.user_id, pk=order.activated_coupon_id).exists():
+def _check_if_user_cannot_use_order_coupon(order: Order) -> None:
+    if not Coupon.objects.filter(customers__exact=order.user_id, pk=order.coupon_id).exists():
         raise OrderCouponError(
-            f"User(id={order.user_id}) cannot use Coupon(id={order.activated_coupon_id})"
+            f"User(id={order.user_id}) cannot use Coupon(id={order.coupon_id})"
         )
 
 
@@ -158,7 +158,7 @@ def _validate_order(order: Order) -> None:
 
 
 def _remove_coupon_from_user_coupon_set(order: Order) -> None:
-    order.activated_coupon.customers.remove(order.user_id)
+    order.coupon.customers.remove(order.user_id)
 
 
 @transaction.atomic
@@ -167,7 +167,7 @@ def make_purchase(order: Order, user: User) -> Operation:
     purchase_operation = _change_balance_amount(user, SUBTRACT, order.total_price)
     _send_money_to_sellers(order)
     _set_order_operation(purchase_operation, order)
-    if order.activated_coupon_id:
+    if order.coupon_id:
         _check_if_user_cannot_use_order_coupon(order)
         _remove_coupon_from_user_coupon_set(order)
     order.save()

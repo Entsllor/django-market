@@ -468,10 +468,10 @@ class CheckOutPageTest(ViewTestMixin, TestBaseWithFilledCatalogue):
     def test_correct_template(self):
         self._test_correct_template()
 
-    def test_can_change_activated_coupon(self):
-        self.assertFalse(self.order.activated_coupon)
-        self.post_to_page(extra_data={'activated_coupon': '1'})
-        self.assertTrue(self.order.activated_coupon)
+    def test_can_change_coupon(self):
+        self.assertFalse(self.order.coupon)
+        self.post_to_page(extra_data={'coupon': '1'})
+        self.assertTrue(self.order.coupon)
 
 
 class TopUpViewTest(ViewTestMixin, TestBaseWithFilledCatalogue):
@@ -620,7 +620,7 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
             top_up_balance(self.user, 2000)
             units_to_add = {'1': 5, '4': 1, '8': 4}
             self.unpaid_order = self.prepare_order(units_to_add)
-            self.unpaid_order.set_coupon(coupon)
+            self.unpaid_order.set_coupon(coupon.pk)
             response = self.post_to_page(data=self.agreement_post_data)
         finally:
             self.assertEqual(self.balance.amount, expected_balance_amount)

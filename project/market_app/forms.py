@@ -134,7 +134,7 @@ class TopUpForm(MoneyExchangerMixin, CreditCardForm):
 class CheckOutForm(forms.ModelForm):
     class Meta:
         model = Order
-        fields = ['activated_coupon', 'address']
+        fields = ['coupon', 'address']
 
     def __init__(self, *args, **kwargs):
         super(CheckOutForm, self).__init__(*args, **kwargs)
@@ -144,11 +144,11 @@ class CheckOutForm(forms.ModelForm):
                 'discount_percent': str(coupon.discount_percent),
                 'max_discount': str(coupon.max_discount) if coupon.max_discount else None
             } for coupon in coupons})
-        self.fields['activated_coupon'].queryset = coupons
-        self.fields['activated_coupon'].widget.attrs.update(
+        self.fields['coupon'].queryset = coupons
+        self.fields['coupon'].widget.attrs.update(
             onchange='onChangeActivatedCoupon()'
         )
-        self.order_fields(['address', 'activated_coupon'])
+        self.order_fields(['address', 'coupon'])
 
 
 class CartForm(forms.Form):

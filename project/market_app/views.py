@@ -346,7 +346,7 @@ class PayingView(LoginRequiredMixin, generic.FormView):
             return HttpResponseRedirect(reverse_lazy('market_app:cart'))
         except OrderCouponError:
             messages.warning(
-                self.request, f"You can't use this coupon '{self.unpaid_order.activated_coupon.description}'"
+                self.request, f"You can't use this coupon '{self.unpaid_order.coupon.description}'"
             )
             return HttpResponseRedirect(reverse_lazy('market_app:checkout', kwargs={'pk': self.unpaid_order.pk}))
         return HttpResponseRedirect(self.success_url)

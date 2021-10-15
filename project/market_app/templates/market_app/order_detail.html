@@ -30,8 +30,8 @@
       {% endfor %}
     </ul>
     <div class="card-body">
-      {% if order.activated_coupon %}
-        {% trans 'Activated coupon' %}: {{ order.activated_coupon }}
+      {% if order.coupon %}
+        {% trans 'Activated coupon' %}: {{ order.coupon }}
       {% endif %}
       <p class="mb-0">
         {% trans 'Total price' %}: {% to_local_currency order.total_price %}

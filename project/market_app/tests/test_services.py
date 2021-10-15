@@ -194,12 +194,12 @@ class CouponTest(TestBaseWithFilledCatalogue):
         super(CouponTest, self).setUp()
         self.log_in_as_customer()
 
-    def test_unlink_activated_coupon_after_buying(self):
+    def test_unlink_coupon_after_buying(self):
         coupon = self.create_and_set_coupon(10)
         top_up_balance(self.user, 1000)
         self.fill_cart({'1': 1})
         order = prepare_order(self.cart)
-        order.set_coupon(coupon)
+        order.set_coupon(coupon.pk)
         self.assertTrue(self.user.coupon_set.filter(pk=coupon.pk).exists())
         make_purchase(order, self.user)
         self.assertFalse(self.user.coupon_set.filter(pk=coupon.pk).exists())
@@ -209,7 +209,7 @@ class CouponTest(TestBaseWithFilledCatalogue):
         top_up_balance(self.user, 1000)
         self.fill_cart({'1': 1})
         order = prepare_order(self.cart)
-        order.set_coupon(coupon)
+        order.set_coupon(coupon.pk)
         make_purchase(order, self.user)
         self.assertEqual(self.balance.amount, 910)
 
@@ -218,7 +218,7 @@ class CouponTest(TestBaseWithFilledCatalogue):
         top_up_balance(self.user, 1000)
         self.fill_cart({'1': 1})
         order = prepare_order(self.cart)
-        order.set_coupon(coupon)
+        order.set_coupon(coupon.pk)
         self.assertEqual(self.sellers.get(pk=1).balance.amount, 0)
         make_purchase(order, self.user)
         self.assertEqual(self.balance.amount, 910)

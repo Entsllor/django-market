@@ -347,9 +347,9 @@ class Order(models.Model):
         null=True,
         related_name='order'
     )
-    activated_coupon = models.ForeignKey(
+    coupon = models.ForeignKey(
         to='Coupon',
-        verbose_name=_('activated coupon'),
+        verbose_name=_('coupon'),
         on_delete=models.SET_NULL,
         null=True, blank=True
     )
@@ -394,16 +394,16 @@ class Order(models.Model):
         return reverse_lazy('market_app:order_detail', kwargs={'pk': self.pk})
 
     def get_coupon_discount(self, total_price: Money) -> Money:
-        if not self.activated_coupon_id:
+        if not self.coupon_id:
             return 0
-        coupon = self.activated_coupon
+        coupon = self.coupon
         coupon_discount = total_price * coupon.discount_percent / 100
         if coupon.max_discount:
             coupon_discount = min(coupon_discount, coupon.max_discount)
         return coupon_discount
 
-    def set_coupon(self, coupon: 'Coupon') -> int:
-        return Order.objects.filter(pk=self.pk).update(activated_coupon=coupon)
+    def set_coupon(self, coupon_id: int) -> int:
+        return Order.objects.filter(pk=self.pk).update(coupon_id=coupon_id)
 
     def get_total_price_without_coupon_discount(self) -> Money:
         total_price = 0
@@ -416,7 +416,7 @@ class Order(models.Model):
     def total_price(self) -> Money:
         if not self.operation_id:
             total_price = self.get_total_price_without_coupon_discount()
-            if self.activated_coupon_id:
+            if self.coupon_id:
                 coupon_discount = self.get_coupon_discount(total_price)
                 total_price -= coupon_discount
         else:
