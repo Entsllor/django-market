@@ -23,7 +23,7 @@ DEFAULT_CURRENCY = LightWeightCurrency(
 
 CURRENCY_CHOICES = []
 
-currency_code = str
+currency_code_type = str
 CurrencyObj = Union[Currency, LightWeightCurrency]
 
 
@@ -47,7 +47,7 @@ def create_currencies_from_settings() -> None:
         )
 
 
-def get_currency_by_code(code: currency_code) -> CurrencyObj:
+def get_currency_by_code(code: currency_code_type) -> CurrencyObj:
     if code == settings.DEFAULT_CURRENCY_CODE:
         return DEFAULT_CURRENCY
     return Currency.objects.filter(code=code).first() or DEFAULT_CURRENCY
@@ -74,7 +74,8 @@ def _exchange(amount: Decimal, exchange_rate: Decimal) -> Decimal:
     return (amount * exchange_rate).quantize(Decimal('1.00'))
 
 
-def _get_exchange_rate(to_currency: currency_code, from_currency: currency_code = DEFAULT_CURRENCY_CODE) -> Decimal:
+def _get_exchange_rate(
+        to_currency: currency_code_type, from_currency: currency_code_type = DEFAULT_CURRENCY_CODE) -> Decimal:
     if to_currency.upper() == from_currency.upper():
         return Decimal('1')
     currencies_set = Currency.objects.only('rate', 'code').filter(code__in=(to_currency, from_currency))
@@ -83,13 +84,13 @@ def _get_exchange_rate(to_currency: currency_code, from_currency: currency_code 
     return to_currency_rate / from_currency_rate
 
 
-def exchange_to(code: currency_code, amount, _from=DEFAULT_CURRENCY_CODE):
+def exchange_to(code: currency_code_type, amount, _from=DEFAULT_CURRENCY_CODE):
     exchange_rate = _get_exchange_rate(code, _from)
     exchanged_amount = _exchange(amount, exchange_rate)
     return exchanged_amount
 
 
-def get_exchanger(to: currency_code, _from: currency_code = DEFAULT_CURRENCY_CODE,
+def get_exchanger(to: currency_code_type, _from: currency_code_type = DEFAULT_CURRENCY_CODE,
                   by_language: bool = False) -> _exchange:
     if by_language:
         to = get_currency_code_by_language(to)

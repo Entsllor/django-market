@@ -219,6 +219,14 @@ class ProductEditTest(ViewTestMixin, BaseMarketTestCase):
         new_price = self.product.original_price
         self.assertEqual(new_price, expected_price)
 
+    def test_cannot_edit_price_in_another_currency(self):
+        self.log_in_as_seller()
+        price_at_start = self.product.original_price
+        response = self.post_to_product_edit(
+            self.product.id, data_to_update={'original_price': 200}, currency_code='INVALID')
+        self.assertIn('currency_code', response.context_data['form'].errors)
+        self.assertEqual(self.product.original_price, price_at_start)
+
     def test_redirect_if_not_logged_in(self):
         self._test_redirect_if_not_logged_in()
 

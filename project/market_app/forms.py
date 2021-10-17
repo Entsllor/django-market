@@ -2,6 +2,7 @@ import json
 
 from django import forms
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext_lazy as _
 
 from currencies.services import exchange_to, get_currency_choices
@@ -23,13 +24,20 @@ class MoneyExchangerMixin(forms.Form):
     )
 
     def _clean_field_with_money_exchanging(self, field_name):
-        currency_code: str = self.data.get('currency_code', DEFAULT_CURRENCY)
+        currency_code: str = self.data.get('currency_code')
         amount = self.data[field_name]
-        return exchange_to(
-            DEFAULT_CURRENCY,
-            amount=amount,
-            _from=currency_code
-        )
+        try:
+            return exchange_to(
+                DEFAULT_CURRENCY,
+                amount=amount,
+                _from=currency_code
+            )
+        except ObjectDoesNotExist:
+            self.add_error(
+                'currency_code',
+                _(f"Sorry, but we can't find exchange rate for this currency '{currency_code}'")
+            )
+        return amount
 
 
 class ProductUpdateForm(MoneyExchangerMixin, forms.ModelForm):
