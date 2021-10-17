@@ -12,7 +12,7 @@ from ..models import Market, Product, ProductCategory, Operation, ProductType, O
 from ..services import top_up_balance, make_purchase, prepare_order
 from ..views import ProductCreateView, ProductEditView, CatalogueView, MarketEditView, \
     MarketCreateView, CartView, CheckOutView, TopUpView, OperationHistoryView, \
-    OrderDetail, ProductTypeEdit, UserMarketView, ShippingPage, PayingView, SearchProducts
+    OrderDetail, ProductTypeEdit, UserMarketView, ShippingPage, PayingView, SearchProducts, ProductView
 
 
 def prepare_product_data_to_post(data) -> dict:
@@ -65,6 +65,78 @@ class CatalogueTest(ViewTestMixin):
 
     def test_correct_template(self):
         self._test_correct_template()
+
+
+class ProductViewTest(ViewTestMixin, BaseMarketTestCase):
+    ViewClass = ProductView
+
+    def setUp(self) -> None:
+        super(ProductViewTest, self).setUp()
+        self.log_in_as_seller()
+        self.product = self.create_product('TestProduct', original_price=100)
+        for units_count in (10, 5, 0):
+            ProductType.objects.create(product=self.product, units_count=units_count)
+        self.client.logout()
+
+    def get_url(self):
+        return self.product.get_absolute_url()
+
+    def test_correct_template(self):
+        self._test_correct_template()
+
+    def test_can_add_to_cart(self):
+        self.log_in_as_customer()
+        self.assertEqual(self.cart.items, {})
+        self.post_to_page(data={'product_type': 1, 'quantity': 3})
+        self.assertEqual(self.cart.items, {'1': 3})
+
+    def test_can_add_to_cart_different_types(self):
+        self.log_in_as_customer()
+        self.assertEqual(self.cart.items, {})
+        self.post_to_page(data={'product_type': 1, 'quantity': 3})
+        self.post_to_page(data={'product_type': 2, 'quantity': 5})
+        self.assertEqual(self.cart.items, {'1': 3, '2': 5})
+
+    def test_cannot_add_if_units_count_equals_zero(self):
+        self.log_in_as_customer()
+        self.assertEqual(ProductType.objects.get(pk=3).units_count, 0)
+        self.assertEqual(self.cart.items, {})
+        self.post_to_page(data={'product_type': 3, 'quantity': 1})
+        self.assertEqual(self.cart.items, {})
+
+    def test_cannot_add_negative_quantity(self):
+        self.log_in_as_customer()
+        self.assertEqual(self.cart.items, {})
+        self.post_to_page(data={'product_type': 1, 'quantity': 2})
+        response = self.post_to_page(data={'product_type': 2, 'quantity': -2})
+        self.assertFalse(response.context_data['form'].is_valid())
+        self.assertEqual(self.cart.items, {'1': 2})
+
+    def test_cannot_add_types_from_not_relevant_product(self):
+        self.log_in_as_customer()
+        self.assertEqual(self.cart.items, {})
+        self.post_to_page(data={'product_type': 1, 'quantity': 2})
+        response = self.post_to_page(data={'product_type': 4, 'quantity': 1})
+        self.assertFalse(response.context_data['form'].is_valid())
+        self.assertEqual(self.cart.items, {'1': 2})
+
+    def test_can_change_amount_on_cart(self):
+        self.log_in_as_customer()
+        self.assertEqual(self.cart.items, {})
+        self.post_to_page(data={'product_type': 1, 'quantity': 3})
+        self.post_to_page(data={'product_type': 1, 'quantity': 2})
+        self.assertEqual(self.cart.items, {'1': 2})
+
+    def test_redirect_if_unauthenticated_user_try_to_add_to_cart(self):
+        self.client.logout()
+        self.assertEqual(self.cart.items, {})
+        response = self.post_to_page(data={'product_type': 1, 'quantity': 3})
+        self.assertRedirectsAuth(response)
+
+    def test_redirect_if_post(self):
+        self.log_in_as_customer()
+        response = self.post_to_page(data={'product_type': 1, 'quantity': 3})
+        self.assertRedirects(response, self.ViewClass.success_url)
 
 
 class ProductCreateTest(ViewTestMixin, BaseMarketTestCase):
