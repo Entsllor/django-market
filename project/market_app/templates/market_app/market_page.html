@@ -5,7 +5,7 @@
 {% block main_center_block %}
   <div class="card my-2">
     <div class="card-header content-title">
-      <h3 class="">{{ market.name }}</h3>
+      <h4>{{ market.name }}</h4>
     </div>
 
     <div class="card-body">
@@ -20,8 +20,8 @@
             {% trans 'Product count' %}: {{ products|length }}
           </p>
         </div>
-        <div class="col col-12 col-md-6">
-          <img class="img-fluid float-end"
+        <div class="col col-12 col-md-6 d-flex justify-content-center justify-content-md-end">
+          <img class="img-fluid"
                src="{{ market.get_img_url }}"
                alt="market logo">
         </div>

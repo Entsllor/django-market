@@ -5,30 +5,27 @@
 
 {% block main_center_card %}
   <div class="card-header content-title">
-    {% trans 'Product' %}
+    <h4>{{ product.name }}</h4>
   </div>
   <div class="card-body">
-    <div class="row row-cols-1 row-cols-md-2">
-      <div class="col">
-        <div class="m-auto">
-          <img class="img-fluid m-auto"
-               src="{{ product.get_img_url }}"
-               alt="img">
-        </div>
-      </div>
-      <div class="col">
-        <h3 class="text-center">{{ product.name }}</h3>
-        {% if product.description %}
-          <p>{% trans "Description" %}: {{ product.description }}</p>
-        {% endif %}
-        <p class="text-end">
+    <div class="row">
+      <div class="col col-12 col-md-6">
+
+        <p class="card-text">
+          {% if product.description %}
+            {% trans 'Description' %}: {{ product.description }} <br>
+          {% endif %}
           {% trans 'Market' %}:
-          <a href="{{ product.market.get_absolute_url }}">
-            {{ product.market.name }}
-          </a>
+          <a href="{{ product.market.get_absolute_url }}">{{ product.market.name }}</a>
         </p>
       </div>
+      <div class="col col-12 col-md-6 d-flex justify-content-center justify-content-md-end">
+        <img class="img-fluid"
+             src="{{ product.get_img_url }}"
+             alt="market logo">
+      </div>
     </div>
+    <br>
     {% if product.available %}
       <form action="{{ product.get_absolute_url }}" method="post">
         {% include 'core_app/include/pretty_form.html' with form=form without_button=True %}
