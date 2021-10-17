@@ -4,6 +4,7 @@ import re
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
+from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q, Prefetch
 from django.http import HttpResponseRedirect, Http404
@@ -27,8 +28,6 @@ class MarketOwnerRequiredMixin(PermissionRequiredMixin):
         return self.permission_denied_message or "Current user isn't the market owner"
 
     def has_permission(self):
-        # if not getattr(self, 'request').user.is_authenticated:
-        #     return redirect_to_login()
         is_current_user_the_market_owner = getattr(
             self, 'request').user.id == self.get_current_market_owner_id()
         if self.permission_required is None:
@@ -106,21 +105,21 @@ class CatalogueView(generic.ListView):
         return get_products()
 
 
-class ProductPageView(generic.FormView):
+class ProductView(generic.FormView):
     model = Product
     template_name = 'market_app/product.html'
     form_class = AddToCartForm
     success_url = reverse_lazy('market_app:catalogue')
 
     def setup(self, request, *args, **kwargs):
-        super(ProductPageView, self).setup(request, *args, **kwargs)
+        super(ProductView, self).setup(request, *args, **kwargs)
         self.object = Product.objects.prefetch_related(
             Prefetch('product_types', ProductType.objects.filter(units_count__gt=0))
         ).select_related('market').get(pk=self.kwargs['pk'])
         self.product_types = self.object.product_types.all()
 
     def get_context_data(self, **kwargs):
-        context = super(ProductPageView, self).get_context_data(**kwargs)
+        context = super(ProductView, self).get_context_data(**kwargs)
         context['product'] = self.object
         context['markup_percents'] = json.dumps(
             {i_type.pk: str(i_type.markup_percent) for i_type in self.product_types}
@@ -129,19 +128,24 @@ class ProductPageView(generic.FormView):
         return context
 
     def get_form_kwargs(self):
-        kwargs = super(ProductPageView, self).get_form_kwargs()
+        kwargs = super(ProductView, self).get_form_kwargs()
         kwargs['types'] = self.product_types
         return kwargs
 
+    def post(self, request, *args, **kwargs):
+        return super(ProductView, self).post(request, *args, **kwargs)
+
     def form_valid(self, form):
+        if not self.request.user.is_authenticated:
+            return redirect_to_login(next=self.object.get_absolute_url())
         quantity = form.cleaned_data['quantity']
         if self.object.market.owner_id == self.request.user.id:
             form.add_error('product_type', _('Cannot buy your own product.'))
-            return super(ProductPageView, self).form_invalid(form)
+            return super(ProductView, self).form_invalid(form)
         self.request.user.cart.set_item(
             product_type_pk=form.cleaned_data['product_type'],
             quantity=quantity)
-        return super(ProductPageView, self).form_valid(form)
+        return super(ProductView, self).form_valid(form)
 
 
 class MarketCreateView(LoginRequiredMixin, generic.CreateView):
