@@ -6,9 +6,7 @@ from django.conf import settings
 from .models import Currency, get_rates
 
 DEFAULT_CURRENCY_CODE = settings.DEFAULT_CURRENCY_CODE
-CURRENCY_CHOICES = []
 LOCAL_CURRENCIES = settings.LOCAL_CURRENCIES
-currency_code = str
 
 
 class LightWeightCurrency(NamedTuple):
@@ -23,16 +21,19 @@ DEFAULT_CURRENCY = LightWeightCurrency(
     rate=1
 )
 
+CURRENCY_CHOICES = []
+
+currency_code = str
 CurrencyObj = Union[Currency, LightWeightCurrency]
 
 
 def get_currency_choices() -> tuple:
     if not CURRENCY_CHOICES:
         CURRENCY_CHOICES.extend(
-            (currency.code, currency.sym) for currency in Currency.objects.filter(code__in=settings.CURRENCIES)
+            (code, f'{settings.CURRENCIES_SYMBOLS.get(code, "?")} ({code})')
+            for code in Currency.objects.filter(code__in=settings.EXTRA_CURRENCIES).values_list('code', flat=True)
         )
-        if not CURRENCY_CHOICES:
-            return (DEFAULT_CURRENCY_CODE, settings.CURRENCIES_SYMBOLS[DEFAULT_CURRENCY_CODE]),
+        CURRENCY_CHOICES.append((DEFAULT_CURRENCY.code, f'{DEFAULT_CURRENCY.sym} ({DEFAULT_CURRENCY.code})'))
     return tuple(CURRENCY_CHOICES)
 
 
