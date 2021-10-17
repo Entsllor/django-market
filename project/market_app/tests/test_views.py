@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.urls import reverse_lazy
 
 from currencies.services import DEFAULT_CURRENCY_CODE, exchange_to
-from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue, FailedToCreateObject
+from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue
 from ..models import Market, Product, ProductCategory, Operation, ProductType, Order, OrderItem, OrderStatusChoices, \
     User, Coupon
 from ..services import top_up_balance, make_purchase, prepare_order
@@ -74,6 +74,7 @@ class ProductCreateTest(ViewTestMixin, BaseMarketTestCase):
     def setUp(self) -> None:
         self.create_currencies()
         super(ProductCreateTest, self).setUp()
+        self.created_product = None
         self.market = self.seller.market
         self.product_data = {
             'name': 'TestProductName', 'description': 'text', 'market': self.market,
@@ -93,20 +94,24 @@ class ProductCreateTest(ViewTestMixin, BaseMarketTestCase):
         if check_unique:
             self.assertObjectDoesNotExist(Product.objects, name=data['name'])
         response = self.post_to_page(self.page_url, data=data | {'currency_code': currency_code}, **kwargs)
-        try:
-            self.try_to_set_created_product(name=data['name'])
-        except ObjectDoesNotExist:
-            raise FailedToCreateObject("Failed to create the product. Make sure the data is valid.")
+        self.set_created_product(name=data['name'])
         return response
 
-    def try_to_set_created_product(self, **data):
-        self.created_product = Product.objects.get(**data)
+    def set_created_product(self, **data):
+        self.created_product = Product.objects.filter(**data).first() or None
 
     def test_can_create_product(self):
         self.log_in_as_seller()
         self.post_to_product_create()
+        self.assertTrue(self.created_product)
         for key in self.product_data:
             self.assertEqual(getattr(self.created_product, key), self.product_data[key])
+
+    def test_cannot_create_if_not_logged_in(self):
+        self.client.logout()
+        response = self.post_to_product_create()
+        self.assertRedirectsAuth(response)
+        self.assertIsNone(self.created_product)
 
     def test_create_in_default_currency(self):
         self.log_in_as_seller()
