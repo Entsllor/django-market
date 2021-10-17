@@ -164,7 +164,9 @@ def _remove_coupon_from_user_coupon_set(order: Order) -> None:
 @transaction.atomic
 def make_purchase(order: Order, user: User) -> Operation:
     _validate_order(order)
-    purchase_operation = _change_balance_amount(user, SUBTRACT, order.total_price)
+    total_order_price = order.total_price
+    logger.info(f'User(pk={user.pk}) try to pay for Order(id={order.pk}). Total order price: {total_order_price}')
+    purchase_operation = _change_balance_amount(user, SUBTRACT, total_order_price)
     _send_money_to_sellers(order)
     _set_order_operation(purchase_operation, order)
     if order.coupon_id:
