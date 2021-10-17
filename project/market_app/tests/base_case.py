@@ -1,12 +1,13 @@
 import datetime
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Model, QuerySet
 from django.db.models.signals import post_save
 from django.test import TestCase
 
-from currencies.services import create_currencies_from_settings
+from currencies.models import Currency
 from market_app.models import Product, Market, ProductCategory, ProductType, Coupon, Cart, Balance, OrderItem, Order
 from market_app.services import prepare_order, top_up_balance, make_purchase
 
@@ -53,7 +54,14 @@ class BaseMarketTestCase(TestCase):
 
     @staticmethod
     def create_currencies():
-        create_currencies_from_settings()
+        rates = {code: 50 for code in settings.EXTRA_CURRENCIES}
+        rates[settings.DEFAULT_CURRENCY_CODE] = 1
+        for currency_code in settings.CURRENCIES:
+            Currency.objects.update_or_create(
+                code=currency_code,
+                sym=settings.CURRENCIES_SYMBOLS.get(currency_code, '?'),
+                rate=rates[currency_code]
+            )
 
     def log_in_as_customer(self) -> bool:
         return self._log_in(self.customer)
