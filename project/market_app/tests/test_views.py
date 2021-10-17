@@ -12,7 +12,7 @@ from ..models import Market, Product, ProductCategory, Operation, ProductType, O
 from ..services import top_up_balance, make_purchase, prepare_order
 from ..views import ProductCreateView, ProductEditView, CatalogueView, MarketEditView, \
     MarketCreateView, CartView, CheckOutView, TopUpView, OperationHistoryView, \
-    OrderDetail, ProductTypeEdit, UserMarketView, ShippingPage, PayingView
+    OrderDetail, ProductTypeEdit, UserMarketView, ShippingPage, PayingView, SearchProducts
 
 
 def prepare_product_data_to_post(data) -> dict:
@@ -886,3 +886,38 @@ class ShippingPageTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         items_to_mark_pks = self.order_1.items.values_list('pk', flat=True)
         self.post_to_page(data={f'item_{pk}': 'on' for pk in items_to_mark_pks})
         self.assertEqual(self.order_1.status, OrderStatusChoices.SHIPPED)
+
+
+class SearchTest(ViewTestMixin, TestBaseWithFilledCatalogue):
+    ViewClass = SearchProducts
+    page_url = reverse_lazy('market_app:search_products')
+
+    def test_correct_template(self):
+        self._test_correct_template()
+
+    def test_can_search_by_category(self):
+        response = self.get_from_page(data={'category': 3})
+        expected_names = Product.objects.filter(category_id=3).values_list('name', flat=True)
+        unexpected_names = Product.objects.exclude(category_id=3).values_list('name', flat=True)
+        self.assertTrue(expected_names)
+        self.assertTrue(unexpected_names)
+        for expected_name in expected_names:
+            self.assertContains(response, expected_name)
+        for unexpected_name in unexpected_names:
+            self.assertNotContains(response, unexpected_name)
+
+    def test_can_search_by_name(self):
+        query_value = '2'
+        response = self.get_from_page(data={'q': query_value})
+        expected_names = Product.objects.filter(
+            Q(description__icontains=query_value) | Q(name__icontains=query_value)
+        ).values_list('name', flat=True)
+        unexpected_names = Product.objects.exclude(
+            Q(description__icontains=query_value) | Q(name__icontains=query_value)
+        ).values_list('name', flat=True)
+        self.assertTrue(expected_names)
+        self.assertTrue(unexpected_names)
+        for expected_name in expected_names:
+            self.assertContains(response, expected_name)
+        for unexpected_name in unexpected_names:
+            self.assertNotContains(response, unexpected_name)
