@@ -107,7 +107,7 @@ class ProductCreateTest(ViewTestMixin, BaseMarketTestCase):
         for key in self.product_data:
             self.assertEqual(getattr(self.created_product, key), self.product_data[key])
 
-    def test_cannot_create_if_not_logged_in(self):
+    def test_cannot_post_if_logged_out(self):
         self.client.logout()
         response = self.post_to_product_create()
         self.assertRedirectsAuth(response)
@@ -176,6 +176,14 @@ class ProductEditTest(ViewTestMixin, BaseMarketTestCase):
         self.post_to_product_edit(self.product.id, self.new_data)
         for key in self.new_data:
             self.assertEqual(getattr(self.product, key), self.new_data[key])
+
+    def test_cannot_post_if_logged_out(self):
+        self.client.logout()
+        self.assertEqual(self.product.name, self.old_data['name'])
+        response = self.post_to_product_edit(self.product.id, self.new_data)
+        self.assertRedirectsAuth(response)
+        for key in self.new_data:
+            self.assertEqual(getattr(self.product, key), self.old_data[key])
 
     def test_edit_product_if_user_is_not_owner(self):
         new_seller = self.create_seller(username='NewSeller')
@@ -250,6 +258,13 @@ class MarketEditTest(ViewTestMixin, BaseMarketTestCase):
         for key in self.new_data:
             self.assertEqual(getattr(self.market, key), self.new_data[key])
 
+    def test_cannot_post_if_logged_out(self):
+        self.client.logout()
+        response = self.post_to_market_edit(market=self.market)
+        self.assertRedirectsAuth(response)
+        for key in self.new_data:
+            self.assertEqual(getattr(self.market, key), self.old_data[key])
+
     def test_edit_market_as_customer(self):
         self.log_in_as_customer()
         response = self.post_to_market_edit(market=self.market)
@@ -263,7 +278,7 @@ class MarketEditTest(ViewTestMixin, BaseMarketTestCase):
         another_market = self.create_market(owner=another_seller)
         response = self.post_to_market_edit(market=another_market)
         for key in self.new_data:
-            self.assertNotEqual(getattr(self.market, key), self.new_data[key])
+            self.assertEqual(getattr(self.market, key), self.old_data[key])
         self.assertEqual(response.status_code, 403)
 
     def test_can_another_seller_edit_side_market(self):
@@ -271,7 +286,7 @@ class MarketEditTest(ViewTestMixin, BaseMarketTestCase):
         self.client.login(username=another_seller, password=self.password)
         response = self.post_to_market_edit(market=self.market)
         for key in self.new_data:
-            self.assertNotEqual(getattr(self.market, key), self.new_data[key])
+            self.assertEqual(getattr(self.market, key), self.old_data[key])
         self.assertEqual(response.status_code, 403)
 
     def test_redirect_if_not_logged_in(self):
@@ -316,6 +331,13 @@ class MarketCreateViewsTest(ViewTestMixin, BaseMarketTestCase):
         self.post_to_market_create()
         self.assertIsInstance(self.created_market, Market)
         self.assertEqual(self.created_market.owner.id, self.user.id)
+
+    def test_cannot_post_if_logged_out(self):
+        self.client.logout()
+        response = self.post_to_market_create()
+        self.assertEqual(self.created_market, None)
+        self.assertFalse(Market.objects.exists())
+        self.assertRedirectsAuth(response)
 
     def test_redirects_after_create(self):
         self.log_in_as_seller()
@@ -391,6 +413,13 @@ class ProductTypeEditTest(ViewTestMixin, BaseMarketTestCase):
         response = self.post_to_edit_type(pk=self.product.pk, units_count=units_count)
         self.assertEqual(response.status_code, 403)
 
+    @assert_difference(0)
+    def test_cannot_post_if_logged_out(self):
+        units_count = 10
+        self.client.logout()
+        response = self.post_to_edit_type(pk=self.product.pk, units_count=units_count)
+        self.assertRedirectsAuth(response)
+
     def test_redirect_if_not_logged_in(self):
         self._test_redirect_if_not_logged_in()
 
@@ -420,6 +449,18 @@ class CartViewTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.assertEqual(order.get_units_count_of('1'), 8)
         self.assertEqual(order.get_units_count_of('7'), 2)
         self.assertFalse(order.items.filter(product_type_id='2').exists())
+
+    def test_cannot_post_if_logged_out(self):
+        orders_count_at_start = Order.objects.count()
+        order_items_count_at_start = OrderItem.objects.count()
+        order_items = {'1': 5, '2': 3, '7': 5}
+        self.client.logout()
+        response = self.post_to_page(data=order_items)
+        self.assertRedirectsAuth(response)
+        orders_count_after_post = Order.objects.count()
+        order_items_count_after_post = OrderItem.objects.count()
+        self.assertEqual(orders_count_at_start, orders_count_after_post)
+        self.assertEqual(order_items_count_at_start, order_items_count_after_post)
 
     def test_redirect_if_form_is_valid(self):
         order_items = {'1': 5, '2': 3, '7': 5}
@@ -474,9 +515,16 @@ class CheckOutPageTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self._test_correct_template()
 
     def test_can_change_coupon(self):
-        self.assertFalse(self.order.coupon)
+        self.assertIsNone(self.order.coupon)
         self.post_to_page(extra_data={'coupon': '1'})
         self.assertTrue(self.order.coupon)
+
+    def test_cannot_post_if_logged_out(self):
+        self.assertIsNone(self.order.coupon)
+        self.client.logout()
+        response = self.post_to_page(extra_data={'coupon': '1'})
+        self.assertRedirectsAuth(response)
+        self.assertIsNone(self.order.coupon)
 
 
 class TopUpViewTest(ViewTestMixin, TestBaseWithFilledCatalogue):
@@ -511,6 +559,23 @@ class TopUpViewTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.user.refresh_from_db()
         self.assertEqual(self.user.balance.amount, 1000)
         self.assertRedirects(response, self.ViewClass.success_url)
+
+    def test_create_one_operation(self):
+        self.log_in_as_customer()
+        operations_count_at_start = Operation.objects.count()
+        data = self.get_top_up_form_data(1000)
+        self.post_to_page(data=data)
+        operations_count_after_post = Operation.objects.count()
+        self.assertEqual(operations_count_at_start + 1, operations_count_after_post)
+
+    def test_cannot_post_if_logged_out(self):
+        operations_count_at_start = Operation.objects.count()
+        self.client.logout()
+        data = self.get_top_up_form_data(1000)
+        response = self.post_to_page(data=data)
+        operations_count_after_post = Operation.objects.count()
+        self.assertEqual(operations_count_at_start, operations_count_after_post)
+        self.assertRedirectsAuth(response)
 
     def test_redirect_to_unpaid_order_if_exists(self):
         self.log_in_as_customer()
@@ -572,6 +637,16 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.unpaid_order.refresh_from_db()
         self.assertTrue(self.unpaid_order.operation_id)
         self.assertEqual(self.user.balance.amount, 0)
+
+    def test_cannot_post_if_logged_out(self):
+        self.fill_cart({'1': 1})
+        top_up_balance(self.user, Decimal('32.13333'))
+        self.unpaid_order = prepare_order(self.cart)
+        self.client.logout()
+        response = self.post_to_page(data=self.test_credit_cart_data)
+        self.assertEqual(response.status_code, 403)
+        self.unpaid_order.refresh_from_db()
+        self.assertIsNone(self.unpaid_order.operation_id)
 
     def test_cannot_post_if_user_id_does_not_equal_order_owner_id(self):
         self.fill_cart({'1': 1})
@@ -773,14 +848,27 @@ class ShippingPageTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self._init_orders()
         self.log_in_as_seller()
         order_items = self.get_order_items_that_ready_to_shipping()
-        self.assertFalse(self.all_items_are_shipped(order_items.values_list('pk', flat=True)))
+        self.assertFalse(any(order_items.values_list('is_shipped', flat=True)))
         items_to_mark_pks = order_items.filter(product_type_id__in=(3, 5)).values_list('pk', flat=True)
         items_not_to_mark_pks = order_items.exclude(product_type_id__in=(3, 5)).values_list('pk', flat=True)
         self.assertTrue(items_to_mark_pks)
         self.assertTrue(items_not_to_mark_pks)
         self.post_to_page(data={f'item_{pk}': 'on' for pk in items_to_mark_pks})
         self.assertTrue(self.all_items_are_shipped(items_to_mark_pks))
-        self.assertFalse(self.all_items_are_shipped(items_not_to_mark_pks))
+        self.assertFalse(any(order_items.filter(id__in=items_not_to_mark_pks).values_list('is_shipped', flat=True)))
+
+    def test_cannot_post_if_logged_out(self):
+        self._init_orders()
+        self.client.logout()
+        order_items = self.get_order_items_that_ready_to_shipping()
+        self.assertFalse(any(order_items.values_list('is_shipped', flat=True)))
+        items_to_mark_pks = order_items.filter(product_type_id__in=(3, 5)).values_list('pk', flat=True)
+        items_not_to_mark_pks = order_items.exclude(product_type_id__in=(3, 5)).values_list('pk', flat=True)
+        self.assertTrue(items_to_mark_pks)
+        self.assertTrue(items_not_to_mark_pks)
+        response = self.post_to_page(data={f'item_{pk}': 'on' for pk in items_to_mark_pks})
+        self.assertRedirectsAuth(response)
+        self.assertFalse(any(order_items.values_list('is_shipped', flat=True)))
 
     def test_cannot_mark_as_unshipped(self):
         self._init_orders()

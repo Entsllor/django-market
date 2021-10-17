@@ -27,6 +27,8 @@ class MarketOwnerRequiredMixin(PermissionRequiredMixin):
         return self.permission_denied_message or "Current user isn't the market owner"
 
     def has_permission(self):
+        # if not getattr(self, 'request').user.is_authenticated:
+        #     return redirect_to_login()
         is_current_user_the_market_owner = getattr(
             self, 'request').user.id == self.get_current_market_owner_id()
         if self.permission_required is None:
