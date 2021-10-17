@@ -404,10 +404,11 @@ class MarketsList(generic.ListView):
     model = Market
     context_object_name = 'markets'
     paginate_by = 18
+    ordering = 'created_at'
 
     def get_queryset(self):
-        queryset = super(MarketsList, self).get_queryset()
-        return queryset.prefetch_related('product_set')
+        return super(MarketsList, self).get_queryset(
+        ).prefetch_related('product_set')
 
 
 class UserMarketView(LoginRequiredMixin, generic.DetailView):
