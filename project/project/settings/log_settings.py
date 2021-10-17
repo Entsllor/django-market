@@ -1,10 +1,10 @@
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 LOG_DIR = BASE_DIR
 TRANSACTION_LOG_PATH = BASE_DIR.joinpath('log/transactions.log')
 
-LOGGING = {
+LOGGING_SETTINGS = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
