@@ -722,7 +722,7 @@ class UserMarketViewTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.assertRedirects(response, reverse_lazy('market_app:create_market'))
 
 
-class ShippingPageView(ViewTestMixin, TestBaseWithFilledCatalogue):
+class ShippingPageTest(ViewTestMixin, TestBaseWithFilledCatalogue):
     ViewClass = ShippingPage
 
     def get_url(self):
@@ -738,12 +738,21 @@ class ShippingPageView(ViewTestMixin, TestBaseWithFilledCatalogue):
     def test_display_order_items(self):
         self._init_orders()
         self.log_in_as_seller()
-        order_items = self.get_order_items()
+        order_items = self.get_order_items_that_ready_to_shipping()
         response = self.get_from_page()
         self.assertTrue(order_items)
         for order_item in order_items:
             self.assertContains(response, f'id="order_item_{order_item.pk}"')
             self.assertContains(response, f'{order_item.product_type.properties_as_str}')
+
+    def test_display_only_paid_items(self):
+        self._init_orders()
+        self.log_in_as_seller()
+        order_items = self.get_order_items_that_ready_to_shipping()
+        order_items.update(payment=None)
+        response = self.get_from_page()
+        for order_item in OrderItem.objects.all():
+            self.assertNotContains(response, f'id="order_item_{order_item.pk}"')
 
     def test_do_not_display_order_items_from_other_markets(self):
         self._init_orders()
@@ -758,7 +767,7 @@ class ShippingPageView(ViewTestMixin, TestBaseWithFilledCatalogue):
     def test_can_mark_as_shipped(self):
         self._init_orders()
         self.log_in_as_seller()
-        order_items = self.get_order_items()
+        order_items = self.get_order_items_that_ready_to_shipping()
         self.assertFalse(self.all_items_are_shipped(order_items.values_list('pk', flat=True)))
         items_to_mark_pks = order_items.filter(product_type_id__in=(3, 5)).values_list('pk', flat=True)
         items_not_to_mark_pks = order_items.exclude(product_type_id__in=(3, 5)).values_list('pk', flat=True)
@@ -771,7 +780,7 @@ class ShippingPageView(ViewTestMixin, TestBaseWithFilledCatalogue):
     def test_cannot_mark_as_unshipped(self):
         self._init_orders()
         self.log_in_as_seller()
-        order_items = self.get_order_items()
+        order_items = self.get_order_items_that_ready_to_shipping()
         order_items.update(is_shipped=True)
         items_to_unmark_pks = order_items.filter(product_type_id__in=(3, 5)).values_list('pk', flat=True)
         self.post_to_page(data={f'item_{pk}': 'off' for pk in items_to_unmark_pks})

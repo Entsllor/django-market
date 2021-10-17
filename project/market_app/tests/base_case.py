@@ -2,13 +2,12 @@ import datetime
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Model
+from django.db.models import Model, QuerySet
 from django.db.models.signals import post_save
 from django.test import TestCase
 
 from currencies.services import create_currencies_from_settings
-from market_app.models import Product, Market, ProductCategory, ProductType, Coupon, Cart, Balance, OrderItem, Order, \
-    Money
+from market_app.models import Product, Market, ProductCategory, ProductType, Coupon, Cart, Balance, OrderItem, Order
 from market_app.services import prepare_order, top_up_balance, make_purchase
 
 
@@ -316,7 +315,7 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
     def product_types(self):
         return ProductType.objects.all()
 
-    def get_order_items(self):
+    def get_order_items_that_ready_to_shipping(self) -> QuerySet[OrderItem]:
         return OrderItem.objects.select_related(
             'product_type', 'product_type__product', 'product_type__product__market', 'payment', 'order'
         ).filter(payment__user_id=self.market.owner_id)
