@@ -24,8 +24,12 @@ urlpatterns = [
     path('site/', include('core_app.urls')),
     path('accounts/', include('accounts.urls')),
     path('', include('market_app.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+urlpatterns.extend(static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT))
+urlpatterns.extend(static(settings.STATIC_URL, document_root=settings.STATIC_ROOT))
 
 if settings.DEBUG:
     import debug_toolbar
+
     urlpatterns.append(path('__debug__/', include(debug_toolbar.urls)))
