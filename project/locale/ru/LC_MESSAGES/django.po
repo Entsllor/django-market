@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-10-08 14:29+0500\n"
-"PO-Revision-Date: 2021-09-27 20:12+0500\n"
+"PO-Revision-Date: 2021-10-17 17:45+0500\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
@@ -289,10 +289,8 @@ msgstr ""
 "продукта."
 
 #: .\market_app\forms.py:17
-#, fuzzy
-#| msgid "currency code"
 msgid "Currency code"
-msgstr "код валюты"
+msgstr "Код валюты"
 
 #: .\market_app\forms.py:133
 msgid "Select a coupon"
@@ -300,7 +298,7 @@ msgstr "Выберите купон"
 
 #: .\market_app\forms.py:140
 msgid "Do you agree?"
-msgstr "Вы согласны"
+msgstr "Вы согласны?"
 
 #: .\market_app\forms.py:142
 msgid "Shipping address"
@@ -624,7 +622,7 @@ msgstr "Отмена"
 #: .\market_app\templates\market_app\market_page.html:16
 #: .\market_app\templates\market_app\product.html:21
 msgid "Description"
-msgstr "Описания"
+msgstr "Описание"
 
 #: .\market_app\templates\market_app\market_page.html:18
 msgid "Market owner"
@@ -674,10 +672,8 @@ msgid "Order №"
 msgstr "Заказ №"
 
 #: .\market_app\templates\market_app\order_detail.html:26
-#, fuzzy
-#| msgid "is shipped"
 msgid "Is already shipped"
-msgstr "отправлено"
+msgstr "Отправлено"
 
 #: .\market_app\templates\market_app\order_detail.html:34
 msgid "Activated coupon"
@@ -737,20 +733,16 @@ msgid "Edit market"
 msgstr "Редактировать магазин"
 
 #: .\market_app\templates\market_app\user_market.html:27
-#, fuzzy
-#| msgid "Shopping"
 msgid "Shipping"
-msgstr "Покупки"
+msgstr "Отправка"
 
 #: .\market_app\templates\market_app\user_market.html:29
-#, fuzzy
-#| msgid "Create product"
 msgid "Create Product"
 msgstr "Создать товар"
 
 #: .\market_app\templates\market_app\user_market.html:31
 msgid "Public Page"
-msgstr ""
+msgstr "Публичная страница"
 
 #: .\market_app\views.py:138
 msgid "Cannot buy your own product."
@@ -760,8 +752,8 @@ msgstr "Вы не можете купить собственный продук�
 msgid ""
 "Sorry, product \"{}\" is almost sold out and we can sell only {} of these."
 msgstr ""
-"Простите, продукт \"{}\" почти распродан поэтому мы может продать только {} "
-"штук."
+"Простите, продукт \"{}\" почти распродан, поэтому мы можем продать только "
+"{} штук."
 
 #~ msgid "balance"
 #~ msgstr "баланс"
