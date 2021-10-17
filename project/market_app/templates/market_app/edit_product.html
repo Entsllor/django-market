@@ -17,12 +17,12 @@
       <thead>
       <tr>
         <th scope="col">
-          {% trans "count" %}
+          {% trans "amount" %}
         </th>
         {% for attribute in product.get_attributes %}
           <th scope="col">{{ attribute }}</th>
         {% endfor %}
-        <th>Edit</th>
+        <th scope="col">Edit</th>
       </tr>
       </thead>
       <tbody>
@@ -33,6 +33,8 @@
             <td>
               {{ value }}
             </td>
+          {% empty %}
+            <td></td>
           {% endfor %}
           <td>
             <a href="{% url 'market_app:edit_type' product_type.pk %}">
