@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, UpdateView, DetailView
@@ -11,7 +12,6 @@ from .forms import *
 
 class LogIn(LoginView):
     template_name = 'accounts/log_in_template.html'
-    success_url = reverse_lazy('market_app:catalogue')
     redirect_authenticated_user = True
 
 

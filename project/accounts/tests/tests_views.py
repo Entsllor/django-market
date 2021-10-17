@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
@@ -176,7 +177,7 @@ class AuthenticationTest(AccountsFunctionalTestBase):
     def test_auth_if_password_is_valid(self):
         self.client.logout()
         response = self.log_in_by_url()
-        self.assertRedirects(response, self.profile_url)
+        self.assertRedirects(response, settings.LOGIN_REDIRECT_URL)
         self.assertEqual(self.registered_user, self.get_current_logged_user())
 
     def test_auth_if_password_is_invalid(self):
