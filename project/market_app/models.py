@@ -9,6 +9,9 @@ from django.db.models import F, QuerySet, Sum
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
+from market_app.validators import default_image_format_validator, product_image_size_validator, \
+    market_logo_size_validator
+
 User = get_user_model()
 MAX_PRODUCT_PRICE_DIGITS_COUNT = settings.MAX_PRODUCT_PRICE_DIGITS_COUNT
 MAX_BALANCE_DIGITS_COUNT = settings.MAX_BALANCE_DIGITS_COUNT
@@ -51,7 +54,8 @@ class Market(models.Model):
         verbose_name=_('logo'),
         null=True,
         blank=True,
-        upload_to='markets_logos/'
+        upload_to='markets_logos/',
+        validators=[default_image_format_validator, market_logo_size_validator]
     )
 
     class Meta:
@@ -93,7 +97,8 @@ class Product(models.Model):
         verbose_name=_('image'),
         null=True,
         blank=True,
-        upload_to='product_images/'
+        upload_to='product_images/',
+        validators=[default_image_format_validator, product_image_size_validator]
     )
 
     category = models.ForeignKey(

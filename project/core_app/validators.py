@@ -1,6 +1,7 @@
 import os
 from typing import Iterable
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
@@ -31,3 +32,6 @@ def get_image_format_validator(allowed_formats: Iterable[str]):
             ))
 
     return image_format_validate
+
+
+default_image_format_validator = get_image_format_validator(settings.SUPPORTED_IMAGE_FORMATS)

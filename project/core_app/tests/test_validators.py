@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.test import SimpleTestCase
 
 from core_app.file_utils import *
@@ -10,7 +9,7 @@ min_image_height = 600
 max_image_width = 1000
 max_image_height = 1200
 
-image_format_validate = get_image_format_validator(supported_image_formats)
+image_format_validate = default_image_format_validator
 image_dimensions_validate = get_image_dimensions_validator(
     min_image_width,
     min_image_height,
