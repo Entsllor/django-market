@@ -14,10 +14,9 @@
 
           <p class="card-text">
             {% if market.description %}
-              {% trans 'Description' %} {{ market.description }} <br>
+              {% trans 'Description' %}: {{ market.description }} <br>
             {% endif %}
             {% trans 'Market owner' %}: {{ market.owner.username }} <br>
-            {% trans 'Product count' %}: {{ products|length }}
           </p>
         </div>
         <div class="col col-12 col-md-6 d-flex justify-content-center justify-content-md-end">

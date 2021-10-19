@@ -441,9 +441,10 @@ class MarketView(generic.DetailView):
     context_object_name = 'market'
     model = Market
 
-    def get(self, request, *args, **kwargs):
-        self.object = Market.objects.select_related('owner').get(pk=self.kwargs['pk'])
-        return super(MarketView, self).get(request, *args, **kwargs)
+    def get_object(self, queryset=None):
+        if not hasattr(self, 'object'):
+            self.object = Market.objects.select_related('owner').get(pk=self.kwargs['pk'])
+        return self.object
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
