@@ -7,7 +7,7 @@
       <a class="text-decoration-none text-dark" href="{{ product.get_absolute_url }}">
 
         <div class="card h-100">
-          <img class="card-img-top"
+          <img class="card-img-top" style="object-fit: cover; height: 100%"
                src="{{ product.get_img_url }}" alt="product image">
           <p class="text-center">
             {{ product }}
@@ -15,10 +15,11 @@
           <div class="p-1">
             <div style="text-align: right">
               {% if product.discount_percent %}
-                <s>{% to_local_currency product.original_price %}</s>
-                <b>{% to_local_currency product.sale_price %}</b>
+                <s>{% to_local_currency product.original_price %}</s> <br>
+                <b class="text-success">{% to_local_currency product.sale_price %}</b>
               {% else %}
-                <p>{% to_local_currency product.original_price %}</p>
+                <br>
+                <b>{% to_local_currency product.original_price %}</b>
               {% endif %}
             </div>
           </div>
