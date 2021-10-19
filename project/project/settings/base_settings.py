@@ -121,6 +121,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_ROOT = BASE_DIR.joinpath('media/')
 MEDIA_URL = '/media/'
 
+# Validators
+SUPPORTED_IMAGE_FORMATS = ('.jpg', '.jpeg', '.png')
+MIN_USER_AGE = 18
+
+# Login
+
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 

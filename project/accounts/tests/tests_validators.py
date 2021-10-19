@@ -1,15 +1,12 @@
 import datetime
-import unittest
 import string
 
-from accounts.file_utils import create_img, is_file_exists
+from django.test import SimpleTestCase
+
 from accounts.validators import (
-    MAX_AVATAR_WIDTH, MAX_AVATAR_HEIGHT,
-    MIN_AVATAR_WIDTH, MIN_AVATAR_HEIGHT,
-    SUPPORTED_AVATAR_FORMATS, MIN_USER_AGE,
-    ValidationError, avatar_format_validate,
+    MIN_USER_AGE, ValidationError,
     MIN_PHONE_NUMBER_LEN, MAX_PHONE_NUMBER_LEN,
-    avatar_dimensions_validate, birthday_validate, phone_number_validate
+    birthday_validate, phone_number_validate
 )
 
 
@@ -23,57 +20,7 @@ def age_to_date(year, days=0):
     ) - datetime.timedelta(days=days)
 
 
-class AvatarTest(unittest.TestCase):
-    def setUp(self) -> None:
-        self.img_path = 'img_test_folder\\__TEST_IMG__'
-        if is_file_exists(self.img_path):
-            raise FileExistsError('File already exists')
-
-    def test_constants_are_valid(self):
-        self.assertGreater(MAX_AVATAR_HEIGHT, 0)
-        self.assertGreater(MAX_AVATAR_WIDTH, 0)
-        self.assertIsInstance(MAX_AVATAR_HEIGHT, int)
-        self.assertIsInstance(MAX_AVATAR_WIDTH, int)
-        self.assertIsInstance(SUPPORTED_AVATAR_FORMATS, (list, tuple))
-
-    def test_get_valid_formats(self):
-        for supported_format in SUPPORTED_AVATAR_FORMATS:
-            img = create_img(self.img_path + supported_format, 1, 1, save=False)
-            avatar_format_validate(img)
-
-    def test_get_invalid_formats(self):
-        for unsupported_format in ['.txt', '.py', '.gif', '.mp4', '.mp3']:
-            img = create_img(self.img_path + unsupported_format, 1, 1, save=False)
-            with self.assertRaises(ValidationError):
-                avatar_format_validate(img)
-
-    def test_valid_avatar_dimension(self):
-        dimensions = (
-            ((MAX_AVATAR_WIDTH + MIN_AVATAR_WIDTH) // 2, (MAX_AVATAR_HEIGHT + MIN_AVATAR_HEIGHT) // 2),
-            ((MAX_AVATAR_WIDTH + MIN_AVATAR_WIDTH) // 2, MAX_AVATAR_HEIGHT),
-            (MAX_AVATAR_WIDTH, (MAX_AVATAR_HEIGHT + MIN_AVATAR_HEIGHT) // 2),
-            (MAX_AVATAR_WIDTH, MAX_AVATAR_HEIGHT),
-            (MIN_AVATAR_HEIGHT, MAX_AVATAR_HEIGHT),
-        )
-        for w, h in dimensions:
-            img = create_img(self.img_path + SUPPORTED_AVATAR_FORMATS[0], w, h, save=False)
-            avatar_dimensions_validate(img)
-
-    def test_invalid_avatar_dimension(self):
-        dimensions = (
-            (MIN_AVATAR_WIDTH - 1, MIN_AVATAR_WIDTH - 1),
-            (MIN_AVATAR_WIDTH - 1, MIN_AVATAR_WIDTH),
-            (MAX_AVATAR_WIDTH + 1, MAX_AVATAR_HEIGHT),
-            (MAX_AVATAR_WIDTH + 1, MAX_AVATAR_HEIGHT + 1),
-            (MAX_AVATAR_WIDTH, MAX_AVATAR_HEIGHT + 1),
-        )
-        for w, h in dimensions:
-            img = create_img(self.img_path + SUPPORTED_AVATAR_FORMATS[0], w, h, save=False)
-            with self.assertRaises(ValidationError):
-                avatar_dimensions_validate(img)
-
-
-class BirthdayValidatorTest(unittest.TestCase):
+class BirthdayValidatorTest(SimpleTestCase):
     min_age = MIN_USER_AGE
 
     def setUp(self) -> None:
@@ -108,7 +55,7 @@ class BirthdayValidatorTest(unittest.TestCase):
                 birthday_validate(birthdate)
 
 
-class PhoneNumberValidatorTest(unittest.TestCase):
+class PhoneNumberValidatorTest(SimpleTestCase):
     min_len = MIN_PHONE_NUMBER_LEN
     max_len = MAX_PHONE_NUMBER_LEN
     invalid_chars = string.ascii_letters + string.punctuation.replace('+', '') + string.whitespace
@@ -139,7 +86,8 @@ class PhoneNumberValidatorTest(unittest.TestCase):
             'a' + self.get_number(self.min_len)[1:],
             '-' + self.get_number(self.min_len)[1:],
             '#' + self.get_number(self.min_len)[1:],
-        ] + [char * self.min_len for char in self.invalid_chars]
+            *[char * self.min_len for char in self.invalid_chars]
+        ]
         for number in test_numbers:
             with self.assertRaises(ValidationError, msg=number):
                 phone_number_validate(f'{number}')

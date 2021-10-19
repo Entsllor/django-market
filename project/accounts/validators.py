@@ -1,18 +1,20 @@
 import datetime
-import os.path
 import re
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-SUPPORTED_AVATAR_FORMATS = ('.jpg', '.jpeg', '.png')
+from core_app.validators import get_image_dimensions_validator, get_image_format_validator
+
+SUPPORTED_AVATAR_FORMATS = settings.SUPPORTED_IMAGE_FORMATS
+MIN_USER_AGE = settings.MIN_USER_AGE
 MAX_AVATAR_WIDTH = 1200
 MAX_AVATAR_HEIGHT = 1200
 MIN_AVATAR_WIDTH = 200
 MIN_AVATAR_HEIGHT = 200
 MIN_PHONE_NUMBER_LEN = 8
 MAX_PHONE_NUMBER_LEN = 16
-MIN_USER_AGE = 18
 
 
 def get_age(birthdate: datetime):
@@ -22,26 +24,11 @@ def get_age(birthdate: datetime):
     return year_delta + had_birthday_this_year
 
 
-def avatar_dimensions_validate(avatar):
-    w = avatar.width
-    h = avatar.height
-    if w > MAX_AVATAR_WIDTH or h > MAX_AVATAR_HEIGHT:
-        raise ValidationError(
-            _("Please use an image that is {}x{} or smaller.").format(MAX_AVATAR_WIDTH, MAX_AVATAR_HEIGHT)
-        )
-    elif w < MIN_AVATAR_WIDTH or h < MIN_AVATAR_HEIGHT:
-        raise ValidationError(
-            _("Please use an image that is {}x{} or bigger.").format(MIN_AVATAR_WIDTH, MIN_AVATAR_HEIGHT)
-        )
+avatar_dimensions_validate = get_image_dimensions_validator(
+    MIN_AVATAR_WIDTH, MIN_AVATAR_HEIGHT, MAX_AVATAR_WIDTH, MAX_AVATAR_HEIGHT
+)
 
-
-def avatar_format_validate(avatar):
-    main, extension = os.path.splitext(avatar.path)
-    if extension not in SUPPORTED_AVATAR_FORMATS:
-        raise ValidationError(_('Expected file formats for uploads: {}. Caught "{}"').format(
-            ", ".join(SUPPORTED_AVATAR_FORMATS),
-            extension
-        ))
+avatar_format_validate = get_image_format_validator(SUPPORTED_AVATAR_FORMATS)
 
 
 def birthday_validate(date: datetime.datetime):
