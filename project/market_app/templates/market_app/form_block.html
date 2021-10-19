@@ -2,12 +2,14 @@
 {% load i18n %}
 
 
-{% block main_center_card %}
-  <div class="card-header content-title">
-    {% block card-title %}{% endblock %}
-  </div>
-  <div class="card-body">
-    {% block form_block %}
-    {% endblock %}
+{% block main_center_block %}
+  <div class="card card-block">
+    <div class="card-header content-title">
+      {% block card-title %}{% endblock %}
+    </div>
+    <div class="card-body">
+      {% block form_block %}
+      {% endblock %}
+    </div>
   </div>
 {% endblock %}

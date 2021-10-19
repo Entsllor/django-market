@@ -3,37 +3,37 @@
 {% load currencies %}
 {% load l10n %}
 
-{% block main_center_card %}
-  <div class="card-header content-title">
-    <h4>{{ product.name }}</h4>
-  </div>
-  <div class="card-body">
-    <div class="row">
-      <div class="col col-12 col-md-6">
-
-        <p class="card-text">
-          {% if product.description %}
-            {% trans 'Description' %}: {{ product.description }} <br>
-          {% endif %}
-          {% trans 'Market' %}:
-          <a href="{{ product.market.get_absolute_url }}">{{ product.market.name }}</a>
-        </p>
-      </div>
-      <div class="col col-12 col-md-6 d-flex justify-content-center justify-content-md-end">
-        <img class="img-fluid"
-             src="{{ product.get_img_url }}"
-             alt="market logo">
-      </div>
+{% block main_center_block %}
+  <div class="card card-block">
+    <div class="card-header content-title">
+      {{ product.name }}
     </div>
-    <br>
-    {% if product.available %}
-      <form action="{{ product.get_absolute_url }}" method="post">
-        {% include 'core_app/include/pretty_form.html' with form=form without_button=True %}
-        {% csrf_token %}
-        <div class="d-flex">
-          <div>
-            {% if product.discount_percent %}
-              <span>{% trans "Unit price" %}:
+    <div class="card-body">
+      <div class="row">
+        <div class="col col-12 col-md-6">
+          <p class="card-text">
+            {% if product.description %}
+              {% trans 'Description' %}: {{ product.description }} <br>
+            {% endif %}
+            {% trans 'Market' %}:
+            <a href="{{ product.market.get_absolute_url }}">{{ product.market.name }}</a>
+          </p>
+        </div>
+        <div class="col col-12 col-md-6 d-flex justify-content-center justify-content-md-end">
+          <img class="img-fluid"
+               src="{{ product.get_img_url }}"
+               alt="market logo">
+        </div>
+      </div>
+      <br>
+      {% if product.available %}
+        <form action="{{ product.get_absolute_url }}" method="post">
+          {% include 'core_app/include/pretty_form.html' with form=form without_button=True %}
+          {% csrf_token %}
+          <div class="d-flex">
+            <div>
+              {% if product.discount_percent %}
+                <span>{% trans "Unit price" %}:
               <b id="sale_price">
                 {% to_local_currency product.sale_price %}
               </b>
@@ -41,44 +41,45 @@
                 {% to_local_currency product.original_price %}
               </s>
             </span>
-            {% else %}
-              <span>
+              {% else %}
+                <span>
               {% trans "Unit price" %}:
               <span id="sale_price">
                 {% to_local_currency product.original_price %}
               </span>
             </span>
-            {% endif %}
-            <br>
-            <div id="total_price" style="display: none">
-              {% trans 'Total price' %}:
-              <b id="total_sale_price"></b>
-              {% if product.discount_percent %}
-                <s id="total_original_price"></s>
               {% endif %}
+              <br>
+              <div id="total_price" style="display: none">
+                {% trans 'Total price' %}:
+                <b id="total_sale_price"></b>
+                {% if product.discount_percent %}
+                  <s id="total_original_price"></s>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="ms-auto mt-auto">
+              {% if is_market_owner %}
+                <a href="{% url 'market_app:edit_product' pk=product.pk %}"
+                   class="btn btn-dark">{% trans 'Edit product' %}
+                </a>
+              {% endif %}
+              <button class="btn btn-primary">{% trans 'Add to cart' %}</button>
             </div>
           </div>
-
-          <div class="ms-auto mt-auto">
-            {% if is_market_owner %}
-              <a href="{% url 'market_app:edit_product' pk=product.pk %}"
-                 class="btn btn-dark">{% trans 'Edit product' %}
-              </a>
-            {% endif %}
-            <button class="btn btn-primary">{% trans 'Add to cart' %}</button>
-          </div>
+        </form>
+      {% else %}
+        <div class="d-flex">
+          <div class="text-danger align-self-center">Sold out</div>
+          {% if is_market_owner %}
+            <a href="{% url 'market_app:edit_product' pk=product.pk %}"
+               class="btn btn-dark ms-auto">{% trans 'Edit product' %}
+            </a>
+          {% endif %}
         </div>
-      </form>
-    {% else %}
-      <div class="d-flex">
-        <div class="text-danger align-self-center">Sold out</div>
-        {% if is_market_owner %}
-          <a href="{% url 'market_app:edit_product' pk=product.pk %}"
-             class="btn btn-dark ms-auto">{% trans 'Edit product' %}
-          </a>
-        {% endif %}
-      </div>
-    {% endif %}
+      {% endif %}
+    </div>
   </div>
 
   <script>

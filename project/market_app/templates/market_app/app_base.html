@@ -9,24 +9,18 @@
     <div class="col-md-3 order-1">
       {% block main_left_block %}
         <div class="sticky-top">
-          {% block left_block_over_side_bar %}
-          {% endblock %}
           {% block search_form_block %}
             {% product_search_form %}
           {% endblock %}
           {% side_nav %}
         </div>
       {% endblock main_left_block %}
-      {% block left_block_under_side_bar %}{% endblock %}
     </div>
     <div class="col-md-9 order-2 order-md-1">
       {% block messages %}
         {% include 'core_app/messages_block.html' %}
       {% endblock %}
-      {% block main_center_block %}
-        {#       WARNING! DON'T MAKE SPACE BETWEEN CARD DIV ELSE DIV WILL BE NOT EMPTY       #}
-        <div class="card my-2 border-0">{% block main_center_card %}{% endblock %}</div>
-      {% endblock main_center_block %}
+      {% block main_center_block %}{% endblock main_center_block %}
     </div>
   </div>
   {% block under_main_row %}
