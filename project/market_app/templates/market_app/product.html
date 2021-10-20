@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load currencies %}
 {% load l10n %}
+{% load market_app_blocks %}
 
 {% block main_center_block %}
   <div class="card card-block">
@@ -81,6 +82,8 @@
       {% endif %}
     </div>
   </div>
+  {% products_catalogue products 16  %}
+
 
   <script>
       const MARKUPS = JSON.parse('{{ markup_percents|unlocalize }}'.replace(/&quot;/ig, '"'));

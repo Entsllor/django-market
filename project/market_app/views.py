@@ -121,6 +121,7 @@ class ProductView(generic.FormView):
     def get_context_data(self, **kwargs):
         context = super(ProductView, self).get_context_data(**kwargs)
         context['product'] = self.object
+        context['products'] = get_products().filter(category_id=self.object.category_id)
         context['markup_percents'] = json.dumps(
             {i_type.pk: str(i_type.markup_percent) for i_type in self.product_types}
         )

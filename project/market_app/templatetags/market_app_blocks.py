@@ -27,7 +27,7 @@ def get_page_obj(request, queryset, page_size):
 def products_catalogue(context, products=None, limit=None, page_size=None, ordering="discount_percent"):
     request = context['request']
     if products is None:
-        products = get_products(ordering)[:limit]
+        products = get_products(ordering)
     if isinstance(page_size, int) and page_size > 0:
         paginator, page_obj = get_page_obj(request, products, page_size)
         context['products'] = page_obj.object_list
@@ -35,5 +35,5 @@ def products_catalogue(context, products=None, limit=None, page_size=None, order
         context['paginator'] = paginator
         context['is_paginated'] = page_obj.has_other_pages()
     else:
-        context['products'] = products
+        context['products'] = products[:limit]
     return context
