@@ -30,3 +30,8 @@ market_logo_size_validator = ImageSizeValidator(
     max_image_width=MAX_PRODUCT_IMAGE_WIDTH,
     max_image_height=MAX_PRODUCT_IMAGE_HEIGHT
 )
+
+
+def validate_attributes_symbols(value):
+    if invalid_symbol := re.search(r"[^\w\s']", value):
+        raise ValidationError(_('Invalid symbol "{}" in text field').format(invalid_symbol.group()))
