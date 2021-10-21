@@ -10,7 +10,7 @@ from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 from market_app.validators import default_image_format_validator, product_image_size_validator, \
-    market_logo_size_validator, product_attributes_symbols_validator
+    market_logo_size_validator, product_attributes_symbols_validator, product_type_property_symbols_validator
 
 User = get_user_model()
 MAX_PRODUCT_PRICE_DIGITS_COUNT = settings.MAX_PRODUCT_PRICE_DIGITS_COUNT
@@ -167,7 +167,12 @@ class ProductType(models.Model):
         blank=True,
         default=0
     )
-    properties = models.JSONField(verbose_name=_('properties'), blank=True, default=dict)
+    properties = models.JSONField(
+        verbose_name=_('properties'),
+        blank=True,
+        default=dict,
+        validators=[product_type_property_symbols_validator]
+    )
     markup_percent = models.DecimalField(
         verbose_name=_('markup percent'),
         decimal_places=2,

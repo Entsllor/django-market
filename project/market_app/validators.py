@@ -27,3 +27,4 @@ market_logo_size_validator = ImageSizeValidator(
 )
 
 product_attributes_symbols_validator = ForbiddenSymbolsValidator(r"[^\w\s']")
+product_type_property_symbols_validator = ForbiddenSymbolsValidator(r'[^\w\' ]')

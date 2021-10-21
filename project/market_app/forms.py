@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 
 from currencies.services import exchange_to, get_currency_choices
 from .models import Product, Market, ProductType, ProductCategory, Cart, Order, Coupon
+from .validators import product_type_property_symbols_validator
 
 DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY_CODE
 product_attributes_placeholder = _(
@@ -94,7 +95,8 @@ class ProductTypeForm(forms.ModelForm):
                 self.fields[attr] = forms.CharField(
                     label=attr,
                     max_length=63,
-                    required=False
+                    required=False,
+                    validators=[product_type_property_symbols_validator]
                 )
                 if hasattr(self, 'product_type'):
                     self.fields[attr].initial = self.product_type.properties.get(attr, '')
@@ -103,7 +105,7 @@ class ProductTypeForm(forms.ModelForm):
         properties = {}
         for attr in self.product.get_attributes:
             if attr:
-                properties[attr] = self.cleaned_data[attr]
+                properties[attr] = self.cleaned_data.get(attr, '')
         self.instance.properties = properties
         super(ProductTypeForm, self).save(commit)
 
