@@ -10,15 +10,15 @@ max_image_width = 1000
 max_image_height = 1200
 
 image_format_validate = default_image_format_validator
-image_dimensions_validate = get_image_dimensions_validator(
-    min_image_width,
-    min_image_height,
-    max_image_width,
-    max_image_height
+image_dimensions_validate = ImageSizeValidator(
+    min_image_width=min_image_width,
+    min_image_height=min_image_height,
+    max_image_width=max_image_width,
+    max_image_height=max_image_height
 )
 
 
-class AvatarTest(SimpleTestCase):
+class ImageValidatorTest(SimpleTestCase):
     def setUp(self) -> None:
         self.img_path = 'img_test_folder\\__TEST_IMG__'
         if is_file_exists(self.img_path):

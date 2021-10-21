@@ -10,7 +10,7 @@ from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 from market_app.validators import default_image_format_validator, product_image_size_validator, \
-    market_logo_size_validator
+    market_logo_size_validator, product_attributes_validator
 
 User = get_user_model()
 MAX_PRODUCT_PRICE_DIGITS_COUNT = settings.MAX_PRODUCT_PRICE_DIGITS_COUNT

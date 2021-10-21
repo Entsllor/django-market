@@ -1,37 +1,44 @@
 import os
-from typing import Iterable
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.utils.deconstruct import deconstructible
 from django.utils.translation import gettext_lazy as _
 
 
-def get_image_dimensions_validator(min_image_width, min_image_height, max_image_width, max_image_height):
-    def image_dimensions_validate(image):
+@deconstructible
+class ImageSizeValidator:
+    def __init__(self, min_image_width, min_image_height, max_image_width, max_image_height):
+        self.min_image_width = min_image_width
+        self.min_image_height = min_image_height
+        self.max_image_width = max_image_width
+        self.max_image_height = max_image_height
+
+    def __call__(self, image):
         w = image.width
         h = image.height
-        if w > max_image_width or h > max_image_height:
+        if w > self.max_image_width or h > self.max_image_height:
             raise ValidationError(
-                _("Please use an image that is {}x{} or smaller.").format(max_image_width, max_image_height)
+                _("Please use an image that is {}x{} or smaller.").format(self.max_image_width, self.max_image_height)
             )
-        elif w < min_image_width or h < min_image_height:
+        elif w < self.min_image_width or h < self.min_image_height:
             raise ValidationError(
-                _("Please use an image that is {}x{} or bigger.").format(min_image_width, min_image_height)
+                _("Please use an image that is {}x{} or bigger.").format(self.min_image_width, self.min_image_height)
             )
 
-    return image_dimensions_validate
 
+@deconstructible
+class ImageExtensionValidator:
+    def __init__(self, allowed_extensions):
+        self.allowed_extensions = allowed_extensions
 
-def get_image_format_validator(allowed_formats: Iterable[str]):
-    def image_format_validate(image):
+    def __call__(self, image):
         main, extension = os.path.splitext(image.path)
-        if extension not in allowed_formats:
+        if extension not in self.allowed_extensions:
             raise ValidationError(_('Expected file formats for uploads: {}. Caught "{}"').format(
-                ", ".join(allowed_formats),
+                ", ".join(self.allowed_extensions),
                 extension
             ))
 
-    return image_format_validate
 
-
-default_image_format_validator = get_image_format_validator(settings.SUPPORTED_IMAGE_FORMATS)
+default_image_format_validator = ImageExtensionValidator(settings.SUPPORTED_IMAGE_FORMATS)

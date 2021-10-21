@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from core_app.validators import get_image_dimensions_validator, default_image_format_validator
+from core_app.validators import default_image_format_validator, ImageSizeValidator
 
 SUPPORTED_AVATAR_FORMATS = settings.SUPPORTED_IMAGE_FORMATS
 MIN_USER_AGE = settings.MIN_USER_AGE
@@ -24,7 +24,7 @@ def get_age(birthdate: datetime):
     return year_delta + had_birthday_this_year
 
 
-avatar_dimensions_validate = get_image_dimensions_validator(
+avatar_dimensions_validate = ImageSizeValidator(
     MIN_AVATAR_WIDTH, MIN_AVATAR_HEIGHT, MAX_AVATAR_WIDTH, MAX_AVATAR_HEIGHT
 )
 
