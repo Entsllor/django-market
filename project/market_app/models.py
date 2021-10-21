@@ -10,7 +10,7 @@ from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 from market_app.validators import default_image_format_validator, product_image_size_validator, \
-    market_logo_size_validator, validate_attributes_symbols
+    market_logo_size_validator, product_attributes_symbols_validator
 
 User = get_user_model()
 MAX_PRODUCT_PRICE_DIGITS_COUNT = settings.MAX_PRODUCT_PRICE_DIGITS_COUNT
@@ -94,7 +94,7 @@ class Product(models.Model):
     attributes = models.TextField(
         verbose_name=_('attributes'),
         blank=True,
-        validators=[validate_attributes_symbols]
+        validators=[product_attributes_symbols_validator]
     )
     created_at = models.DateTimeField(verbose_name=_('created at'), auto_now_add=True)
     available = models.BooleanField(verbose_name=_('available'), default=True)

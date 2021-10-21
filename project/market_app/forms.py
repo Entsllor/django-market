@@ -54,6 +54,13 @@ class ProductUpdateForm(MoneyExchangerMixin, forms.ModelForm):
         model = Product
         exclude = ['market', 'created_at']
 
+    def clean_attributes(self):
+        value = self.data.get('attributes')
+        if not value:
+            return ''
+        rows = map(str.strip, value.splitlines())
+        return '\n'.join(row for row in rows if row)
+
     def clean_original_price(self):
         return self._clean_field_with_money_exchanging('original_price')
 

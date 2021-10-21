@@ -1,9 +1,4 @@
-import re
-
-from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
-
-from core_app.validators import default_image_format_validator, ImageSizeValidator
+from core_app.validators import default_image_format_validator, ImageSizeValidator, ForbiddenSymbolsValidator
 
 default_image_format_validator = default_image_format_validator
 
@@ -31,7 +26,4 @@ market_logo_size_validator = ImageSizeValidator(
     max_image_height=MAX_PRODUCT_IMAGE_HEIGHT
 )
 
-
-def validate_attributes_symbols(value):
-    if invalid_symbol := re.search(r"[^\w\s']", value):
-        raise ValidationError(_('Invalid symbol "{}" in text field').format(invalid_symbol.group()))
+product_attributes_symbols_validator = ForbiddenSymbolsValidator(r"[^\w\s']")

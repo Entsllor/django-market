@@ -1,4 +1,5 @@
 import os
+import re
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -39,6 +40,16 @@ class ImageExtensionValidator:
                 ", ".join(self.allowed_extensions),
                 extension
             ))
+
+
+@deconstructible
+class ForbiddenSymbolsValidator:
+    def __init__(self, pattern):
+        self.pattern = pattern
+
+    def __call__(self, text):
+        if invalid_symbol := re.search(self.pattern, text):
+            raise ValidationError(_('Invalid symbol "{}" in text field').format(invalid_symbol.group()))
 
 
 default_image_format_validator = ImageExtensionValidator(settings.SUPPORTED_IMAGE_FORMATS)
