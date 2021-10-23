@@ -218,7 +218,7 @@ class ProductEditTest(ViewTestMixin, BaseMarketTestCase):
     def setUp(self) -> None:
         self.create_currencies()
         super(ProductEditTest, self).setUp()
-        self.new_category = self.create_category()
+        self.new_category = self.create_category('NewProductCategory')
         self.old_data = {
             'name': 'OldProductName', 'description': 'text',
             'original_price': 100, 'discount_percent': 0,

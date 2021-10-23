@@ -30,7 +30,7 @@ class OrderStatusChoices(models.TextChoices):
 
 
 class ProductCategory(models.Model):
-    name = models.CharField(verbose_name=_('category'), max_length=63)
+    name = models.CharField(verbose_name=_('category'), max_length=63, unique=True)
 
     class Meta:
         verbose_name = _('category')
@@ -47,7 +47,7 @@ class Market(models.Model):
         related_name='market',
         verbose_name=_('market owner')
     )
-    name = models.CharField(verbose_name=_('name'), max_length=63)
+    name = models.CharField(verbose_name=_('name'), max_length=63, unique=True)
     description = models.TextField(verbose_name=_('description'), blank=True)
     created_at = models.DateTimeField(verbose_name=_('created at'), auto_now_add=True)
     logo = models.ImageField(
