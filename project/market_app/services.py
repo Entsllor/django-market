@@ -210,7 +210,6 @@ def top_up_balance(user: User, amount_of_money: Money) -> Operation:
 
 def get_products(ordering: str = '-discount_percent') -> QuerySet(Product):
     fields = ('image', 'original_price', 'discount_percent', 'name', 'image')
-    queryset = Product.objects.distinct().only(*fields).select_related(
-        'productimage').filter(
+    queryset = Product.objects.distinct().only(*fields).filter(
         available=True, product_types__isnull=False).order_by(ordering)
     return queryset

@@ -219,15 +219,6 @@ class ProductType(models.Model):
         verbose_name_plural = _('Product types')
 
 
-class ProductImage(models.Model):
-    product = models.OneToOneField(Product, verbose_name=_('product'), on_delete=models.CASCADE)
-    image = models.ImageField(verbose_name=_('image'), upload_to='products_images/')
-
-    class Meta:
-        verbose_name = _('product image')
-        verbose_name_plural = _('products images')
-
-
 def _validate_units_quantity(quantity) -> None:
     if not isinstance(quantity, int) or quantity < 0:
         raise ValueError(f'Expected a natural number, got {quantity} instead')
