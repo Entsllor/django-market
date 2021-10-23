@@ -56,6 +56,20 @@ python manage.py configure_market
 python manage.py runserver 0.0.0.0:8000
 ```
 
+### Test filling
+
+You can use a special command to fill db with test data 
+```
+python manage.py test_filling
+```
+
+If you want to configure filling use this: 
+
+```
+python manage.py test_filling custom
+```
+
+
 ## Warning
 
 Keep the secret key used in production secret!
