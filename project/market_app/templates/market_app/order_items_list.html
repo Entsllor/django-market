@@ -2,40 +2,85 @@
 {% load i18n %}
 {% load currencies %}
 
-{% block main_center_block %}
-  <div class="card card-block">
-    <div class="card-header content-title">
-      {% trans 'Orders Items' %}
-    </div>
-    <div class="list-group list-group-flush">
-      <form action="{% url 'market_app:shipping' pk=view.kwargs.pk %}" method="post">
-        {% csrf_token %}
-        {% for item in orders_items %}
-          <div class="list-group-item" id="order_item_{{ item.pk }}">
-            <div class="row row-cols-5">
-              <div class="col col-3">{{ item.product_type.product.name }}</div>
-              <div class="col col-3">{{ item.product_type.properties_as_str }}</div>
-              <div class="col col-1" id="amount_order_item_{{ item.pk }}">
-                {{ item.amount }}
-              </div>
-              <div class="col col-4">
-                {{ item.payment.transaction_time }}
-              </div>
-              <div class="col col-1">
-                <input type="checkbox" name="item_{{ item.pk }}" id="item_{{ item.pk }}"
-                  {% if item.is_shipped %} checked disabled {% endif %}>
-              </div>
-            </div>
-            <div>{% trans 'Address' %}: {{ item.order.address }}</div>
+{% block main_container %}
+  <div class="py-2" style="background: none;">
+    <div class="card">
+      <div class="card-header content-title">
+        {% trans 'Shipping' %}
+      </div>
+      <div class="list-group list-group-flush">
+        <form action="{% url 'market_app:shipping' pk=view.kwargs.pk %}" method="post">
+          <div class="w-100" style="overflow-x: auto; overflow-y: hidden">
+            <table class="w-100 table text-center table-striped">
+              <thead>
+              <tr>
+                <th>
+                  {% trans "Product" %}
+                </th>
+                <th>
+                  {% trans "Properties" %}
+                </th>
+                <th>
+                  {% trans "Amount" %}
+                </th>
+                <th>
+                  {% trans 'Purchasing time' %}
+                </th>
+                <th>
+                  {% trans "Address" %}
+                </th>
+                <th>
+                  {% trans 'Is shipped' %}
+                </th>
+              </tr>
+              </thead>
+              <tbody>
+              {% for item in orders_items %}
+                <tr id="order_item_{{ item.pk }}">
+                  <td>
+                    <a href="{{ item.product_type.product.get_absolute_url }}">
+                      {{ item.product_type.product.name }}
+                    </a>
+                  </td>
+                  <td class="text-start">
+                    {% if item.product_type.properties %}
+                      {% for attr, value in item.product_type.properties_as_dict.items %}
+                        {{ attr }}: {{ value }}<br>
+                      {% endfor %}
+                    {% else %}
+                      Id={{ item.product_type.pk }}
+                    {% endif %}
+                  </td>
+                  <td>
+                    {{ item.amount }}
+                  </td>
+                  <td>
+                    {{ item.payment.transaction_time }}
+                  </td>
+                  <td>
+                    {{ item.order.address }}
+                  </td>
+                  <td>
+                    <input type="checkbox" name="item_{{ item.pk }}" id="item_{{ item.pk }}"
+                      {% if item.is_shipped %} checked disabled {% endif %}>
+                  </td>
+                </tr>
+              {% empty %}
+                {% trans 'There is nothing' %}
+              {% endfor %}
+              </tbody>
+            </table>
           </div>
-        {% empty %}
-          {% trans 'There is nothing' %}
-        {% endfor %}
-        <div class="d-flex justify-content-end">
-          <button class="btn btn-primary m-1" type="submit">{% trans 'Submit' %}</button>
-        </div>
-      </form>
+          {% csrf_token %}
+
+          <div class="d-flex justify-content-between">
+            <div class="ms-2">
+              {% include 'market_app/include/paginator.html' %}
+            </div>
+            <button class="btn btn-primary m-2" type="submit">{% trans 'Submit' %}</button>
+          </div>
+        </form>
+      </div>
     </div>
-  {% include 'market_app/include/paginator.html' %}
   </div>
 {% endblock %}
