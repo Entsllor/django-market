@@ -531,6 +531,7 @@ class ShippingPage(MarketOwnerRequiredMixin, generic.ListView):
     template_name = 'market_app/order_items_list.html'
     model = OrderItem
     context_object_name = 'orders_items'
+    paginate_by = 16
 
     def get_current_market_owner_id(self):
         return Market.objects.filter(pk=self.kwargs['pk']).values_list('owner_id', flat=True).first()
