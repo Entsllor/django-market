@@ -5,13 +5,14 @@
 
 ## Prerequisites
 
-[Optional] Install virtual environment:
+Install virtual environment:
 
 ```
+pip install virtualenv 
 python -m virtualenv env
 ```
 
-[Optional] Activate virtual environment:
+Activate virtual environment:
 
 On macOS and Linux:
 
@@ -54,7 +55,7 @@ cd django_market
 pip install -r requirements.txt
 cd project
 python manage.py configure_market
-python manage.py runserver 0.0.0.0:8000
+python manage.py runserver
 ```
 
 ### Test filling
