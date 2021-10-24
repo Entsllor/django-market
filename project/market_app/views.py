@@ -183,8 +183,13 @@ class MarketEditView(MarketOwnerRequiredMixin, generic.UpdateView):
     def get_success_url(self):
         return self.object.get_absolute_url()
 
+    def get_object(self, queryset=None):
+        if not hasattr(self, 'object'):
+            self.object = get_object_or_404(self.model, pk=self.kwargs['pk'])
+        return self.object
+
     def get_current_market_owner_id(self):
-        return self.model.objects.filter(pk=self.kwargs['pk']).values_list('owner_id', flat=True).first()
+        return self.get_object().owner_id
 
 
 class CartView(LoginRequiredMixin, generic.FormView):
