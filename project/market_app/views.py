@@ -542,7 +542,7 @@ class ShippingPage(MarketOwnerRequiredMixin, generic.ListView):
             'product_type__product__name', 'amount',
             'order__address', 'is_shipped', 'product_type__properties', 'payment__amount',
             'payment__transaction_time'
-        )
+        ).order_by('is_shipped', 'payment__transaction_time')
         return self.queryset
 
     def post(self, request, *args, **kwargs):
