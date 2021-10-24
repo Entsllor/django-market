@@ -125,6 +125,7 @@ class ProductView(generic.FormView):
         context['markup_percents'] = json.dumps(
             {i_type.pk: str(i_type.markup_percent) for i_type in self.product_types}
         )
+        context['has_types'] = bool(self.product_types)
         context['is_market_owner'] = self.object.market.owner_id == self.request.user.id
         return context
 

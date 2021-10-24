@@ -27,7 +27,7 @@
         </div>
       </div>
       <br>
-      {% if product.available %}
+      {% if product.available and has_types %}
         <form action="{{ product.get_absolute_url }}" method="post">
           {% include 'core_app/include/pretty_form.html' with form=form without_button=True %}
           {% csrf_token %}
@@ -72,7 +72,10 @@
         </form>
       {% else %}
         <div class="d-flex">
-          <div class="text-danger align-self-center">Sold out</div>
+          <div class="text-danger align-self-center">
+            {% trans "This product isn't available to buy" %}
+            <!-- This product doesn't have types or isn't available -->
+          </div>
           {% if is_market_owner %}
             <a href="{% url 'market_app:edit_product' pk=product.pk %}"
                class="btn btn-dark ms-auto">{% trans 'Edit product' %}
@@ -82,7 +85,7 @@
       {% endif %}
     </div>
   </div>
-  {% products_catalogue products 16  %}
+  {% products_catalogue products 16 %}
 
 
   <script>
