@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue
-from ..models import OrderStatusChoices, Order
+from ..models import OrderStatusChoices
 from ..services import top_up_balance, withdraw_money, make_purchase
 
 
@@ -167,9 +167,9 @@ class OrderTest(TestBaseWithFilledCatalogue):
         self.prepare_order({'1': 5, '3': 2, '5': 4, '8': 4})
 
     def test_change_status(self):
-        self.assertEqual(self.order.status, OrderStatusChoices.UNPAID)
+        self.assertEqual(self.order.status, OrderStatusChoices.UNPAID.value)
         make_purchase(self.order, self.user)
         self.order.refresh_from_db()
-        self.assertEqual(self.order.status, OrderStatusChoices.HAS_PAID)
+        self.assertEqual(self.order.status, OrderStatusChoices.HAS_PAID.value)
         self.order.items.update(is_shipped=True)
-        self.assertEqual(self.order.status, OrderStatusChoices.SHIPPED)
+        self.assertEqual(self.order.status, OrderStatusChoices.SHIPPED.value)

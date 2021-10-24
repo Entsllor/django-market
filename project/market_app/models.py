@@ -1,4 +1,5 @@
 from decimal import Decimal
+from enum import Enum
 from typing import Iterable, Union
 
 from django.conf import settings
@@ -21,7 +22,7 @@ MAX_OPERATION_DIGITS_COUNT = MAX_BALANCE_DIGITS_COUNT
 Money = Union[Decimal, int]
 
 
-class OrderStatusChoices(models.TextChoices):
+class OrderStatusChoices(Enum):
     UNPAID = _("awaiting for payment")
     CANCELED = _("canceled")
     HAS_PAID = _("has successfully paid")
@@ -379,11 +380,11 @@ class Order(models.Model):
     @property
     def status(self) -> str:
         if not self.has_paid:
-            return OrderStatusChoices.UNPAID
+            return OrderStatusChoices.UNPAID.value
         elif not all(item.is_shipped for item in self.items.all()):
-            return OrderStatusChoices.HAS_PAID
+            return OrderStatusChoices.HAS_PAID.value
         else:
-            return OrderStatusChoices.SHIPPED
+            return OrderStatusChoices.SHIPPED.value
 
     def get_units_count(self) -> dict:
         return {str(pk): amount for pk, amount in self.items.values_list('product_type_id', 'amount')}

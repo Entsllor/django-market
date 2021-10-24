@@ -962,10 +962,10 @@ class ShippingPageTest(ViewTestMixin, TestBaseWithFilledCatalogue):
     def test_order_changed_his_status(self):
         self._init_orders()
         self.log_in_as_seller()
-        self.assertEqual(self.order_1.status, OrderStatusChoices.HAS_PAID)
+        self.assertEqual(self.order_1.status, OrderStatusChoices.HAS_PAID.value)
         items_to_mark_pks = self.order_1.items.values_list('pk', flat=True)
         self.post_to_page(data={f'item_{pk}': 'on' for pk in items_to_mark_pks})
-        self.assertEqual(self.order_1.status, OrderStatusChoices.SHIPPED)
+        self.assertEqual(self.order_1.status, OrderStatusChoices.SHIPPED.value)
 
 
 class SearchTest(ViewTestMixin, TestBaseWithFilledCatalogue):
