@@ -1,5 +1,6 @@
-{% extends 'market_app/catalogue.html' %}
+{% extends 'market_app/app_base.html' %}
 {% load i18n %}
+{% load market_app_blocks %}
 
 {% block search_form_block %}
   <div class="card my-2">
@@ -15,4 +16,8 @@
       </form>
     </div>
   </div>
+{% endblock %}
+
+{% block main_center_block %}
+  {% products_catalogue products 36 %}
 {% endblock %}
