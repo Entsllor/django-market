@@ -3,6 +3,8 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 LOG_DIR = BASE_DIR
 TRANSACTION_LOG_PATH = BASE_DIR.joinpath('log/transactions.log')
+if not TRANSACTION_LOG_PATH.parent.exists():
+    TRANSACTION_LOG_PATH.parent.mkdir()
 
 LOGGING_SETTINGS = {
     'version': 1,
