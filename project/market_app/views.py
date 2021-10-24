@@ -521,10 +521,11 @@ class SearchProducts(CatalogueView, generic.edit.FormMixin):
 class OperationHistoryView(LoginRequiredMixin, generic.ListView):
     template_name = 'market_app/operation_history.html'
     model = Operation
+    paginate_by = 30
 
     def get_queryset(self):
         user_id = self.request.user.id
-        return Operation.objects.filter(user_id=user_id)
+        return Operation.objects.filter(user_id=user_id).order_by('-transaction_time')
 
 
 class ShippingPage(MarketOwnerRequiredMixin, generic.ListView):

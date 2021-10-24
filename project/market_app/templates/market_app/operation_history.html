@@ -31,10 +31,15 @@
           {% trans "You don't have any operations yet" %}.
         </div>
       {% endfor %}
-      <li class="list-group-item text-end">
-        <a href="{% url 'market_app:top_up' %}" class="btn btn-primary">
-          {% trans 'Top up' %}
-        </a>
+      <li class="list-group-item">
+        <div class="d-flex justify-content-between">
+          <div class="me-2">
+            {% include 'market_app/include/paginator.html' %}
+          </div>
+          <a href="{% url 'market_app:top_up' %}" class="btn btn-primary align-self-center ms-2">
+            {% trans 'Top up' %}
+          </a>
+        </div>
       </li>
     </ul>
   </div>
