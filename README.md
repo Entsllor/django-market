@@ -30,7 +30,7 @@ On Windows:
 1. Clone
 
 ```
-git clone https://github.com/Entsllor/django-market.git
+git clone https://github.com/Entsllor/django_market
 ```
 
 2. Set secret key to your environmental variables
@@ -47,9 +47,10 @@ On Windows:
 SET SECRET_KEY=YOUR_SECRET_KEY
 ```
 
-3. Install configure and run server
+3. Install, configure and run server
 
 ```
+cd django_market
 pip install -r requirements.txt
 cd project
 python manage.py configure_market
