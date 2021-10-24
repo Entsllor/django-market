@@ -3,7 +3,6 @@ import os
 
 DEBUG = False
 
-
 try:
     SECRET_KEY = os.environ['SECRET_KEY']
 except KeyError:
@@ -13,7 +12,6 @@ try:
     ALLOWED_HOSTS = os.environ['DJANGO_ALLOWED_HOSTS'].split()
 except KeyError:
     raise KeyError('DJANGO_ALLOWED_HOSTS is not in environmental variables. Set DJANGO_ALLOWED_HOSTS to run server.')
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -28,4 +26,11 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+]
+
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
 ]
