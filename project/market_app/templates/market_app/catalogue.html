@@ -6,6 +6,6 @@
 {% block main_center_block %}
   {% get_current_language as CURRENT_LANGUAGE %}
   {% cache 600 catalogue CURRENT_LANGUAGE request.GET.page %}
-    {% products_catalogue products page_size=36 %}
+    {% products_catalogue products page_size=36 display_text_when_no_products=True %}
   {% endcache %}
 {% endblock %}

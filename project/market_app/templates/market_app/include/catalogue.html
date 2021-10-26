@@ -28,11 +28,13 @@
 
     </div>
   {% empty %}
-    <div class="w-100">
-      <div class="display-5 text-center">
-        {% trans 'There are no products' %}.
+    {% if display_text_when_no_products %}
+      <div class="w-100">
+        <div class="display-5 text-center">
+          {% trans 'There are no products' %}.
+        </div>
       </div>
-    </div>
+    {% endif %}
   {% endfor %}
 </div>
 

@@ -24,7 +24,10 @@ def get_page_obj(request, queryset, page_size):
 
 
 @register.inclusion_tag('market_app/include/catalogue.html', takes_context=True)
-def products_catalogue(context, products=None, limit=None, page_size=None, ordering="discount_percent"):
+def products_catalogue(
+        context, products=None, limit=None,
+        display_text_when_no_products=False,
+        page_size=None, ordering="discount_percent"):
     request = context['request']
     if products is None:
         products = get_products(ordering)
@@ -36,4 +39,5 @@ def products_catalogue(context, products=None, limit=None, page_size=None, order
         context['is_paginated'] = page_obj.has_other_pages()
     else:
         context['products'] = products[:limit]
+    context['display_text_when_no_products'] = display_text_when_no_products
     return context
