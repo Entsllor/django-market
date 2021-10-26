@@ -196,14 +196,22 @@ class CartView(LoginRequiredMixin, generic.FormView):
     template_name = 'market_app/cart_page.html'
     form_class = CartForm
 
+    @property
+    def cart(self):
+        if not hasattr(self, '_cart'):
+            cart = self.request.user.cart
+            cart.prepare_items()
+            self._cart = cart
+        return self._cart
+
     def get_context_data(self, **kwargs):
         context = super(CartView, self).get_context_data(**kwargs)
-        context['cart'] = self.request.user.cart
+        context['cart'] = self.cart
         return context
 
     def get_form_kwargs(self):
         kwargs = super(CartView, self).get_form_kwargs()
-        kwargs['cart'] = self.request.user.cart
+        kwargs['cart'] = self.cart
         return kwargs
 
     def form_valid(self, form):
@@ -212,9 +220,8 @@ class CartView(LoginRequiredMixin, generic.FormView):
                         'Please pay for this unpaid order or cancel it')
             messages.warning(self.request, message)
             return HttpResponseRedirect(unpaid_order.get_absolute_url(), status=302)
-        cart = self.request.user.cart
-        cart.items = form.cleaned_data
-        order: Order = prepare_order(cart)
+        self.cart.items = form.cleaned_data
+        order: Order = prepare_order(self.cart)
         almost_sold_types_pks = {
             item.product_type_id: item.amount for item in order.items.all() if
             item.amount < form.cleaned_data.get(str(item.product_type_id))

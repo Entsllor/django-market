@@ -144,7 +144,8 @@ class CartTest(TestBaseWithFilledCatalogue):
         self.cart.set_item('2', 3)
         self.cart.set_item('256', 1)
         self.assertEqual(self.cart.items, {'2': 3, '256': 1})
-        self.cart._remove_nonexistent_product_types()
+        count_of_removed_items = self.cart.prepare_items()
+        self.assertEqual(count_of_removed_items, 1)
         self.assertEqual(self.cart.items, {'2': 3})
 
     @assert_difference({'10': 3, '7': 3})
@@ -156,7 +157,8 @@ class CartTest(TestBaseWithFilledCatalogue):
         self.cart.set_item('5', 3)
         self.cart.set_item('10', 3)
         self.cart.set_item('2', 1)
-        self.cart._remove_own_products_types_from_cart()
+        count_of_removed_items = self.cart.prepare_items()
+        self.assertEqual(count_of_removed_items, 4)
 
 
 class OrderTest(TestBaseWithFilledCatalogue):

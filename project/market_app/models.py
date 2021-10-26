@@ -270,23 +270,33 @@ class Cart(models.Model):
     def clear(self) -> int:
         return Cart.objects.filter(pk=self.pk).update(items=self._default_cart_value())
 
-    def _remove_nonexistent_product_types(self) -> None:
-        old_pks = self.get_types_pks()
-        new_pks = ProductType.objects.values_list('pk', flat=True)
-        for pk in old_pks:
-            if int(pk) not in new_pks:
-                del self.items[str(pk)]
-        self.save(update_fields=['items'])
+    def _remove_own_products_and_nonexistent_types_from_cart(self) -> int:
+        """Remove invalid items and return count of removed items"""
+        items_count_at_start = len(self.items)
+        valid_types_pks = ProductType.objects.exclude(
+            product__market__owner_id=self.user_id).values_list('pk', flat=True)
+        self.items = {pk: count for pk, count in self.items.items() if int(pk) in valid_types_pks}
+        return items_count_at_start - len(self.items)
 
-    def _remove_own_products_types_from_cart(self) -> None:
-        own_products_types_pks = ProductType.objects.filter(
-            product__market__owner=self.user).values_list('pk', flat=True)
-        self.items = {pk: count for pk, count in self.items.items() if int(pk) not in own_products_types_pks}
-        self.save(update_fields=['items'])
+    def _remove_items_with_non_natural_number_as_count(self):
+        items_count_at_start = len(self.items)
+        self.items = {pk: count for pk, count in self.items.items() if isinstance(count, int) and count > 0}
+        return items_count_at_start - len(self.items)
 
-    def prepare_items(self) -> None:
-        self._remove_nonexistent_product_types()
-        self._remove_own_products_types_from_cart()
+    @property
+    def is_filled(self):
+        return self.items != self._default_cart_value
+
+    def prepare_items(self) -> int:
+        """Remove invalid items if filled, save valid items and return count of removed items"""
+        count_of_removed_items = 0
+        items_at_start = self.items.copy()
+        if self.is_filled:
+            count_of_removed_items += self._remove_own_products_and_nonexistent_types_from_cart()
+            count_of_removed_items += self._remove_items_with_non_natural_number_as_count()
+            if items_at_start != self.items:
+                self.save(update_fields=['items'])
+        return count_of_removed_items
 
 
 class Balance(models.Model):
