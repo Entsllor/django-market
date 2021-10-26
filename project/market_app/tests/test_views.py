@@ -1012,6 +1012,8 @@ class UserCouponListTest(ViewTestMixin, BaseMarketTestCase):
         super(UserCouponListTest, self).setUp()
         coupons = [Coupon(discount_percent=10) for _ in range(5)]
         Coupon.objects.bulk_create(coupons)
+        Coupon.objects.get(pk=1).customers.add(self.customer.id)
+        Coupon.objects.get(pk=2).customers.add(self.customer.id)
 
     def test_redirect_if_not_logged_in(self):
         self._test_redirect_if_not_logged_in()
@@ -1022,8 +1024,6 @@ class UserCouponListTest(ViewTestMixin, BaseMarketTestCase):
 
     def test_display_all_users_coupons(self):
         self.log_in_as_customer()
-        Coupon.objects.get(pk=1).customers.add(self.user)
-        Coupon.objects.get(pk=2).customers.add(self.user)
         response = self.get_from_page()
         self.assertContains(response, 'id="coupon_1_block"')
         self.assertContains(response, 'id="coupon_2_block"')
