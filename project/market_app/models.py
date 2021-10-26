@@ -460,7 +460,7 @@ class Coupon(models.Model):
     customers = models.ManyToManyField(
         to=User, verbose_name=_('customer')
     )
-    description = models.TextField(verbose_name=_('description'), blank=True)
+
     max_discount = models.DecimalField(
         verbose_name=_('max discount'), blank=True, null=True,
         max_digits=15, decimal_places=MONEY_DECIMAL_PLACES
@@ -473,6 +473,13 @@ class Coupon(models.Model):
         blank=True,
         validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
+
+    @property
+    def description(self):
+        if self.discount_percent == 100 and self.max_discount:
+            return f'{self.max_discount} OFF'
+        else:
+            return f'-{self.discount_percent}%'
 
     class Meta:
         verbose_name = _('coupon')
