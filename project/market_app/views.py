@@ -18,7 +18,7 @@ from currencies.services import get_currency_code_by_language, DEFAULT_CURRENCY_
     get_exchanger
 from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, ProductTypeForm, CreditCardForm, \
     AdvancedSearchForm, CartForm, CheckOutForm, TopUpForm, AgreementForm
-from .models import Product, Market, ProductType, Operation, Order, OrderItem
+from .models import Product, Market, ProductType, Operation, Order, OrderItem, Coupon
 from .services import top_up_balance, make_purchase, prepare_order, EmptyOrderError, OrderCannotBeCancelledError, \
     try_to_cancel_order, get_products, OrderCouponError
 
@@ -560,3 +560,12 @@ class ShippingPage(MarketOwnerRequiredMixin, generic.ListView):
             self.get_queryset()
         self.queryset.filter(id__in=pks).update(is_shipped=True)
         return HttpResponseRedirect(reverse_lazy('market_app:shipping', kwargs=self.kwargs))
+
+
+class UserCouponListView(LoginRequiredMixin, generic.ListView):
+    template_name = 'market_app/coupons.html'
+    model = Coupon
+    context_object_name = 'coupons'
+
+    def get_queryset(self):
+        return self.request.user.coupon_set.order_by('-discount_percent').all()
