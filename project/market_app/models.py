@@ -284,14 +284,9 @@ class Cart(models.Model):
         self.items = {pk: count for pk, count in self.items.items() if int(pk) not in own_products_types_pks}
         self.save(update_fields=['items'])
 
-    def _to_valid_units_count(self) -> int:
-        valid_items = {item: count for item, count in self.items.items()}
-        return Cart.objects.filter(pk=self.pk).update(items=valid_items)
-
     def prepare_items(self) -> None:
         self._remove_nonexistent_product_types()
         self._remove_own_products_types_from_cart()
-        self._to_valid_units_count()
 
 
 class Balance(models.Model):
