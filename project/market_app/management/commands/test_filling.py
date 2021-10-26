@@ -11,10 +11,10 @@ class Command(BaseCommand):
     help = 'Fill db with test data'
 
     def add_arguments(self, parser):
-        parser.add_argument('custom', help='run with settings', type=str.lower)
+        parser.add_argument('-c', '--custom', action='store_true', default=False, help='run with settings')
 
     def handle(self, *args, **options):
-        if 'custom' in options:
+        if options['custom']:
             fill_with_settings()
         else:
             fill()

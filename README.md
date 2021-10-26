@@ -68,7 +68,7 @@ python manage.py test_filling
 If you want to configure filling use this: 
 
 ```
-python manage.py test_filling custom
+python manage.py test_filling --custom
 ```
 
 
@@ -107,5 +107,4 @@ python manage.py update_currencies
 ```
 
 [Optional] Use 'update_currencies' command when you need to update exchanging rates
-
 [Optional] Change rates-source-url if it is necessary
