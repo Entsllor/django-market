@@ -5,38 +5,43 @@
 {% get_current_language as CURRENT_LANGUAGE %}
 
 {% cache 600 side_nav CURRENT_LANGUAGE request.user.username %}
-<div class="card my-2 border-0">
-  <div class="card-header content-title">
-    {% trans 'Navigation' %}
-  </div>
-  <ul class="list-group list-group-flush text-center">
-    <li class="list-group-item">
-      <a href="{% url 'market_app:cart' %}">
-        {% trans 'My cart' %}
-      </a>
-    </li>
-    <li class="list-group-item">
-      <a href="{% url 'market_app:orders' %}">
-        {% trans 'My orders' %}
-      </a>
-    </li>
-    <li class="list-group-item">
-      <a href="{% url 'market_app:market_list' %}">
-        {% trans 'Markets' %}
-      </a>
-    </li>
-    <li class="list-group-item">
-      <a href="{% url 'market_app:user_market' %}">
-        {% trans 'My market' %}
-      </a>
-    </li>
-    {% if user.is_authenticated %}
+  <div class="card my-2 border-0">
+    <div class="card-header content-title">
+      {% trans 'Navigation' %}
+    </div>
+    <ul class="list-group list-group-flush text-center">
       <li class="list-group-item">
-        <a href="{% url 'market_app:operation_history' %}">
-          {% trans 'Balance' %} {% to_local_currency user.balance.amount %}
+        <a href="{% url 'market_app:cart' %}">
+          {% trans 'My cart' %}
         </a>
       </li>
-    {% endif %}
-  </ul>
-</div>
+      <li class="list-group-item">
+        <a href="{% url 'market_app:orders' %}">
+          {% trans 'My orders' %}
+        </a>
+      </li>
+      <li class="list-group-item">
+        <a href="{% url 'market_app:market_list' %}">
+          {% trans 'Markets' %}
+        </a>
+      </li>
+      <li class="list-group-item">
+        <a href="{% url 'market_app:user_market' %}">
+          {% trans 'My market' %}
+        </a>
+      </li>
+      {% if user.is_authenticated %}
+        <li class="list-group-item">
+          <a href="{% url 'market_app:user_coupons' %}">
+            {% trans 'Coupons' %}
+          </a>
+        </li>
+        <li class="list-group-item">
+          <a href="{% url 'market_app:operation_history' %}">
+            {% trans 'Balance' %} {% to_local_currency user.balance.amount %}
+          </a>
+        </li>
+      {% endif %}
+    </ul>
+  </div>
 {% endcache %}

@@ -1,43 +1,48 @@
 {% extends 'market_app/app_base.html' %}
 {% load i18n %}
+{% load l10n %}
+{% load cache %}
 {% load currencies %}
 
 {% block main_center_block %}
-  {% if not coupons %}
-    <div class="text-center display-5">
-      {% trans "You don't have coupons yet" %}
-    </div>
+  {% get_current_language as CURRENT_LANGUAGE %}
+  {% cache 300 user_coupons_block CURRENT_LANGUAGE user.pk %}
+    {% if not coupons %}
+      <div class="text-center display-5">
+        {% trans "You don't have coupons yet" %}
+      </div>
 
-  {% else %}
-    <div class="row row-cols-1 row-cols-sm-2 g-2 m-0">
-      {% for coupon in coupons %}
-        <div class="col-12 col-sm-6 align-self-center">
-          <div class="w-100 p-2 bg-danger border-warning" style="border: solid 0.2em" id="coupon_{{ coupon.pk }}_block">
-            <div class="bg-danger h-100 border-warning" style="border: solid 0.2em">
-              <div class="w-100 text-center px-2">
-                <br style="font-size: 0.6em">
-                <div class="display-6 h-50 text-light fw-bold text-break">
-                  {% if coupon.discount_percent == 100 %}
-                    <b>{% to_local_currency coupon.max_discount %} OFF</b>
-                  {% else %}
-                    <b>-{{ coupon.discount_percent }}%</b>{% spaceless %}
-                    {% if coupon.max_discount %}<sup>*</sup>{% endif %}
-                  {% endspaceless %}
-                  {% endif %}
+    {% else %}
+      <div class="row row-cols-1 row-cols-sm-2 g-2 m-0">
+        {% for coupon in coupons %}
+          <div class="col-12 col-sm-6 align-self-center">
+            <div class="w-100 p-2 bg-danger border-warning" style="border: solid 0.2em"
+                 id="coupon_{{ coupon.pk }}_block">
+              <div class="bg-danger h-100 border-warning" style="border: solid 0.2em">
+                <div class="w-100 text-center px-2">
+                  <br style="font-size: 0.6em">
+                  <div class="display-6 h-50 text-light fw-bold text-break">
+                    {% if coupon.discount_percent == 100 %}
+                      <b>{% to_local_currency coupon.max_discount %} OFF</b>
+                    {% else %}
+                      <b>-{{ coupon.discount_percent }}%</b>{% spaceless %}
+                      {% if coupon.max_discount %}<sup>*</sup>{% endif %}
+                    {% endspaceless %}
+                    {% endif %}
+                  </div>
+                  <p class="text-end text-light" style="font-size: 0.6em">
+                    {% if coupon.max_discount and coupon.discount_percent != 100 %}
+                      {% trans 'limit' %}: {% to_local_currency coupon.max_discount %}*
+                    {% else %}
+                      <br>
+                    {% endif %}
+                  </p>
                 </div>
-                <p class="text-end text-light" style="font-size: 0.6em">
-                  {% if coupon.max_discount and coupon.discount_percent != 100 %}
-                    {% trans 'limit' %}: {% to_local_currency coupon.max_discount %}*
-                  {% else %}
-                    <br>
-                  {% endif %}
-                </p>
               </div>
             </div>
           </div>
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endcache %}
 {% endblock %}
-
