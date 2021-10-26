@@ -1,11 +1,9 @@
 {% extends 'market_app/app_base.html' %}
 {% load i18n %}
-{% load l10n %}
 {% load cache %}
 {% load currencies %}
 
 {% block main_center_block %}
-  {% get_current_language as CURRENT_LANGUAGE %}
   {% cache 300 user_coupons_block CURRENT_LANGUAGE user.pk %}
     {% if not coupons %}
       <div class="text-center display-5">

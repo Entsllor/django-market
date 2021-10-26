@@ -1,8 +1,6 @@
 {% load i18n %}
-{% load l10n %}
 {% load currencies %}
 {% load cache %}
-{% get_current_language as CURRENT_LANGUAGE %}
 
 {% cache 600 side_nav CURRENT_LANGUAGE request.user.username %}
   <div class="card my-2 border-0">
