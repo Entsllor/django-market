@@ -12,7 +12,8 @@ from ..models import Market, Product, ProductCategory, Operation, ProductType, O
 from ..services import top_up_balance, make_purchase, prepare_order
 from ..views import ProductCreateView, ProductEditView, CatalogueView, MarketEditView, \
     MarketCreateView, CartView, CheckOutView, TopUpView, OperationHistoryView, \
-    OrderDetail, ProductTypeEdit, UserMarketView, ShippingPage, PayingView, SearchProducts, ProductView
+    OrderDetail, ProductTypeEdit, UserMarketView, ShippingPage, PayingView, SearchProducts, ProductView, \
+    UserCouponListView
 
 
 def prepare_product_data_to_post(data) -> dict:
@@ -1001,3 +1002,34 @@ class SearchTest(ViewTestMixin, TestBaseWithFilledCatalogue):
             self.assertContains(response, expected_name)
         for unexpected_name in unexpected_names:
             self.assertNotContains(response, unexpected_name)
+
+
+class UserCouponListTest(ViewTestMixin, BaseMarketTestCase):
+    ViewClass = UserCouponListView
+    page_url = reverse_lazy('market_app:user_coupons')
+
+    def setUp(self) -> None:
+        super(UserCouponListTest, self).setUp()
+        coupons = [Coupon(discount_percent=10) for _ in range(5)]
+        Coupon.objects.bulk_create(coupons)
+
+    def test_redirect_if_not_logged_in(self):
+        self._test_redirect_if_not_logged_in()
+
+    def test_correct_template(self):
+        self.log_in_as_customer()
+        self._test_correct_template()
+
+    def test_display_all_users_coupons(self):
+        self.log_in_as_customer()
+        Coupon.objects.get(pk=1).customers.add(self.user)
+        Coupon.objects.get(pk=2).customers.add(self.user)
+        response = self.get_from_page()
+        self.assertContains(response, 'id="coupon_1_block"')
+        self.assertContains(response, 'id="coupon_2_block"')
+
+    def test_do_not_display_another_coupons(self):
+        self.log_in_as_customer()
+        response = self.get_from_page()
+        self.assertNotContains(response, 'id="coupon_3_block"')
+        self.assertNotContains(response, 'id="coupon_4_block"')
