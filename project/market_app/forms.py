@@ -151,21 +151,29 @@ class TopUpForm(MoneyExchangerMixin, CreditCardForm):
 class CheckOutForm(forms.ModelForm):
     class Meta:
         model = Order
-        fields = ['coupon', 'address']
+        fields = ['address']
 
     def __init__(self, *args, **kwargs):
         super(CheckOutForm, self).__init__(*args, **kwargs)
         coupons = Coupon.objects.filter(customers__exact=self.instance.user_id)
-        self.coupons_json = json.dumps(
-            {str(coupon.pk): {
-                'discount_percent': str(coupon.discount_percent),
-                'max_discount': str(coupon.max_discount) if coupon.max_discount else None
-            } for coupon in coupons})
-        self.fields['coupon'].queryset = coupons
-        self.fields['coupon'].widget.attrs.update(
-            onchange='onChangeActivatedCoupon()'
+        coupons_data = {str(coupon.id): {
+            'discount_percent': str(coupon.discount_percent),
+            'max_discount': str(coupon.max_discount) if coupon.max_discount else None
+        } for coupon in coupons}
+        coupons_choices = tuple((coupon.id, coupon.description) for coupon in coupons)
+        self.coupons_json = json.dumps(coupons_data)
+        self.fields['coupon'] = forms.ChoiceField(
+            choices=coupons_choices,
+            label=_('Coupon'),
+            required=False,
+            initial=None
         )
+        self.fields['coupon'].widget.attrs.update(onchange='onChangeActivatedCoupon()')
         self.order_fields(['address', 'coupon'])
+
+    def save(self, commit=True):
+        self.instance.coupon_id = self.cleaned_data['coupon']
+        return super(CheckOutForm, self).save()
 
 
 class CartForm(forms.Form):
