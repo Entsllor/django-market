@@ -158,7 +158,7 @@ class CheckOutForm(forms.ModelForm):
         coupons = Coupon.objects.filter(customers__exact=self.instance.user_id)
         coupons_data = {str(coupon.id): {
             'discount_percent': str(coupon.discount_percent),
-            'max_discount': str(coupon.max_discount) if coupon.max_discount else None
+            'discount_limit': str(coupon.discount_limit) if coupon.discount_limit else None
         } for coupon in coupons}
         coupons_choices = tuple((coupon.id, str(coupon)) for coupon in coupons)
         self.discount_limit_format = _('limit') + ': {discount_limit}'

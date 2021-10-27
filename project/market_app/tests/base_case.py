@@ -124,8 +124,8 @@ class BaseMarketTestCase(TestCase):
         return product
 
 
-def _create_coupon(discount_percent, max_discount):
-    return Coupon.objects.create(discount_percent=discount_percent, max_discount=max_discount)
+def _create_coupon(discount_percent, discount_limit):
+    return Coupon.objects.create(discount_percent=discount_percent, discount_limit=discount_limit)
 
 
 class TestBaseWithFilledCatalogue(BaseMarketTestCase):
@@ -289,8 +289,8 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
                 types.append(ProductType(product_id=product_id, **type_data))
         ProductType.objects.bulk_create(types)
 
-    def create_and_set_coupon(self, discount_percent=0, max_discount=0) -> Coupon:
-        coupon = _create_coupon(discount_percent, max_discount)
+    def create_and_set_coupon(self, discount_percent=0, discount_limit=0) -> Coupon:
+        coupon = _create_coupon(discount_percent, discount_limit)
         coupon.customers.add(self.user)
         return coupon
 

@@ -76,7 +76,7 @@
       const localizeCouponChoicesText = () => {
           let couponChoices = couponChoiceForm.options;
           for (let couponChoice of couponChoices) {
-              let discount_limit = coupons[couponChoice.value]['max_discount']
+              let discount_limit = coupons[couponChoice.value]['discount_limit']
               if (discount_limit) {
                   discount_limit = toLocalCurrency(discount_limit)
                   couponChoice.textContent += ' ' + discountLimitFormat.replace('{discount_limit}', discount_limit)
@@ -86,8 +86,8 @@
 
       const getCouponDiscount = (coupon, price) => {
           let discountAmount = price * coupon['discount_percent'] / 100;
-          if (coupon['max_discount']) {
-              discountAmount = Math.min(discountAmount, coupon['max_discount']);
+          if (coupon['discount_limit']) {
+              discountAmount = Math.min(discountAmount, coupon['discount_limit']);
           }
           return discountAmount
       }

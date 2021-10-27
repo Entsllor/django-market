@@ -21,16 +21,16 @@
                   <br style="font-size: 0.6em">
                   <div class="display-6 h-50 text-light fw-bold text-break">
                     {% if coupon.discount_percent == 100 %}
-                      <b>{% to_local_currency coupon.max_discount %} OFF</b>
+                      <b>{% to_local_currency coupon.discount_limit %} OFF</b>
                     {% else %}
                       <b>-{{ coupon.discount_percent }}%</b>{% spaceless %}
-                      {% if coupon.max_discount %}<sup>*</sup>{% endif %}
+                      {% if coupon.discount_limit %}<sup>*</sup>{% endif %}
                     {% endspaceless %}
                     {% endif %}
                   </div>
                   <p class="text-end text-light" style="font-size: 0.6em">
-                    {% if coupon.max_discount and coupon.discount_percent != 100 %}
-                      {% trans 'limit' %}: {% to_local_currency coupon.max_discount %}*
+                    {% if coupon.discount_limit and coupon.discount_percent != 100 %}
+                      *{% trans 'limit' %}: {% to_local_currency coupon.discount_limit %}
                     {% else %}
                       <br>
                     {% endif %}

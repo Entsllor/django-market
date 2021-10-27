@@ -792,24 +792,24 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self._test_use_coupon(coupon, 1100)
 
     def test_use_coupon_with_discount_limit(self):
-        coupon = self.create_and_set_coupon(discount_percent=10, max_discount=80)
+        coupon = self.create_and_set_coupon(discount_percent=10, discount_limit=80)
         self._test_use_coupon(coupon, 1080)
 
     def test_coupon_discount_dont_affect_to_seller_top_up_operation(self):
-        coupon = self.create_and_set_coupon(discount_percent=10, max_discount=80)
+        coupon = self.create_and_set_coupon(discount_percent=10, discount_limit=80)
         self._test_use_coupon(coupon, 1080)
         self.assertEqual(self.sellers.get(pk=1).balance.amount, 600)
         self.assertEqual(self.sellers.get(pk=2).balance.amount, 400)
 
     def test_cannot_use_coupon_if_user_have_no_access_to_the_coupon(self):
-        coupon = Coupon.objects.create(discount_percent=10, max_discount=80)
+        coupon = Coupon.objects.create(discount_percent=10, discount_limit=80)
         response = self._test_use_coupon(coupon, 2000)
         self.assertRedirects(response, reverse_lazy('market_app:checkout', kwargs={'pk': self.unpaid_order.pk}))
         self.assertEqual(self.sellers.get(pk=1).balance.amount, 0)
         self.assertEqual(self.sellers.get(pk=2).balance.amount, 0)
 
     def test_remove_coupon_from_user_coupon_set_after_purchasing(self):
-        coupon = self.create_and_set_coupon(discount_percent=10, max_discount=80)
+        coupon = self.create_and_set_coupon(discount_percent=10, discount_limit=80)
         self.assertTrue(self.user.coupon_set.filter(pk=coupon.pk).exists())
         self._test_use_coupon(coupon, 1080)
         self.assertFalse(self.user.coupon_set.filter(pk=coupon.pk).exists())

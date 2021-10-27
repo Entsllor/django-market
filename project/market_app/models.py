@@ -408,8 +408,8 @@ class Order(models.Model):
             return 0
         coupon = self.coupon
         coupon_discount = total_price * coupon.discount_percent / 100
-        if coupon.max_discount:
-            coupon_discount = min(coupon_discount, coupon.max_discount)
+        if coupon.discount_limit:
+            coupon_discount = min(coupon_discount, coupon.discount_limit)
         return coupon_discount
 
     def set_coupon(self, coupon_id: int) -> int:
@@ -471,8 +471,8 @@ class Coupon(models.Model):
         to=User, verbose_name=_('customer')
     )
 
-    max_discount = models.DecimalField(
-        verbose_name=_('max discount'), blank=True, null=True,
+    discount_limit = models.DecimalField(
+        verbose_name=_('discount limit'), blank=True, null=True,
         max_digits=15, decimal_places=MONEY_DECIMAL_PLACES
     )
     discount_percent = models.DecimalField(
