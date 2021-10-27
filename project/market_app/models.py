@@ -486,10 +486,7 @@ class Coupon(models.Model):
 
     @property
     def description(self):
-        if self.discount_percent == 100 and self.max_discount:
-            return f'{self.max_discount} OFF'
-        else:
-            return f'-{self.discount_percent}%'
+        return f'-{self.discount_percent}%'
 
     class Meta:
         verbose_name = _('coupon')

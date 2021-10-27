@@ -160,7 +160,8 @@ class CheckOutForm(forms.ModelForm):
             'discount_percent': str(coupon.discount_percent),
             'max_discount': str(coupon.max_discount) if coupon.max_discount else None
         } for coupon in coupons}
-        coupons_choices = tuple((coupon.id, coupon.description) for coupon in coupons)
+        coupons_choices = tuple((coupon.id, str(coupon)) for coupon in coupons)
+        self.discount_limit_format = _('limit') + ': {discount_limit}'
         self.coupons_json = json.dumps(coupons_data)
         self.fields['coupon'] = forms.ChoiceField(
             choices=coupons_choices,

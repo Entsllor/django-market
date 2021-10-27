@@ -66,11 +66,23 @@
       const couponChoiceForm = document.getElementById('id_coupon')
       const couponDiscountBlock = document.getElementById('coupon_discount_block')
       const couponDiscountAmount = document.getElementById('coupon_discount_amount')
+      const discountLimitFormat = "{{ form.discount_limit_format }}"
 
       const toLocalCurrency = price => {
           let local_price = (price * LOCAL_CURRENCY_RATE).toFixed(2)
           return String(local_price) + LOCAL_CURRENCY_SYM
       };
+
+      const localizeCouponChoicesText = () => {
+          let couponChoices = couponChoiceForm.options;
+          for (let couponChoice of couponChoices) {
+              let discount_limit = coupons[couponChoice.value]['max_discount']
+              if (discount_limit) {
+                  discount_limit = toLocalCurrency(discount_limit)
+                  couponChoice.textContent += ' ' + discountLimitFormat.replace('{discount_limit}', discount_limit)
+              }
+          }
+      }
 
       const getCouponDiscount = (coupon, price) => {
           let discountAmount = price * coupon['discount_percent'] / 100;
@@ -93,6 +105,12 @@
               couponDiscountBlock.style.display = 'none';
           }
       }
-      onload = onChangeActivatedCoupon
+
+      const onloadPage = () => {
+          onChangeActivatedCoupon();
+          localizeCouponChoicesText();
+      }
+
+      onload = onloadPage
   </script>
 {% endblock %}
