@@ -1,6 +1,7 @@
 {% extends 'market_app/form_block.html' %}
 
 {% load i18n %}
+{% load market_app_utils %}
 
 {% block card-title %}
   {% trans 'Edit product' %}
@@ -29,12 +30,10 @@
       {% for product_type in product.product_types.all %}
         <tr>
           <th>{{ product_type.units_count }}</th>
-          {% for value in product_type.properties_as_dict.values %}
+          {% for attribute in product.get_attributes %}
             <td>
-              {{ value }}
+              {{ product_type.properties_as_dict|get_by_key:attribute }}
             </td>
-          {% empty %}
-            <td></td>
           {% endfor %}
           <td>
             <a href="{% url 'market_app:edit_type' product_type.pk %}">
