@@ -206,7 +206,7 @@ class ProductType(models.Model):
 
     @property
     def properties_as_str(self) -> str:
-        return ', '.join(f'{key}: {value}' for key, value in self.properties.items())
+        return ', '.join(f'{key}: {value}' for key, value in self.properties.items() if value)
 
     @property
     def properties_as_dict(self) -> dict:
