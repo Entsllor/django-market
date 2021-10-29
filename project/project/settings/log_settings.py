@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -5,6 +6,8 @@ LOG_DIR = BASE_DIR
 TRANSACTION_LOG_PATH = BASE_DIR.joinpath('log/transactions.log')
 if not TRANSACTION_LOG_PATH.parent.exists():
     TRANSACTION_LOG_PATH.parent.mkdir()
+
+LOG_LEVEL = os.getenv("DJANGO_LOG_LEVEL", "INFO")
 
 LOGGING_SETTINGS = {
     'version': 1,
@@ -57,21 +60,17 @@ LOGGING_SETTINGS = {
     'loggers': {
         'django': {
             'handlers': ['console'],
+            'level': LOG_LEVEL,
             'propagate': True,
-        },
-        'market.debug': {
-            'handlers': ['debug'],
-            'level': 'DEBUG',
-            'propagate': True
         },
         'market_app.services': {
             'handlers': ['money_transactions'],
-            'level': 'DEBUG',
+            'level': LOG_LEVEL,
             'propagate': True
 
         },
         'django.db.backends': {
-            'level': 'DEBUG',
+            'level': LOG_LEVEL,
             'handlers': ['sql_query_handler'],
             'propagate': True
         },
