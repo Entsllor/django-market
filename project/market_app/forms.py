@@ -115,13 +115,17 @@ class ProductTypeForm(forms.ModelForm):
 
 
 class AddToCartForm(forms.Form):
-    quantity = forms.IntegerField(min_value=0, max_value=Cart.max_product_type_count_on_cart)
+    quantity = forms.IntegerField(
+        label=_('Quantity'),
+        min_value=0,
+        max_value=Cart.max_product_type_count_on_cart)
 
     def __init__(self, *args, **kwargs):
         self.types = kwargs.pop('types')
         super(AddToCartForm, self).__init__(*args, **kwargs)
         choices = ((i_type.pk, str(i_type)) for i_type in self.types)
         self.fields['product_type'] = forms.ChoiceField(
+            label=_('Properties'),
             choices=choices, initial=1
         )
         self.fields['product_type'].widget.attrs.update(
@@ -137,12 +141,16 @@ class AgreementForm(forms.Form):
 
 
 class CreditCardForm(forms.Form):
-    name_on_card = forms.CharField(max_length=63)
-    card_number = forms.IntegerField(min_value=1000_0000_0000_0000, max_value=9999_9999_9999_9999)
+    name_on_card = forms.CharField(max_length=63, label=_("Cardholder's name"))
+    card_number = forms.IntegerField(
+        label=_('Card number'),
+        min_value=1000_0000_0000_0000, max_value=9999_9999_9999_9999)
 
 
 class TopUpForm(MoneyExchangerMixin, CreditCardForm):
-    top_up_amount = forms.DecimalField(min_value=1, max_value=1000000)
+    top_up_amount = forms.DecimalField(
+        label=_('Top-up amount'),
+        min_value=1, max_value=1000000)
 
     def clean_top_up_amount(self):
         return self._clean_field_with_money_exchanging('top_up_amount')

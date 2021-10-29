@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-24 16:49+0500\n"
-"PO-Revision-Date: 2021-10-24 15:28+0500\n"
+"POT-Creation-Date: 2021-10-29 20:02+0500\n"
+"PO-Revision-Date: 2021-10-29 00:32+0500\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
@@ -49,8 +49,8 @@ msgid "Female"
 msgstr "Женщина"
 
 #: .\accounts\models.py:21 .\market_app\models.py:233
-#: .\market_app\models.py:300 .\market_app\models.py:320
-#: .\market_app\models.py:364
+#: .\market_app\models.py:305 .\market_app\models.py:325
+#: .\market_app\models.py:369
 msgid "user"
 msgstr "пользователь"
 
@@ -171,7 +171,7 @@ msgstr "Редактировать профиль."
 #: .\core_app\templates\core_app\include\pretty_form.html:62
 #: .\market_app\templates\market_app\cart_page.html:111
 #: .\market_app\templates\market_app\market_edit.html:16
-#: .\market_app\templates\market_app\order_items_list.html:80
+#: .\market_app\templates\market_app\order_items_list.html:79
 msgid "Submit"
 msgstr "Подтвердить"
 
@@ -188,7 +188,7 @@ msgid "Your password was changed."
 msgstr "Ваш пароль был изменен."
 
 #: .\core_app\templates\core_app\about_us_template.html:6
-#: .\core_app\templates\core_app\base_template.html:94
+#: .\core_app\templates\core_app\base_template.html:93
 msgid "About us"
 msgstr "О нас"
 
@@ -206,7 +206,7 @@ msgstr "Номер телефона"
 
 #: .\core_app\templates\core_app\about_us_template.html:23
 #: .\market_app\templates\market_app\order_detail.html:40
-#: .\market_app\templates\market_app\order_items_list.html:30
+#: .\market_app\templates\market_app\order_items_list.html:31
 msgid "Address"
 msgstr "Адрес"
 
@@ -304,27 +304,56 @@ msgstr ""
 "Простите, но мы не можем найти обменный курс для этой валюты "
 "'{currency_code}'"
 
-#: .\market_app\forms.py:136
+#: .\market_app\forms.py:119
+msgid "Quantity"
+msgstr "Количество"
+
+#: .\market_app\forms.py:128
+#: .\market_app\templates\market_app\order_items_list.html:22
+msgid "Properties"
+msgstr "Свойства"
+
+#: .\market_app\forms.py:140
 msgid "I am sure"
 msgstr "Я согласен"
 
-#: .\market_app\forms.py:187
+#: .\market_app\forms.py:144
+msgid "Cardholder's name"
+msgstr "Владелец карты"
+
+#: .\market_app\forms.py:146
+msgid "Card number"
+msgstr "Номер карты"
+
+#: .\market_app\forms.py:152
+msgid "Top-up amount"
+msgstr "Сумма пополнения"
+
+#: .\market_app\forms.py:172 .\market_app\templates\market_app\coupons.html:33
+msgid "limit"
+msgstr "лимит"
+
+#: .\market_app\forms.py:176 .\market_app\models.py:496
+msgid "Coupon"
+msgstr "Купон"
+
+#: .\market_app\forms.py:204
 msgid "Min price"
 msgstr "Минимальная цена"
 
-#: .\market_app\forms.py:188
+#: .\market_app\forms.py:205
 msgid "Max price"
 msgstr "Максимальная цена"
 
-#: .\market_app\forms.py:192
+#: .\market_app\forms.py:209
 msgid "Query"
 msgstr "Запрос"
 
-#: .\market_app\forms.py:195
+#: .\market_app\forms.py:212
 msgid "Category"
 msgstr "Категория"
 
-#: .\market_app\forms.py:196
+#: .\market_app\forms.py:213
 msgid "Show if sold out"
 msgstr "Показывать если распродано"
 
@@ -366,7 +395,6 @@ msgid "name"
 msgstr "имя"
 
 #: .\market_app\models.py:52 .\market_app\models.py:82
-#: .\market_app\models.py:468
 msgid "description"
 msgstr "описание"
 
@@ -390,7 +418,7 @@ msgstr "маркеты"
 msgid "price"
 msgstr "цена"
 
-#: .\market_app\models.py:89 .\market_app\models.py:474
+#: .\market_app\models.py:89 .\market_app\models.py:479
 msgid "discount percent"
 msgstr "процент скидки"
 
@@ -416,9 +444,9 @@ msgstr "продукты"
 
 #: .\market_app\models.py:167
 #: .\market_app\templates\market_app\cart_page.html:82
-#: .\market_app\templates\market_app\checkout_page.html:20
+#: .\market_app\templates\market_app\checkout_page.html:19
 #: .\market_app\templates\market_app\order_detail.html:19
-#: .\market_app\templates\market_app\order_items_list.html:24
+#: .\market_app\templates\market_app\order_items_list.html:25
 #: .\market_app\templates\market_app\paying_page.html:11
 msgid "Amount"
 msgstr "Количество"
@@ -451,75 +479,71 @@ msgstr "корзина"
 msgid "carts"
 msgstr "корзины"
 
-#: .\market_app\models.py:305 .\market_app\models.py:326
-#: .\market_app\models.py:454
-#: .\market_app\templates\market_app\edit_product.html:20
+#: .\market_app\models.py:310 .\market_app\models.py:331
+#: .\market_app\models.py:459
+#: .\market_app\templates\market_app\edit_product.html:21
 msgid "amount"
 msgstr "количество"
 
-#: .\market_app\models.py:331
+#: .\market_app\models.py:336
 msgid "transaction time"
 msgstr "время транзакции"
 
-#: .\market_app\models.py:343 .\market_app\models.py:350
+#: .\market_app\models.py:348 .\market_app\models.py:355
 msgid "operation"
 msgstr "операция"
 
-#: .\market_app\models.py:344
+#: .\market_app\models.py:349
 msgid "operations"
 msgstr "операции"
 
-#: .\market_app\models.py:357 .\market_app\models.py:483
+#: .\market_app\models.py:362 .\market_app\models.py:492
 msgid "coupon"
 msgstr "купон"
 
-#: .\market_app\models.py:371
+#: .\market_app\models.py:376
 msgid "address"
 msgstr "адрес"
 
-#: .\market_app\models.py:435
+#: .\market_app\models.py:440
 msgid "product type"
 msgstr "подтип продукта"
 
-#: .\market_app\models.py:442
+#: .\market_app\models.py:447
 msgid "order"
 msgstr "заказ"
 
-#: .\market_app\models.py:450
+#: .\market_app\models.py:455
 msgid "payment"
 msgstr "оплата"
 
-#: .\market_app\models.py:455
+#: .\market_app\models.py:460
 msgid "is shipped"
 msgstr "отправлено"
 
-#: .\market_app\models.py:466
+#: .\market_app\models.py:471
 msgid "customer"
 msgstr "покупатель"
 
-#: .\market_app\models.py:470
-msgid "max discount"
-msgstr "максимальная скидка"
+#: .\market_app\models.py:475
+msgid "discount limit"
+msgstr "лимит скидки"
 
-#: .\market_app\models.py:484
+#: .\market_app\models.py:493
 msgid "coupons"
 msgstr "купоны"
 
-#: .\market_app\models.py:487
-msgid "Coupon"
-msgstr "Купон"
-
-#: .\market_app\templates\market_app\advanced_search.html:7
+#: .\market_app\templates\market_app\advanced_search.html:8
 msgid "Advanced search"
 msgstr "Расширенный поиск"
 
-#: .\market_app\templates\market_app\advanced_search.html:13
+#: .\market_app\templates\market_app\advanced_search.html:14
 #: .\market_app\templates\market_app\include\search.html:7
 msgid "Search"
 msgstr "Поиск"
 
 #: .\market_app\templates\market_app\cart_page.html:13
-#: .\market_app\templates\market_app\include\side_nav.html:11
+#: .\market_app\templates\market_app\include\side_nav.html:13
 msgid "My cart"
 msgstr "Моя корзина"
 
@@ -531,11 +555,11 @@ msgstr "Цена за единицу"
 
 #: .\market_app\templates\market_app\cart_page.html:88
 msgid "Total order item price"
-msgstr "Суммарная цена позиции"
+msgstr "Итоговая цена позиции"
 
 #: .\market_app\templates\market_app\cart_page.html:105
 msgid "Total order price"
-msgstr "Суммарная цена заказа"
+msgstr "Итоговая цена заказа"
 
 #: .\market_app\templates\market_app\cart_page.html:119
 msgid "Your cart is empty"
@@ -545,73 +569,82 @@ msgstr "Ваша корзина пуста"
 msgid "But these products will interest you"
 msgstr "Но это может вас заинтересовать"
 
-#: .\market_app\templates\market_app\checkout_page.html:10
+#: .\market_app\templates\market_app\checkout_page.html:9
 msgid "Check out"
 msgstr "Оформление"
 
-#: .\market_app\templates\market_app\checkout_page.html:28
+#: .\market_app\templates\market_app\checkout_page.html:27
 #: .\market_app\templates\market_app\order_detail.html:23
 msgid "Sale price"
 msgstr "Цена продажи"
 
-#: .\market_app\templates\market_app\checkout_page.html:40
+#: .\market_app\templates\market_app\checkout_page.html:39
 #: .\market_app\templates\market_app\paying_if_user_balance_gte_order_price.html:19
 msgid "Your balance"
 msgstr "Ваш баланс"
 
-#: .\market_app\templates\market_app\checkout_page.html:42
+#: .\market_app\templates\market_app\checkout_page.html:41
 msgid "Order price"
 msgstr "Цена заказа"
 
-#: .\market_app\templates\market_app\checkout_page.html:49
+#: .\market_app\templates\market_app\checkout_page.html:48
 msgid "Coupon discount"
 msgstr "Скидка по купону"
 
-#: .\market_app\templates\market_app\checkout_page.html:52
+#: .\market_app\templates\market_app\checkout_page.html:51
 #: .\market_app\templates\market_app\order_detail.html:37
 #: .\market_app\templates\market_app\product.html:55
 msgid "Total price"
 msgstr "Суммарная цена"
 
+#: .\market_app\templates\market_app\coupons.html:10
+msgid "You don't have coupons yet"
+msgstr "У вас нет купонов"
+
 #: .\market_app\templates\market_app\create_product.html:5
 msgid "Create product"
 msgstr "Создать товар"
 
-#: .\market_app\templates\market_app\edit_product.html:6
+#: .\market_app\templates\market_app\edit_product.html:7
 #: .\market_app\templates\market_app\product.html:66
 #: .\market_app\templates\market_app\product.html:81
 msgid "Edit product"
 msgstr "Редактировать товар"
 
-#: .\market_app\templates\market_app\edit_product.html:41
+#: .\market_app\templates\market_app\edit_product.html:26
+#: .\market_app\templates\market_app\edit_product.html:40
 msgid "edit"
 msgstr "редактировать"
 
-#: .\market_app\templates\market_app\edit_product.html:52
+#: .\market_app\templates\market_app\edit_product.html:51
 msgid "create type"
 msgstr "создать подтип"
 
-#: .\market_app\templates\market_app\include\catalogue.html:33
+#: .\market_app\templates\market_app\include\catalogue.html:34
 msgid "There are no products"
 msgstr "Продукты не найдены"
 
-#: .\market_app\templates\market_app\include\side_nav.html:6
+#: .\market_app\templates\market_app\include\side_nav.html:8
 msgid "Navigation"
 msgstr "Навигация"
 
-#: .\market_app\templates\market_app\include\side_nav.html:16
+#: .\market_app\templates\market_app\include\side_nav.html:18
 msgid "My orders"
 msgstr "Мои заказы"
 
-#: .\market_app\templates\market_app\include\side_nav.html:21
+#: .\market_app\templates\market_app\include\side_nav.html:23
 msgid "Markets"
 msgstr "Магазины"
 
-#: .\market_app\templates\market_app\include\side_nav.html:26
+#: .\market_app\templates\market_app\include\side_nav.html:28
 msgid "My market"
 msgstr "Мой магазин"
 
-#: .\market_app\templates\market_app\include\side_nav.html:32
+#: .\market_app\templates\market_app\include\side_nav.html:34
+msgid "Coupons"
+msgstr "Купоны"
+
+#: .\market_app\templates\market_app\include\side_nav.html:39
 msgid "Balance"
 msgstr "Баланс"
 
@@ -638,11 +671,11 @@ msgstr "Описание"
 msgid "Market owner"
 msgstr "Владелец магазина"
 
-#: .\market_app\templates\market_app\markets_list.html:14
+#: .\market_app\templates\market_app\markets_list.html:16
 msgid "Products count"
 msgstr "Число продуктов"
 
-#: .\market_app\templates\market_app\markets_list.html:21
+#: .\market_app\templates\market_app\markets_list.html:23
 msgid "There are no markets"
 msgstr "Магазины не найдены"
 
@@ -692,30 +725,26 @@ msgstr "Cостояние"
 msgid "Pay"
 msgstr "Оплата"
 
-#: .\market_app\templates\market_app\order_items_list.html:9
+#: .\market_app\templates\market_app\order_items_list.html:10
 #: .\market_app\templates\market_app\user_market.html:28
 msgid "Shipping"
 msgstr "Отправка"
 
-#: .\market_app\templates\market_app\order_items_list.html:18
+#: .\market_app\templates\market_app\order_items_list.html:19
 msgid "Product"
 msgstr "Продукт"
 
-#: .\market_app\templates\market_app\order_items_list.html:21
-msgid "Properties"
-msgstr "Свойства"
-
-#: .\market_app\templates\market_app\order_items_list.html:27
+#: .\market_app\templates\market_app\order_items_list.html:28
 msgid "Purchasing time"
 msgstr "Время покупки"
 
-#: .\market_app\templates\market_app\order_items_list.html:33
+#: .\market_app\templates\market_app\order_items_list.html:34
 msgid "Is shipped"
 msgstr "Отправлено"
 
-#: .\market_app\templates\market_app\order_items_list.html:69
-msgid "There is nothing"
-msgstr "Тут ничего нет"
+#: .\market_app\templates\market_app\order_items_list.html:86
+msgid "It seems, nobody buys your products yet"
+msgstr "Похоже, у вас ещё ничего не покупали"
 
 #: .\market_app\templates\market_app\orders_history.html:8
 msgid "Orders history"
@@ -782,7 +811,7 @@ msgstr "Публичная страница"
 msgid "Cannot buy your own product."
 msgstr "Вы не можете купить собственный продукт."
 
-#: .\market_app\views.py:206
+#: .\market_app\views.py:219
 msgid ""
 "Sorry, but you can not create a new order because you have an unpaid order. "
 "Please pay for this unpaid order or cancel it"
@@ -790,16 +819,22 @@ msgstr ""
 "Простите, но вы не можете создать новый заказ, потому что у вас неоплаченный "
 "заказ. Пожалуйста оплатите или отмените этот заказ"
 
-#: .\market_app\views.py:222
+#: .\market_app\views.py:234
 msgid ""
 "Sorry, product \"{}\" is almost sold out and we can sell only {} of these."
 msgstr ""
 "Простите, продукт \"{}\" почти распродан, поэтому мы можем продать только {} "
-"штук."
+"шт."
 
-#: .\market_app\views.py:500
+#: .\market_app\views.py:512
 msgid "Sorry, but we cannot find current rate for this currency: {}"
 msgstr "Простите, но мы не можем найти обменный курс для этой валюты: {}"
+
+#~ msgid "max discount"
+#~ msgstr "максимальная скидка"
+
+#~ msgid "There is nothing"
+#~ msgstr "Тут ничего нет"
 
 #~ msgid "product image"
 #~ msgstr "изображение продукта"

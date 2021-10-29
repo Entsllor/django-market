@@ -23,7 +23,7 @@
         {% for attribute in product.get_attributes %}
           <th scope="col">{{ attribute }}</th>
         {% endfor %}
-        <th scope="col">Edit</th>
+        <th scope="col">{% trans "edit"|capfirst %}</th>
       </tr>
       </thead>
       <tbody>
