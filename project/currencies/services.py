@@ -2,6 +2,7 @@ from decimal import Decimal
 from typing import NamedTuple, Union
 
 from django.conf import settings
+from django.core.cache import cache
 
 from .models import Currency, get_rates
 
@@ -50,7 +51,15 @@ def create_currencies_from_settings() -> None:
 def get_currency_by_code(code: currency_code_type) -> CurrencyObj:
     if code == settings.DEFAULT_CURRENCY_CODE:
         return DEFAULT_CURRENCY
-    return Currency.objects.filter(code=code).first() or DEFAULT_CURRENCY
+    else:
+        currency = cache.get_or_set(
+            f'Currency_{code}',
+            lambda: Currency.objects.filter(code=code).values('code', 'sym', 'rate').first(),
+            3600
+        )
+        if not currency:
+            raise Currency.DoesNotExist(f'Unknown code currency code: {code}')
+        return LightWeightCurrency(**currency)
 
 
 def get_currency_code_by_language(language_str: str) -> str:
