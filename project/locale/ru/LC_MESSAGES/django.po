@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-29 20:02+0500\n"
-"PO-Revision-Date: 2021-10-29 00:32+0500\n"
+"POT-Creation-Date: 2021-10-30 18:57+0500\n"
+"PO-Revision-Date: 2021-10-30 18:57+0500\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
@@ -92,7 +92,7 @@ msgstr "пол"
 
 #: .\accounts\models.py:80 .\accounts\templates\accounts\info_view.html:20
 #: .\accounts\templates\accounts\profile.html:6
-#: .\core_app\templates\core_app\base_template.html:17
+#: .\core_app\templates\core_app\base_template.html:19
 msgid "Profile"
 msgstr "Профиль"
 
@@ -188,7 +188,7 @@ msgid "Your password was changed."
 msgstr "Ваш пароль был изменен."
 
 #: .\core_app\templates\core_app\about_us_template.html:6
-#: .\core_app\templates\core_app\base_template.html:93
+#: .\core_app\templates\core_app\base_template.html:95
 msgid "About us"
 msgstr "О нас"
 
@@ -210,11 +210,11 @@ msgstr "Номер телефона"
 msgid "Address"
 msgstr "Адрес"
 
-#: .\core_app\templates\core_app\base_template.html:23
+#: .\core_app\templates\core_app\base_template.html:25
 msgid "Cart"
 msgstr "Корзина"
 
-#: .\core_app\templates\core_app\base_template.html:75
+#: .\core_app\templates\core_app\base_template.html:77
 msgid "Choose your language"
 msgstr "Выбрать язык"
 
@@ -273,7 +273,7 @@ msgstr "валюта"
 msgid "Shopping"
 msgstr "Покупки"
 
-#: .\market_app\forms.py:14
+#: .\market_app\forms.py:15
 msgid ""
 "Enter product attributes separated by newline here. \n"
 "For example:\n"
@@ -292,11 +292,11 @@ msgstr ""
 "Вы сможете установить значение этих атрибутов во время создания подтипов "
 "продукта."
 
-#: .\market_app\forms.py:21
+#: .\market_app\forms.py:22
 msgid "Currency code"
 msgstr "Код валюты"
 
-#: .\market_app\forms.py:39
+#: .\market_app\forms.py:40
 #, python-brace-format
 msgid ""
 "Sorry, but we can't find exchange rate for this currency '{currency_code}'"
@@ -304,56 +304,56 @@ msgstr ""
 "Простите, но мы не можем найти обменный курс для этой валюты "
 "'{currency_code}'"
 
-#: .\market_app\forms.py:119
+#: .\market_app\forms.py:120
 msgid "Quantity"
 msgstr "Количество"
 
-#: .\market_app\forms.py:128
+#: .\market_app\forms.py:129
 #: .\market_app\templates\market_app\order_items_list.html:22
 msgid "Properties"
 msgstr "Свойства"
 
-#: .\market_app\forms.py:140
+#: .\market_app\forms.py:141
 msgid "I am sure"
 msgstr "Я согласен"
 
-#: .\market_app\forms.py:144
+#: .\market_app\forms.py:145
 msgid "Cardholder's name"
 msgstr "Владелец карты"
 
-#: .\market_app\forms.py:146
+#: .\market_app\forms.py:147
 msgid "Card number"
 msgstr "Номер карты"
 
-#: .\market_app\forms.py:152
+#: .\market_app\forms.py:153
 msgid "Top-up amount"
 msgstr "Сумма пополнения"
 
-#: .\market_app\forms.py:172 .\market_app\templates\market_app\coupons.html:33
+#: .\market_app\forms.py:173 .\market_app\templates\market_app\coupons.html:32
 msgid "limit"
 msgstr "лимит"
 
-#: .\market_app\forms.py:176 .\market_app\models.py:496
+#: .\market_app\forms.py:177 .\market_app\models.py:496
 msgid "Coupon"
 msgstr "Купон"
 
-#: .\market_app\forms.py:204
+#: .\market_app\forms.py:205
 msgid "Min price"
 msgstr "Минимальная цена"
 
-#: .\market_app\forms.py:205
+#: .\market_app\forms.py:206
 msgid "Max price"
 msgstr "Максимальная цена"
 
-#: .\market_app\forms.py:209
+#: .\market_app\forms.py:210
 msgid "Query"
 msgstr "Запрос"
 
-#: .\market_app\forms.py:212
+#: .\market_app\forms.py:213
 msgid "Category"
 msgstr "Категория"
 
-#: .\market_app\forms.py:213
+#: .\market_app\forms.py:214
 msgid "Show if sold out"
 msgstr "Показывать если распродано"
 
@@ -597,7 +597,7 @@ msgstr "Скидка по купону"
 msgid "Total price"
 msgstr "Суммарная цена"
 
-#: .\market_app\templates\market_app\coupons.html:10
+#: .\market_app\templates\market_app\coupons.html:9
 msgid "You don't have coupons yet"
 msgstr "У вас нет купонов"
 
@@ -705,7 +705,7 @@ msgid "Thank you for your order"
 msgstr "Спасибо за ваш заказ"
 
 #: .\market_app\templates\market_app\order_detail.html:9
-#: .\market_app\templates\market_app\orders_history.html:16
+#: .\market_app\templates\market_app\orders_history.html:18
 msgid "Order №"
 msgstr "Заказ №"
 
@@ -746,11 +746,11 @@ msgstr "Отправлено"
 msgid "It seems, nobody buys your products yet"
 msgstr "Похоже, у вас ещё ничего не покупали"
 
-#: .\market_app\templates\market_app\orders_history.html:8
+#: .\market_app\templates\market_app\orders_history.html:10
 msgid "Orders history"
 msgstr "История заказов"
 
-#: .\market_app\templates\market_app\orders_history.html:43
+#: .\market_app\templates\market_app\orders_history.html:45
 msgid "You don't have any orders yet"
 msgstr "Вы не совершали заказов"
 
@@ -825,6 +825,14 @@ msgid ""
 msgstr ""
 "Простите, продукт \"{}\" почти распродан, поэтому мы можем продать только {} "
 "шт."
+
+#: .\market_app\views.py:365
+msgid "Cannot perform empty order"
+msgstr "Этот заказ пустой и его невозможно оформить"
+
+#: .\market_app\views.py:369
+msgid "You can't use this coupon '{}'"
+msgstr "Вы не можете использовать этот купон '{}'"
 
 #: .\market_app\views.py:512
 msgid "Sorry, but we cannot find current rate for this currency: {}"

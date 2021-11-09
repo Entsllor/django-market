@@ -362,11 +362,11 @@ class PayingView(LoginRequiredMixin, generic.FormView):
         except PermissionDenied as exc:
             raise exc
         except EmptyOrderError:
-            messages.warning(self.request, 'Cannot perform empty order')
+            messages.warning(self.request, _('Cannot perform empty order'))
             return HttpResponseRedirect(reverse_lazy('market_app:cart'))
         except OrderCouponError:
             messages.warning(
-                self.request, f"You can't use this coupon '{self.unpaid_order.coupon.description}'"
+                self.request, _("You can't use this coupon '{}'").format(self.unpaid_order.coupon.description)
             )
             return HttpResponseRedirect(reverse_lazy('market_app:checkout', kwargs={'pk': self.unpaid_order.pk}))
         return HttpResponseRedirect(self.success_url)
