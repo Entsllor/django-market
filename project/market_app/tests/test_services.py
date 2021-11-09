@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied
 from .base_case import TestBaseWithFilledCatalogue, BaseMarketTestCase, assert_difference
 from ..models import Order, ProductType, Operation
 from ..services import (
-    top_up_balance, make_purchase, withdraw_money, NotEnoughMoneyError, _take_units_from_db, prepare_order
+    top_up_balance, make_purchase, withdraw_money, NotEnoughMoneyError, prepare_order
 )
 
 
@@ -242,25 +242,30 @@ class TakeUnitsFromDBTest(TestBaseWithFilledCatalogue):
 
     @assert_difference({1: 0, 2: 0, 8: 1})
     def test_take_units_from_db(self):
-        self.assertEqual(_take_units_from_db(get_product_type(1), 10), 10)
-        self.assertEqual(_take_units_from_db(get_product_type(2), 5), 5)
-        self.assertEqual(_take_units_from_db(get_product_type(8), 4), 4)
+        self.assertEqual(get_product_type(1).take_units(10), 10)
+        self.assertEqual(get_product_type(2).take_units(5), 5)
+        self.assertEqual(get_product_type(8).take_units(4), 4)
+
+    @assert_difference({1: 10})
+    def test_flag_raise_exc_when_expected_count_gt_real_count(self):
+        with self.assertRaises(ValueError):
+            get_product_type(1).take_units(20, raise_exc_when_expected_count_gt_real_count=True)
 
     @assert_difference({1: 10})
     def test_take_zero_units_from_db(self):
-        taken_count = _take_units_from_db(get_product_type(1), 0)
+        taken_count = get_product_type(1).take_units(0)
         self.assertEqual(taken_count, 0)
 
     @assert_difference({1: 10})
     def test_try_take_negative_count_from_db(self):
-        taken_count = _take_units_from_db(get_product_type(1), -5)
+        taken_count = get_product_type(1).take_units(-5)
         self.assertEqual(taken_count, 0)
 
     @assert_difference({1: 0})
     def test_take_enable_counts_if_cant_take_expected_count(self):
         start_count = self.product_types.get(pk=1).units_count
         expected_count = 100
-        taken_count = _take_units_from_db(get_product_type(1), expected_count)
+        taken_count = get_product_type(1).take_units(expected_count)
         self.assertEqual(start_count, taken_count)
         self.assertLess(taken_count, expected_count)
 

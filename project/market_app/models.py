@@ -204,6 +204,25 @@ class ProductType(models.Model):
         status_code = ProductType.objects.filter(pk=self.pk).update(units_count=F('units_count') - quantity)
         return bool(status_code)
 
+    def take_units(self, expected_count: int, raise_exc_when_expected_count_gt_real_count=False) -> int:
+        """
+        Decrease product_type units count by expected count
+        and return count of taken units.
+        Set raise_exc_when_expected_count_gt_real_count=True if it's necessary to raise error
+        when real product type units count is smaller than expected count to take.
+        """
+        real_count = self.units_count
+        if expected_count < 1:
+            return 0
+        elif real_count < expected_count:
+            if raise_exc_when_expected_count_gt_real_count:
+                raise ValueError(f"Cannot take {expected_count} there are only {real_count}")
+            taken_units = real_count
+        else:
+            taken_units = expected_count
+        self.remove_product_units(taken_units)
+        return taken_units
+
     @property
     def properties_as_str(self) -> str:
         return ', '.join(f'{key}: {value}' for key, value in self.properties.items() if value)

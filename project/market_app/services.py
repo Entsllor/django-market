@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import F, QuerySet
 
-from .models import ProductType, Order, Operation, Cart, Coupon, OrderItem, User, Product, Money
+from .models import Order, Operation, Cart, Coupon, OrderItem, User, Product, Money
 
 logger = logging.getLogger(__name__)
 SUBTRACT = '-'
@@ -14,18 +14,6 @@ ADD = '+'
 
 class NotEnoughMoneyError(Exception):
     """Raises if user doesn't have enough money to a transaction"""
-
-
-def _take_units_from_db(product_type: ProductType, expected_count: int) -> int:
-    total_units = product_type.units_count
-    if expected_count < 1:
-        return 0
-    elif total_units < expected_count:
-        taken_units = total_units
-    else:
-        taken_units = expected_count
-    product_type.remove_product_units(taken_units)
-    return taken_units
 
 
 def validate_money_amount(money_amount: Decimal) -> None:
@@ -43,7 +31,7 @@ def prepare_order(cart: Cart) -> Order:
     for product_type in product_types:
         expected_count = cart.get_count(product_type.pk)
         if expected_count > 0:
-            taken_units = _take_units_from_db(product_type, expected_count)
+            taken_units = product_type.take_units(expected_count)
             order_item = OrderItem(
                 order=order,
                 amount=taken_units,
