@@ -2,6 +2,7 @@ import datetime
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Model, QuerySet
 from django.db.models.signals import post_save
@@ -43,6 +44,9 @@ class BaseMarketTestCase(TestCase):
         self.seller = self.create_seller()
         self.category = self.create_category()
         self.market = self.create_market(owner=self.seller)
+
+    def tearDown(self) -> None:
+        cache.clear()
 
     @property
     def cart(self) -> Cart:
