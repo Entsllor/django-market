@@ -2,7 +2,7 @@
 {% load currencies %}
 {% load cache %}
 
-{% cache 600 side_nav CURRENT_LANGUAGE request.user.username %}
+{% cache 300 side_nav CURRENT_LANGUAGE request.user.username %}
   <div class="card my-2 border-0">
     <div class="card-header content-title">
       {% trans 'Navigation' %}
