@@ -711,7 +711,7 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
 
     def test_can_post_valid_data(self):
         self.fill_cart({'1': 1})
-        top_up_balance(self.user, Decimal('32.13333'))
+        top_up_balance(self.user.id, Decimal('32.13333'))
         self.unpaid_order = prepare_order(self.cart)
         self.assertFalse(self.unpaid_order.operation_id)
         self.post_to_page(data=self.test_credit_cart_data)
@@ -721,7 +721,7 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
 
     def test_cannot_post_if_logged_out(self):
         self.fill_cart({'1': 1})
-        top_up_balance(self.user, Decimal('32.13333'))
+        top_up_balance(self.user.id, Decimal('32.13333'))
         self.unpaid_order = prepare_order(self.cart)
         self.client.logout()
         response = self.post_to_page(data=self.test_credit_cart_data)
@@ -741,7 +741,7 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.assertFalse(self.unpaid_order.operation_id)
 
     def test_is_purchasing_successful(self):
-        top_up_balance(self.user, 10000)
+        top_up_balance(self.user.id, 10000)
         self.prepare_order({'1': 5, '2': 3, '7': 2})
         self.assertEqual(self.user.balance.amount, 10000)
         self.assertEqual(self.sellers.get(id=1).balance.amount, 0)
@@ -754,7 +754,7 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
 
     def test_top_up_if_user_does_not_have_enough_money(self):
         self.assertFalse(self.user.operations.exists())
-        top_up_balance(self.user, 300)
+        top_up_balance(self.user.id, 300)
         self.prepare_order({'1': 5, '7': 2})
         self.post_to_page(data=self.test_credit_cart_data)
         self.assertTrue(self.user.operations.filter(amount=400).exists())
@@ -767,7 +767,7 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
 
     def test_sellers_cant_buy_their_own_products(self):
         self.log_in_as_seller()
-        top_up_balance(self.user, 2000)
+        top_up_balance(self.user.id, 2000)
         own_product_type_units_count_at_start = ProductType.objects.get(pk=1).units_count
         units_to_buy = {'1': 5, '7': 3}
         self.prepare_order(units_to_buy)
@@ -778,7 +778,7 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
 
     def _test_use_coupon(self, coupon, expected_balance_amount):
         try:
-            top_up_balance(self.user, 2000)
+            top_up_balance(self.user.id, 2000)
             units_to_add = {'1': 5, '4': 1, '8': 4}
             self.unpaid_order = self.prepare_order(units_to_add)
             self.unpaid_order.set_coupon(coupon.pk)
@@ -822,10 +822,10 @@ class OperationHistoryTest(ViewTestMixin, TestBaseWithFilledCatalogue):
     def setUp(self) -> None:
         super(OperationHistoryTest, self).setUp()
         self.log_in_as_customer()
-        top_up_balance(self.user, 10000)
+        top_up_balance(self.user.id, 10000)
         self.fill_cart({'1': 2, '3': 1, '7': 1})
         order = prepare_order(self.cart)
-        make_purchase(order, self.user)
+        make_purchase(order)
 
     def test_redirect_if_not_logged_in(self):
         self._test_redirect_if_not_logged_in()
@@ -841,7 +841,7 @@ class OrderDetailTest(ViewTestMixin, TestBaseWithFilledCatalogue):
     def setUp(self) -> None:
         super(OrderDetailTest, self).setUp()
         self.log_in_as_customer()
-        top_up_balance(self.user, 10000)
+        top_up_balance(self.user.id, 10000)
         self.fill_cart({'1': 2, '3': 1, '5': 1})
         self._order = prepare_order(self.cart)
 

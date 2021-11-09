@@ -72,16 +72,16 @@ class ShoppingAccountBalanceTest(BaseMarketTestCase):
 
     def test_balance_equals_amount_sum_of_user_operations(self):
         self.assertEqual(self.user.balance.get_operations_amount_sum(), 0)
-        top_up_balance(self.user, 100)
+        top_up_balance(self.user.id, 100)
         counted_sum = self.user.balance.get_operations_amount_sum()
         self.assertEqual(counted_sum, 100)
-        withdraw_money(self.user, 20)
+        withdraw_money(self.user.id, 20)
         counted_sum = self.user.balance.get_operations_amount_sum()
         self.assertEqual(counted_sum, 80)
 
     def test_get_operations_amount_sum_if_decimal(self):
-        top_up_balance(self.user, Decimal('100.5'))
-        top_up_balance(self.user, Decimal('50.23'))
+        top_up_balance(self.user.id, Decimal('100.5'))
+        top_up_balance(self.user.id, Decimal('50.23'))
         counted_sum = self.user.balance.get_operations_amount_sum()
         self.assertEqual(counted_sum, Decimal('150.73'))
 
@@ -165,12 +165,12 @@ class OrderTest(TestBaseWithFilledCatalogue):
     def setUp(self) -> None:
         super(OrderTest, self).setUp()
         self.log_in_as_customer()
-        top_up_balance(self.user, 10000)
+        top_up_balance(self.user.id, 10000)
         self.prepare_order({'1': 5, '3': 2, '5': 4, '8': 4})
 
     def test_change_status(self):
         self.assertEqual(self.order.status, OrderStatusChoices.UNPAID.value)
-        make_purchase(self.order, self.user)
+        make_purchase(self.order)
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, OrderStatusChoices.HAS_PAID.value)
         self.order.items.update(is_shipped=True)

@@ -339,15 +339,15 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
     def _init_orders(self):
         cur_user = self._user
         self._log_in(User.objects.get(username='customer_6'))
-        top_up_balance(self.user, 10000)
+        top_up_balance(self.user.id, 10000)
         self.order_1 = self.prepare_order({'1': 2, '3': 1})
-        make_purchase(self.order_1, self.user)
+        make_purchase(self.order_1)
         self.order_2 = self.prepare_order({'1': 5, '3': 2, '5': 4, '8': 4})
-        make_purchase(self.order_2, self.user)
+        make_purchase(self.order_2)
         self._log_in(User.objects.get(username='customer_7'))
-        top_up_balance(self.user, 700)
+        top_up_balance(self.user.id, 700)
         self.order_3 = self.prepare_order({'4': 3, '13': 3})
-        make_purchase(self.order_3, self.user)
+        make_purchase(self.order_3)
         if cur_user:
             self._log_in(cur_user)
 

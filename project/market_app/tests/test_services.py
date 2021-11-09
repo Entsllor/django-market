@@ -23,62 +23,62 @@ class ChangeBalanceTest(BaseMarketTestCase):
 
     @assert_difference(100)
     def test_can_top_up(self):
-        top_up_balance(self.user, 100)
+        top_up_balance(self.user.id, 100)
 
     @assert_difference(200)
     def test_can_top_up_twice(self):
-        top_up_balance(self.user, 100)
-        top_up_balance(self.user, 100)
+        top_up_balance(self.user.id, 100)
+        top_up_balance(self.user.id, 100)
 
     def test_get_operation_object_if_topped_up(self):
-        operation = top_up_balance(self.user, 100)
+        operation = top_up_balance(self.user.id, 100)
         self.assertIsInstance(operation, Operation)
         self.assertEqual(operation.user_id, self.user.id)
 
     def test_operation_amount_is_equal_top_up_amount(self):
-        operation = top_up_balance(self.user, 100)
+        operation = top_up_balance(self.user.id, 100)
         self.assertEqual(operation.amount, 100)
-        operation = top_up_balance(self.user, 50)
+        operation = top_up_balance(self.user.id, 50)
         self.assertEqual(operation.amount, 50)
 
     @assert_difference(0)
     def test_get_invalid_value(self):
         with self.assertRaises(TypeError):
-            top_up_balance(self.user, None)
+            top_up_balance(self.user.id, None)
         with self.assertRaises(ValueError):
-            top_up_balance(self.user, -100)
+            top_up_balance(self.user.id, -100)
 
     @assert_difference(Decimal('100.33'))
     def test_get_decimal_value(self):
-        top_up_balance(self.user, Decimal('100.33'))
+        top_up_balance(self.user.id, Decimal('100.33'))
 
     @assert_difference(0)
     def test_get_float(self):
         with self.assertRaises(TypeError):
-            top_up_balance(self.user, 3.33)
+            top_up_balance(self.user.id, 3.33)
 
     @assert_difference(50)
     def test_withdraw_money(self):
-        top_up_balance(self.user, 100)
-        withdraw_money(self.user, 50)
+        top_up_balance(self.user.id, 100)
+        withdraw_money(self.user.id, 50)
 
     @assert_difference(0)
     def test_withdraw_all_money(self):
-        top_up_balance(self.user, 100)
-        withdraw_money(self.user, 50)
-        withdraw_money(self.user, 50)
+        top_up_balance(self.user.id, 100)
+        withdraw_money(self.user.id, 50)
+        withdraw_money(self.user.id, 50)
 
     def test_get_operation_object_if_withdrew(self):
-        top_up_balance(self.user, 200)
-        operation = withdraw_money(self.user, 100)
+        top_up_balance(self.user.id, 200)
+        operation = withdraw_money(self.user.id, 100)
         self.assertIsInstance(operation, Operation)
         self.assertEqual(operation.user_id, self.user.id)
 
     def test_operation_amount_is_negative_withdraw_amount(self):
-        top_up_balance(self.user, 200)
-        operation = withdraw_money(self.user, 100)
+        top_up_balance(self.user.id, 200)
+        operation = withdraw_money(self.user.id, 100)
         self.assertEqual(operation.amount, -100)
-        operation = withdraw_money(self.user, 50)
+        operation = withdraw_money(self.user.id, 50)
         self.assertEqual(operation.amount, -50)
 
 
@@ -97,102 +97,102 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
 
     @assert_difference(2000)
     def test_sellers_get_money_after_purchase(self):
-        top_up_balance(self.user, 2000)
+        top_up_balance(self.user.id, 2000)
         units_to_buy = {'1': 5, '2': 3, '7': 5}
         self.fill_cart(units_to_buy)
         order = prepare_order(self.cart)
-        make_purchase(order, self.user)
+        make_purchase(order)
         self.assertEqual(self.sellers.get(pk=1).balance.amount, 800)
         self.assertEqual(self.sellers.get(pk=2).balance.amount, 500)
         self.assertEqual(sum(self.sellers_balance.values()), 1300)
 
     @assert_difference(2000)
     def test_will_customer_balance_be_reduced(self):
-        top_up_balance(self.user, 2000)
+        top_up_balance(self.user.id, 2000)
         units_to_buy = {'1': 5, '2': 3, '7': 5}
         self.fill_cart(units_to_buy)
         order = prepare_order(self.cart)
-        make_purchase(order, self.user)
+        make_purchase(order)
         self.assertEqual(self.balance.amount, 700)
 
     def test_will_cart_be_cleaned_after_purchase(self):
-        top_up_balance(self.user, 2000)
+        top_up_balance(self.user.id, 2000)
         self.assertEqual(self.user.cart.items, {})
         units_to_buy = {'1': 5, '2': 3, '7': 5}
         self.fill_cart(units_to_buy)
         self.assertNotEqual(self.user.cart.items, {})
         order = prepare_order(self.cart)
-        make_purchase(order, self.user)
+        make_purchase(order)
         self.assertEqual(self.user.cart.items, {})
 
     def test_reduce_total_units_count_after_purchasing(self):
-        top_up_balance(self.user, 2000)
+        top_up_balance(self.user.id, 2000)
         self.assertEqual(self.user.cart.items, {})
         units_to_buy = {'1': 5}
         units_at_start = ProductType.objects.get(pk=1).units_count
         self.fill_cart(units_to_buy)
         order = prepare_order(self.cart)
-        make_purchase(order, self.user)
+        make_purchase(order)
         self.assertEqual(ProductType.objects.get(pk=1).units_count, units_at_start - 5)
 
     def test_pay_only_for_enable_product_units(self):
-        top_up_balance(self.user, 5000)
+        top_up_balance(self.user.id, 5000)
         self.assertEqual(self.user.cart.items, {})
         units_to_buy = {'1': 5, '11': 6}
         self.fill_cart(units_to_buy)
         balance_before_purchase = self.balance.amount
         order = prepare_order(self.cart)
-        make_purchase(order, self.user)
+        make_purchase(order)
         balance_after_purchase = self.balance.amount
         self.assertEqual(balance_after_purchase, balance_before_purchase - 1000)
         self.assertEqual(self.sellers.get(pk=2).balance.amount, 500)
 
     @assert_difference(500)
     def test_user_has_not_enough_money_to_purchase(self):
-        top_up_balance(self.user, 500)
+        top_up_balance(self.user.id, 500)
         units_to_buy = {'1': 5, '2': 3, '7': 5}
         self.fill_cart(units_to_buy)
         order = prepare_order(self.cart)
         with self.assertRaises(NotEnoughMoneyError):
-            make_purchase(order, self.user)
+            make_purchase(order)
         self.assertEqual(self.balance.amount, 500)
         self.assertEqual(sum(self.sellers_balance.values()), 0)
 
     def test_get_operation_object_after_purchase(self):
-        top_up_balance(self.user, 2000)
+        top_up_balance(self.user.id, 2000)
         units_to_buy = {'1': 5, '2': 3, '7': 5}
         self.fill_cart(units_to_buy)
         order = prepare_order(self.cart)
         total_price = order.total_price
-        operation = make_purchase(order, self.user)
+        operation = make_purchase(order)
         self.assertEqual(operation.amount, -total_price)
 
     def test_check_order_items(self):
-        top_up_balance(self.user, 2000)
+        top_up_balance(self.user.id, 2000)
         units_to_buy = {'1': 5, '2': 3, '7': 5}
         self.fill_cart(units_to_buy)
         order = prepare_order(self.cart)
         self.assertEqual(order.items.count(), len(units_to_buy))
 
     def test_cant_pay_twice_for_one_order(self):
-        top_up_balance(self.user, 2000)
+        top_up_balance(self.user.id, 2000)
         units_to_buy = {'1': 5}
         self.fill_cart(units_to_buy)
         order = prepare_order(self.cart)
-        make_purchase(order, self.user)
+        make_purchase(order)
         self.assertEqual(self.balance.amount, 1500)
         self.assertEqual(self.sellers.get(pk=1).balance.amount, 500)
         with self.assertRaises(PermissionDenied):
-            make_purchase(order, self.user)
+            make_purchase(order)
         self.assertEqual(self.balance.amount, 1500)
         self.assertEqual(self.sellers.get(pk=1).balance.amount, 500)
 
     def test_raise_error_if_order_is_empty(self):
-        top_up_balance(self.user, 2000)
+        top_up_balance(self.user.id, 2000)
         self.fill_cart({})
         order = prepare_order(self.cart)
         with self.assertRaises(Order.EmptyOrderError):
-            make_purchase(order, self.user)
+            make_purchase(order)
 
 
 class CouponTest(TestBaseWithFilledCatalogue):
@@ -202,32 +202,32 @@ class CouponTest(TestBaseWithFilledCatalogue):
 
     def test_unlink_coupon_after_buying(self):
         coupon = self.create_and_set_coupon(10)
-        top_up_balance(self.user, 1000)
+        top_up_balance(self.user.id, 1000)
         self.fill_cart({'1': 1})
         order = prepare_order(self.cart)
         order.set_coupon(coupon.pk)
         self.assertTrue(self.user.coupon_set.filter(pk=coupon.pk).exists())
-        make_purchase(order, self.user)
+        make_purchase(order)
         self.assertFalse(self.user.coupon_set.filter(pk=coupon.pk).exists())
 
     def test_coupon_decreases_total_order_price(self):
         coupon = self.create_and_set_coupon(10)
-        top_up_balance(self.user, 1000)
+        top_up_balance(self.user.id, 1000)
         self.fill_cart({'1': 1})
         order = prepare_order(self.cart)
         order.set_coupon(coupon.pk)
-        make_purchase(order, self.user)
+        make_purchase(order)
         order.refresh_from_db()
         self.assertEqual(self.balance.amount, 910)
 
     def test_coupon_dont_decrease_seller_income(self):
         coupon = self.create_and_set_coupon(10)
-        top_up_balance(self.user, 1000)
+        top_up_balance(self.user.id, 1000)
         self.fill_cart({'1': 1})
         order = prepare_order(self.cart)
         order.set_coupon(coupon.pk)
         self.assertEqual(self.sellers.get(pk=1).balance.amount, 0)
-        make_purchase(order, self.user)
+        make_purchase(order)
         self.assertEqual(self.balance.amount, 910)
         self.assertEqual(self.sellers.get(pk=1).balance.amount, 100)
 

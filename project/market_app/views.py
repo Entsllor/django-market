@@ -358,7 +358,7 @@ class PayingView(LoginRequiredMixin, generic.FormView):
 
     def try_to_make_order(self):
         try:
-            make_purchase(self.unpaid_order, self.request.user)
+            make_purchase(self.unpaid_order)
         except PermissionDenied as exc:
             raise exc
         except Order.EmptyOrderError:
@@ -390,7 +390,7 @@ class PayingView(LoginRequiredMixin, generic.FormView):
 
     def form_valid(self, form):
         if isinstance(form, CreditCardForm):
-            top_up_balance(self.request.user, self.top_up_amount)
+            top_up_balance(self.request.user.id, self.top_up_amount)
             self.request.user.refresh_from_db()
         return self.try_to_make_order()
 
@@ -402,7 +402,7 @@ class TopUpView(LoginRequiredMixin, generic.FormView):
 
     def form_valid(self, form):
         amount = form.cleaned_data['top_up_amount']
-        top_up_balance(self.request.user, amount)
+        top_up_balance(self.request.user.id, amount)
         unpaid_order_pk = Order.objects.values_list('pk', flat=True).filter(
             user_id=self.request.user, operation__isnull=True).first()
         if unpaid_order_pk:
