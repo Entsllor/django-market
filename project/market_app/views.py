@@ -19,8 +19,8 @@ from currencies.services import get_currency_code_by_language, DEFAULT_CURRENCY_
 from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, ProductTypeForm, CreditCardForm, \
     AdvancedSearchForm, CartForm, CheckOutForm, TopUpForm, AgreementForm
 from .models import Product, Market, ProductType, Operation, Order, OrderItem, Coupon
-from .services import top_up_balance, make_purchase, prepare_order, EmptyOrderError, OrderCannotBeCancelledError, \
-    try_to_cancel_order, get_products, OrderCouponError
+from .services import top_up_balance, make_purchase, prepare_order, \
+    get_products
 
 
 class MarketOwnerRequiredMixin(PermissionRequiredMixin):
@@ -292,9 +292,9 @@ class OrderListView(generic.ListView):
 def cancel_order_view(request, pk):
     order = get_object_or_404(Order, pk=pk)
     try:
-        try_to_cancel_order(order, request.user.id)
+        order.cancel_by_user(user_id=request.user.id)
         return HttpResponseRedirect(reverse_lazy('market_app:orders'))
-    except OrderCannotBeCancelledError as exc:
+    except Order.CannotBeCancelledError as exc:
         raise PermissionDenied(exc)
 
 
@@ -361,10 +361,10 @@ class PayingView(LoginRequiredMixin, generic.FormView):
             make_purchase(self.unpaid_order, self.request.user)
         except PermissionDenied as exc:
             raise exc
-        except EmptyOrderError:
+        except Order.EmptyOrderError:
             messages.warning(self.request, _('Cannot perform empty order'))
             return HttpResponseRedirect(reverse_lazy('market_app:cart'))
-        except OrderCouponError:
+        except Coupon.CannotBeUsedError:
             messages.warning(
                 self.request, _("You can't use this coupon '{}'").format(self.unpaid_order.coupon.description)
             )

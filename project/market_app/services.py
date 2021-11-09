@@ -16,22 +16,6 @@ class NotEnoughMoneyError(Exception):
     """Raises if user doesn't have enough money to a transaction"""
 
 
-class EmptyOrderError(Exception):
-    """Raises if the order is empty"""
-
-
-class OrderCannotBeCancelledError(BaseException):
-    """Raise if the order cannot be cancelled"""
-
-
-class OrderCouponError(Exception):
-    """Raises if the order coupon cannot be used"""
-
-
-def _set_order_operation(operation: Operation, order: Order) -> None:
-    order.operation = operation
-
-
 def _take_units_from_db(product_type: ProductType, expected_count: int) -> int:
     total_units = product_type.units_count
     if expected_count < 1:
@@ -71,26 +55,6 @@ def prepare_order(cart: Cart) -> Order:
     return order
 
 
-def _cancel_order(order: Order) -> None:
-    items = order.items.select_related('product_type').only('pk', 'product_type', 'amount')
-    product_types = []
-    for item in items:
-        units_in_order = item.amount
-        item.product_type.units_count = F('units_count') + units_in_order
-        product_types.append(item.product_type)
-    ProductType.objects.bulk_update(product_types, ['units_count'])
-    order.delete()
-
-
-def try_to_cancel_order(order: Order, user_id: int) -> None:
-    customer_id = Order.objects.filter(pk=order.pk).values_list('user_id', flat=True).first()
-    if customer_id != user_id:
-        raise OrderCannotBeCancelledError(f"User(id={user_id}) cannot cancel Order(id={order.id})")
-    elif order.has_paid:
-        raise OrderCannotBeCancelledError("The order cannot be cancelled because of its status.")
-    _cancel_order(order)
-
-
 def activate_coupon_to_order(order: Order, user: User, coupon: Coupon) -> None:
     if user.coupon_set.filter(pk=coupon.pk).exists():
         order.set_coupon(coupon.pk)
@@ -121,20 +85,6 @@ def _send_money_to_sellers(order: Order) -> None:
     OrderItem.objects.bulk_update(order_items, fields=['payment'])
 
 
-def _check_if_already_paid(order: Order) -> None:
-    if order.operation_id:
-        raise PermissionDenied('Cannot pay twice for one order.')
-
-
-def _check_if_order_empty(order: Order, use_exists=False) -> None:
-    if use_exists:
-        is_empty = not order.items.exists()
-    else:
-        is_empty = not order.items
-    if is_empty:
-        raise EmptyOrderError('This order is empty.')
-
-
 def get_order_price_if_use_coupon(order: Order, coupon: Coupon):
     order_coupon_at_start = order.coupon
     order.coupon = coupon
@@ -143,35 +93,33 @@ def get_order_price_if_use_coupon(order: Order, coupon: Coupon):
     return total_price
 
 
-def _check_if_user_cannot_use_order_coupon(order: Order) -> None:
+def check_if_user_can_use_order_coupon(order: Order) -> None:
     if not Coupon.objects.filter(customers__exact=order.user_id, pk=order.coupon_id).exists():
-        raise OrderCouponError(
+        raise Coupon.CannotBeUsedError(
             f"User(id={order.user_id}) cannot use Coupon(id={order.coupon_id})"
         )
 
 
-def _validate_order(order: Order) -> None:
-    """Check if order is ready do purchase."""
+def _check_order_is_valid_for_purchasing(order: Order) -> None:
+    """Check if order is ready for purchasing."""
     order.refresh_from_db()
-    _check_if_order_empty(order)
-    _check_if_already_paid(order)
-
-
-def _remove_coupon_from_user_coupon_set(order: Order) -> None:
-    order.coupon.customers.remove(order.user_id)
+    if order.has_paid:
+        raise PermissionDenied('Cannot pay twice for one order.')
+    if order.is_empty():
+        raise Order.EmptyOrderError('This order is empty.')
 
 
 @transaction.atomic
 def make_purchase(order: Order, user: User) -> Operation:
-    _validate_order(order)
+    _check_order_is_valid_for_purchasing(order)
+    if order.coupon_id:
+        check_if_user_can_use_order_coupon(order)
+        order.coupon.customers.remove(order.user_id)
     total_order_price = order.total_price
     logger.info(f'User(pk={user.pk}) try to pay for Order(id={order.pk}). Total order price: {total_order_price}')
     purchase_operation = _change_balance_amount(user, SUBTRACT, total_order_price)
     _send_money_to_sellers(order)
-    _set_order_operation(purchase_operation, order)
-    if order.coupon_id:
-        _check_if_user_cannot_use_order_coupon(order)
-        _remove_coupon_from_user_coupon_set(order)
+    order.set_operation(purchase_operation.pk)
     order.save()
     return purchase_operation
 

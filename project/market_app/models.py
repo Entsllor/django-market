@@ -378,9 +378,24 @@ class Order(models.Model):
         max_length=200
     )
 
+    class OrderError(Exception):
+        pass
+
+    class CannotBeCancelledError(OrderError):
+        """Raise if the order cannot be cancelled"""
+
+    class EmptyOrderError(OrderError):
+        """Raises if the order is empty"""
+
     @property
     def has_paid(self) -> bool:
         return self.operation_id is not None
+
+    def is_empty(self, use_exists=False):
+        if use_exists:
+            # make additional query even if the order.items queryset has already been evaluated
+            return not self.items.exists()
+        return not self.items.all()
 
     @property
     def status(self) -> str:
@@ -412,15 +427,35 @@ class Order(models.Model):
             coupon_discount = min(coupon_discount, coupon.discount_limit)
         return coupon_discount
 
-    def set_coupon(self, coupon_id: int) -> int:
-        return Order.objects.filter(pk=self.pk).update(coupon_id=coupon_id)
-
     def get_total_price_without_coupon_discount(self) -> Money:
         total_price = 0
         items = self.items.all()
         for item in items:
             total_price += item.total_price
         return total_price
+
+    def set_operation(self, operation_id):
+        self.operation_id = operation_id
+
+    def set_coupon(self, coupon_id: int) -> int:
+        return Order.objects.filter(pk=self.pk).update(coupon_id=coupon_id)
+
+    def cancel(self):
+        if self.has_paid:
+            raise Order.CannotBeCancelledError("The order cannot be cancelled because of its status.")
+        items = self.items.select_related('product_type').only('pk', 'product_type', 'amount')
+        product_types = []
+        for item in items:
+            units_in_order = item.amount
+            item.product_type.units_count = F('units_count') + units_in_order
+            product_types.append(item.product_type)
+        ProductType.objects.bulk_update(product_types, ['units_count'])
+        self.delete()
+
+    def cancel_by_user(self, user_id) -> None:
+        if self.user_id != user_id:
+            raise Order.CannotBeCancelledError(f"User(id={user_id}) cannot cancel Order(id={self.pk})")
+        self.cancel()
 
     @property
     def total_price(self) -> Money:
@@ -491,6 +526,9 @@ class Coupon(models.Model):
     class Meta:
         verbose_name = _('coupon')
         verbose_name_plural = _('coupons')
+
+    class CannotBeUsedError(Exception):
+        """Raises if the coupon cannot be used"""
 
     def __str__(self):
         str_class = _('Coupon')

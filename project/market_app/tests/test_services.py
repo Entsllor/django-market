@@ -5,8 +5,7 @@ from django.core.exceptions import PermissionDenied
 from .base_case import TestBaseWithFilledCatalogue, BaseMarketTestCase, assert_difference
 from ..models import Order, ProductType, Operation
 from ..services import (
-    top_up_balance, make_purchase, withdraw_money, NotEnoughMoneyError, _take_units_from_db, prepare_order,
-    _cancel_order
+    top_up_balance, make_purchase, withdraw_money, NotEnoughMoneyError, _take_units_from_db, prepare_order
 )
 
 
@@ -188,6 +187,13 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         self.assertEqual(self.balance.amount, 1500)
         self.assertEqual(self.sellers.get(pk=1).balance.amount, 500)
 
+    def test_raise_error_if_order_is_empty(self):
+        top_up_balance(self.user, 2000)
+        self.fill_cart({})
+        order = prepare_order(self.cart)
+        with self.assertRaises(Order.EmptyOrderError):
+            make_purchase(order, self.user)
+
 
 class CouponTest(TestBaseWithFilledCatalogue):
     def setUp(self) -> None:
@@ -211,6 +217,7 @@ class CouponTest(TestBaseWithFilledCatalogue):
         order = prepare_order(self.cart)
         order.set_coupon(coupon.pk)
         make_purchase(order, self.user)
+        order.refresh_from_db()
         self.assertEqual(self.balance.amount, 910)
 
     def test_coupon_dont_decrease_seller_income(self):
@@ -286,7 +293,7 @@ class CancelOrderTest(TestBaseWithFilledCatalogue):
         self.fill_cart({'1': 3, '2': 5, '7': 2})
         order: Order = prepare_order(self.cart)
         self.assertEqual(order.get_units_count(), {'1': 3, '2': 5, '7': 2})
-        _cancel_order(order)
+        order.cancel()
         self.assertEqual(order.get_units_count(), {})
 
     def test_add_units_from_canceled_order_to_db(self):
@@ -297,5 +304,5 @@ class CancelOrderTest(TestBaseWithFilledCatalogue):
         order = prepare_order(self.cart)
         for pk, count in self.get_global_units_count(product_types_pks).items():
             self.assertEqual(global_units_count_at_start[pk], count + units_to_add[str(pk)])
-        _cancel_order(order)
+        order.cancel()
         self.assertEqual(global_units_count_at_start, self.get_global_units_count(product_types_pks))
