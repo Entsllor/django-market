@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import F, QuerySet
 
-from .models import Order, Operation, Cart, Coupon, OrderItem, User, Product, Money, Balance
+from .models import Order, Operation, Cart, Coupon, OrderItem, Product, Money, Balance
 
 logger = logging.getLogger(__name__)
 SUBTRACT = '-'
@@ -43,13 +43,6 @@ def prepare_order(cart: Cart) -> Order:
     return order
 
 
-def activate_coupon_to_order(order: Order, user: User, coupon: Coupon) -> None:
-    if user.coupon_set.filter(pk=coupon.pk).exists():
-        order.set_coupon(coupon.pk)
-        coupon.customers.remove(user)
-        order.refresh_from_db()
-
-
 def _send_money_to_sellers(order: Order) -> None:
     operations = []
     order_items = order.items.only(
@@ -70,14 +63,6 @@ def _send_money_to_sellers(order: Order) -> None:
         item.payment = operation
         operations.append(operation)
     OrderItem.objects.bulk_update(order_items, fields=['payment'])
-
-
-def get_order_price_if_use_coupon(order: Order, coupon: Coupon):
-    order_coupon_at_start = order.coupon
-    order.coupon = coupon
-    total_price = order.total_price
-    order.coupon = order_coupon_at_start
-    return total_price
 
 
 def check_if_user_can_use_order_coupon(order: Order) -> None:
@@ -144,7 +129,7 @@ def top_up_balance(user_id: int, amount_of_money: Money) -> Operation:
     return operation
 
 
-def get_products(ordering: str = '-discount_percent') -> QuerySet(Product):
+def get_products(ordering: str = '-discount_percent') -> QuerySet[Product]:
     fields = ('image', 'original_price', 'discount_percent', 'name', 'image')
     queryset = Product.objects.distinct().only(*fields).filter(
         available=True, product_types__isnull=False).order_by(ordering)
