@@ -279,8 +279,6 @@ class Cart(models.Model):
         if quantity == 0:
             if product_type_pk in self.items:
                 del self.items[product_type_pk]
-        elif product_type_pk not in self.items:
-            self.items[product_type_pk] = quantity
         else:
             self.items[product_type_pk] = quantity
         if commit:
