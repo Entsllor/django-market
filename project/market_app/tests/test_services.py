@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.core.exceptions import PermissionDenied
 
 from .base_case import TestBaseWithFilledCatalogue, BaseMarketTestCase, assert_difference
-from ..models import Order, ProductType, Operation
+from ..models import Order, ProductType, Operation, Coupon
 from ..services import (
     top_up_balance, make_purchase, withdraw_money, NotEnoughMoneyError, prepare_order
 )
@@ -91,11 +91,6 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
     def sellers_balance(self):
         return {seller.pk: seller.balance.amount for seller in self.sellers}
 
-    # check total sum of user's money
-    def check_data_to_compare(self):
-        return sum(self.sellers_balance.values()) + self.balance.amount
-
-    @assert_difference(2000)
     def test_sellers_get_money_after_purchase(self):
         top_up_balance(self.user.id, 2000)
         units_to_buy = {'1': 5, '2': 3, '7': 5}
@@ -106,8 +101,7 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         self.assertEqual(self.sellers.get(pk=2).balance.amount, 500)
         self.assertEqual(sum(self.sellers_balance.values()), 1300)
 
-    @assert_difference(2000)
-    def test_will_customer_balance_be_reduced(self):
+    def test_customer_balance_reduced_after_purchase(self):
         top_up_balance(self.user.id, 2000)
         units_to_buy = {'1': 5, '2': 3, '7': 5}
         self.fill_cart(units_to_buy)
@@ -125,30 +119,7 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         make_purchase(order)
         self.assertEqual(self.user.cart.items, {})
 
-    def test_reduce_total_units_count_after_purchasing(self):
-        top_up_balance(self.user.id, 2000)
-        self.assertEqual(self.user.cart.items, {})
-        units_to_buy = {'1': 5}
-        units_at_start = ProductType.objects.get(pk=1).units_count
-        self.fill_cart(units_to_buy)
-        order = prepare_order(self.cart)
-        make_purchase(order)
-        self.assertEqual(ProductType.objects.get(pk=1).units_count, units_at_start - 5)
-
-    def test_pay_only_for_enable_product_units(self):
-        top_up_balance(self.user.id, 5000)
-        self.assertEqual(self.user.cart.items, {})
-        units_to_buy = {'1': 5, '11': 6}
-        self.fill_cart(units_to_buy)
-        balance_before_purchase = self.balance.amount
-        order = prepare_order(self.cart)
-        make_purchase(order)
-        balance_after_purchase = self.balance.amount
-        self.assertEqual(balance_after_purchase, balance_before_purchase - 1000)
-        self.assertEqual(self.sellers.get(pk=2).balance.amount, 500)
-
-    @assert_difference(500)
-    def test_user_has_not_enough_money_to_purchase(self):
+    def test_raise_if_user_has_not_enough_money_to_purchase(self):
         top_up_balance(self.user.id, 500)
         units_to_buy = {'1': 5, '2': 3, '7': 5}
         self.fill_cart(units_to_buy)
@@ -165,14 +136,19 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         order = prepare_order(self.cart)
         total_price = order.total_price
         operation = make_purchase(order)
+        self.assertIsInstance(operation, Operation)
         self.assertEqual(operation.amount, -total_price)
 
-    def test_check_order_items(self):
+    def test_order_has_all_expected_items(self):
         top_up_balance(self.user.id, 2000)
         units_to_buy = {'1': 5, '2': 3, '7': 5}
         self.fill_cart(units_to_buy)
         order = prepare_order(self.cart)
-        self.assertEqual(order.items.count(), len(units_to_buy))
+        purchased_units = {
+            str(item['product_type_id']): item['amount']
+            for item in order.items.values('product_type_id', 'amount')
+        }
+        self.assertEqual(purchased_units, units_to_buy)
 
     def test_cant_pay_twice_for_one_order(self):
         top_up_balance(self.user.id, 2000)
@@ -194,80 +170,40 @@ class MakePurchaseTest(TestBaseWithFilledCatalogue):
         with self.assertRaises(Order.EmptyOrderError):
             make_purchase(order)
 
-
-class CouponTest(TestBaseWithFilledCatalogue):
-    def setUp(self) -> None:
-        super(CouponTest, self).setUp()
-        self.log_in_as_customer()
-
-    def test_unlink_coupon_after_buying(self):
-        coupon = self.create_and_set_coupon(10)
-        top_up_balance(self.user.id, 1000)
-        self.fill_cart({'1': 1})
-        order = prepare_order(self.cart)
-        order.set_coupon(coupon.pk)
-        self.assertTrue(self.user.coupon_set.filter(pk=coupon.pk).exists())
-        make_purchase(order)
-        self.assertFalse(self.user.coupon_set.filter(pk=coupon.pk).exists())
-
-    def test_coupon_decreases_total_order_price(self):
-        coupon = self.create_and_set_coupon(10)
-        top_up_balance(self.user.id, 1000)
-        self.fill_cart({'1': 1})
-        order = prepare_order(self.cart)
+    def _test_use_coupon(self, coupon, expected_balance_amount):
+        top_up_balance(self.user.id, 2000)
+        units_to_add = {'1': 5, '4': 1, '8': 4}
+        order = self.prepare_order(units_to_add)
         order.set_coupon(coupon.pk)
         make_purchase(order)
-        order.refresh_from_db()
-        self.assertEqual(self.balance.amount, 910)
+        self.assertEqual(self.balance.amount, expected_balance_amount)
+
+    def test_use_coupon_without_discount_limit(self):
+        coupon = self.create_and_set_coupon(discount_percent=10)
+        self._test_use_coupon(coupon, 1100)
+
+    def test_use_coupon_with_discount_limit(self):
+        coupon = self.create_and_set_coupon(discount_percent=10, discount_limit=80)
+        self._test_use_coupon(coupon, 1080)
 
     def test_coupon_dont_decrease_seller_income(self):
-        coupon = self.create_and_set_coupon(10)
-        top_up_balance(self.user.id, 1000)
-        self.fill_cart({'1': 1})
-        order = prepare_order(self.cart)
-        order.set_coupon(coupon.pk)
+        coupon = self.create_and_set_coupon(discount_percent=10, discount_limit=80)
+        self._test_use_coupon(coupon, 1080)
+        self.assertEqual(self.sellers.get(pk=1).balance.amount, 600)
+        self.assertEqual(self.sellers.get(pk=2).balance.amount, 400)
+
+    def test_cannot_use_coupon_if_user_have_no_access_to_the_coupon(self):
+        coupon = Coupon.objects.create(discount_percent=10, discount_limit=80)
+        with self.assertRaises(Coupon.CannotBeUsedError):
+            self._test_use_coupon(coupon, 2000)
         self.assertEqual(self.sellers.get(pk=1).balance.amount, 0)
-        make_purchase(order)
-        self.assertEqual(self.balance.amount, 910)
-        self.assertEqual(self.sellers.get(pk=1).balance.amount, 100)
+        self.assertEqual(self.sellers.get(pk=2).balance.amount, 0)
 
-
-class TakeUnitsFromDBTest(TestBaseWithFilledCatalogue):
-    def setUp(self) -> None:
-        super(TakeUnitsFromDBTest, self).setUp()
-        self.log_in_as_customer()
-
-    def check_data_to_compare(self):
-        return {i_type.pk: i_type.units_count for i_type in self.product_types.only('units_count')}
-
-    @assert_difference({1: 0, 2: 0, 8: 1})
-    def test_take_units_from_db(self):
-        self.assertEqual(get_product_type(1).take_units(10), 10)
-        self.assertEqual(get_product_type(2).take_units(5), 5)
-        self.assertEqual(get_product_type(8).take_units(4), 4)
-
-    @assert_difference({1: 10})
-    def test_flag_raise_exc_when_expected_count_gt_real_count(self):
-        with self.assertRaises(ValueError):
-            get_product_type(1).take_units(20, raise_exc_when_expected_count_gt_real_count=True)
-
-    @assert_difference({1: 10})
-    def test_take_zero_units_from_db(self):
-        taken_count = get_product_type(1).take_units(0)
-        self.assertEqual(taken_count, 0)
-
-    @assert_difference({1: 10})
-    def test_try_take_negative_count_from_db(self):
-        taken_count = get_product_type(1).take_units(-5)
-        self.assertEqual(taken_count, 0)
-
-    @assert_difference({1: 0})
-    def test_take_enable_counts_if_cant_take_expected_count(self):
-        start_count = self.product_types.get(pk=1).units_count
-        expected_count = 100
-        taken_count = get_product_type(1).take_units(expected_count)
-        self.assertEqual(start_count, taken_count)
-        self.assertLess(taken_count, expected_count)
+    def test_remove_coupon_from_user_coupon_set_after_purchasing(self):
+        coupon = self.create_and_set_coupon(discount_percent=10, discount_limit=80)
+        self.assertTrue(self.user.coupon_set.filter(pk=coupon.pk).exists())
+        self._test_use_coupon(coupon, 1080)
+        self.assertFalse(self.user.coupon_set.filter(pk=coupon.pk).exists())
 
 
 class PrepareOrderTest(TestBaseWithFilledCatalogue):
@@ -280,34 +216,17 @@ class PrepareOrderTest(TestBaseWithFilledCatalogue):
         order = prepare_order(self.cart)
         self.assertIsInstance(order, Order)
 
+    def test_reduce_total_units_count_after_preparing(self):
+        self.assertEqual(self.user.cart.items, {})
+        units_count_at_start = ProductType.objects.get(pk=1).units_count
+        self.fill_cart({'1': 5})
+        prepare_order(self.cart)
+        self.assertEqual(ProductType.objects.get(pk=1).units_count, units_count_at_start - 5)
 
-class CancelOrderTest(TestBaseWithFilledCatalogue):
-    def setUp(self) -> None:
-        super(CancelOrderTest, self).setUp()
-        self.log_in_as_customer()
-
-    @staticmethod
-    def get_global_units_count(pks):
-        units_count = {}
-        for product_type in ProductType.objects.filter(id__in=pks):
-            pk = str(product_type.pk)
-            units_count[pk] = product_type.units_count
-        return units_count
-
-    def test_can_cancel_order(self):
-        self.fill_cart({'1': 3, '2': 5, '7': 2})
-        order: Order = prepare_order(self.cart)
-        self.assertEqual(order.get_units_count(), {'1': 3, '2': 5, '7': 2})
-        order.cancel()
-        self.assertEqual(order.get_units_count(), {})
-
-    def test_add_units_from_canceled_order_to_db(self):
-        units_to_add = {'1': 3, '2': 5, '7': 2}
-        product_types_pks = units_to_add.keys()
-        global_units_count_at_start = self.get_global_units_count(product_types_pks)
-        self.fill_cart(units_to_add)
+    def test_remove_own_products(self):
+        self.log_in_as_seller()
+        top_up_balance(self.user.id, 2000)
+        self.fill_cart({'1': 5, '7': 3})
         order = prepare_order(self.cart)
-        for pk, count in self.get_global_units_count(product_types_pks).items():
-            self.assertEqual(global_units_count_at_start[pk], count + units_to_add[str(pk)])
-        order.cancel()
-        self.assertEqual(global_units_count_at_start, self.get_global_units_count(product_types_pks))
+        self.assertEqual(len(order.items.all()), 1)
+        self.assertEqual(order.items.first().product_type_id, 7)

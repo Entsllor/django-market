@@ -54,7 +54,7 @@ class BaseMarketTestCase(TestCase):
 
     @property
     def balance(self):
-        return Balance.objects.get(pk=self.user.balance.id)
+        return Balance.objects.get(user_id=self._user.id)
 
     @staticmethod
     def create_currencies():

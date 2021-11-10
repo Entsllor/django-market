@@ -1,8 +1,6 @@
-from decimal import Decimal
-
 from .base_case import BaseMarketTestCase, assert_difference, TestBaseWithFilledCatalogue
-from ..models import OrderStatusChoices
-from ..services import top_up_balance, withdraw_money, make_purchase
+from ..models import OrderStatusChoices, ProductType, Order
+from ..services import top_up_balance, withdraw_money, make_purchase, prepare_order
 
 
 class ProductTest(BaseMarketTestCase):
@@ -39,51 +37,74 @@ class ProductTypeTest(BaseMarketTestCase):
         self._product_type.refresh_from_db()
         return self._product_type
 
-    def check_data_to_compare(self):
-        return self.product_type.units_count
+    def assertUnitsCount(self, expected_count):
+        self.assertEqual(self.product_type.units_count, expected_count)
 
-    @assert_difference(10)
+    def create_units(self, count):
+        self.product_type.create_product_units(count)
+
     def test_can_create_product_units(self):
+        self.assertUnitsCount(0)
         quantity = 10
-        self.product_type.create_product_units(quantity=quantity)
+        self.create_units(quantity)
+        self.assertUnitsCount(quantity)
 
-    @assert_difference(5)
     def test_remove_product_units(self):
-        self.product_type.create_product_units(15)
+        self.create_units(15)
         self.product_type.remove_product_units(10)
+        self.assertUnitsCount(5)
 
-    @assert_difference(5)
     def test_remove_more_units_than_have(self):
-        self.product_type.create_product_units(5)
+        self.create_units(5)
         with self.assertRaises(ValueError):
             self.product_type.remove_product_units(10)
+        self.assertUnitsCount(5)
+
+    def test_take_units_from_db(self):
+        self.create_units(15)
+        taken_units = self.product_type.take_units(10)
+        self.assertEqual(taken_units, 10)
+        self.assertUnitsCount(5)
+
+    def test_flag_raise_exc_when_expected_count_gt_real_count(self):
+        self.create_units(10)
+        with self.assertRaises(ValueError):
+            self.product_type.take_units(15, raise_exc_when_expected_count_gt_real_count=True)
+
+    def test_take_zero_units_from_db(self):
+        self.create_units(10)
+        taken_count = self.product_type.take_units(0)
+        self.assertEqual(taken_count, 0)
+        self.assertUnitsCount(10)
+
+    def test_try_take_negative_count_from_db(self):
+        self.create_units(10)
+        taken_count = self.product_type.take_units(-5)
+        self.assertEqual(taken_count, 0)
+        self.assertUnitsCount(10)
+
+    def test_take_enable_units_if_cant_take_expected_count(self):
+        self.product_type.create_product_units(10)
+        start_count = self.product_type.units_count
+        expected_count = 100
+        taken_count = self.product_type.take_units(expected_count)
+        self.assertEqual(start_count, taken_count)
+        self.assertEqual(taken_count, 10)
 
 
-class ShoppingAccountTest(TestBaseWithFilledCatalogue):
+class BalanceTest(BaseMarketTestCase):
     def setUp(self) -> None:
-        super(ShoppingAccountTest, self).setUp()
-        self.log_in_as_customer()
-
-
-class ShoppingAccountBalanceTest(BaseMarketTestCase):
-    def setUp(self) -> None:
-        super(ShoppingAccountBalanceTest, self).setUp()
+        super(BalanceTest, self).setUp()
         self.log_in_as_customer()
 
     def test_balance_equals_amount_sum_of_user_operations(self):
-        self.assertEqual(self.user.balance.get_operations_amount_sum(), 0)
+        self.assertEqual(self.balance.get_operations_amount_sum(), 0)
         top_up_balance(self.user.id, 100)
-        counted_sum = self.user.balance.get_operations_amount_sum()
+        counted_sum = self.balance.get_operations_amount_sum()
         self.assertEqual(counted_sum, 100)
         withdraw_money(self.user.id, 20)
-        counted_sum = self.user.balance.get_operations_amount_sum()
+        counted_sum = self.balance.get_operations_amount_sum()
         self.assertEqual(counted_sum, 80)
-
-    def test_get_operations_amount_sum_if_decimal(self):
-        top_up_balance(self.user.id, Decimal('100.5'))
-        top_up_balance(self.user.id, Decimal('50.23'))
-        counted_sum = self.user.balance.get_operations_amount_sum()
-        self.assertEqual(counted_sum, Decimal('150.73'))
 
 
 class CartTest(TestBaseWithFilledCatalogue):
@@ -165,13 +186,39 @@ class OrderTest(TestBaseWithFilledCatalogue):
     def setUp(self) -> None:
         super(OrderTest, self).setUp()
         self.log_in_as_customer()
-        top_up_balance(self.user.id, 10000)
-        self.prepare_order({'1': 5, '3': 2, '5': 4, '8': 4})
 
     def test_change_status(self):
+        top_up_balance(self.user.id, 10000)
+        self.prepare_order({'1': 5, '3': 2, '5': 4, '8': 4})
         self.assertEqual(self.order.status, OrderStatusChoices.UNPAID.value)
         make_purchase(self.order)
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, OrderStatusChoices.HAS_PAID.value)
         self.order.items.update(is_shipped=True)
         self.assertEqual(self.order.status, OrderStatusChoices.SHIPPED.value)
+
+    @staticmethod
+    def get_global_units_count(pks):
+        units_count = {}
+        for product_type in ProductType.objects.filter(id__in=pks):
+            pk = str(product_type.pk)
+            units_count[pk] = product_type.units_count
+        return units_count
+
+    def test_can_cancel_order(self):
+        self.fill_cart({'1': 3, '2': 5, '7': 2})
+        order: Order = prepare_order(self.cart)
+        self.assertEqual(order.get_units_count(), {'1': 3, '2': 5, '7': 2})
+        order.cancel()
+        self.assertEqual(order.get_units_count(), {})
+
+    def test_add_units_from_canceled_order_to_db(self):
+        units_to_add = {'1': 3, '2': 5, '7': 2}
+        product_types_pks = units_to_add.keys()
+        global_units_count_at_start = self.get_global_units_count(product_types_pks)
+        self.fill_cart(units_to_add)
+        order = prepare_order(self.cart)
+        for pk, count in self.get_global_units_count(product_types_pks).items():
+            self.assertEqual(global_units_count_at_start[pk], count + units_to_add[str(pk)])
+        order.cancel()
+        self.assertEqual(global_units_count_at_start, self.get_global_units_count(product_types_pks))
