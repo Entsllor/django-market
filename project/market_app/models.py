@@ -22,6 +22,11 @@ MAX_OPERATION_DIGITS_COUNT = MAX_BALANCE_DIGITS_COUNT
 Money = Union[Decimal, int]
 
 
+def validate_natural_number(number) -> None:
+    if not isinstance(number, int) or number < 0:
+        raise ValueError(f'Expected a natural number, got {number} instead')
+
+
 class OrderStatusChoices(Enum):
     UNPAID = _("awaiting for payment")
     CANCELED = _("canceled")
@@ -239,11 +244,6 @@ class ProductType(models.Model):
         verbose_name_plural = _('Product types')
 
 
-def _validate_units_quantity(quantity) -> None:
-    if not isinstance(quantity, int) or quantity < 0:
-        raise ValueError(f'Expected a natural number, got {quantity} instead')
-
-
 class Cart(models.Model):
     _default_cart_value = dict
     max_product_type_count_on_cart = 20
@@ -274,7 +274,7 @@ class Cart(models.Model):
         return tuple(self.items.keys())
 
     def set_item(self, product_type_pk, quantity: int, commit: bool = True) -> None:
-        _validate_units_quantity(quantity)
+        validate_natural_number(quantity)
         product_type_pk = str(product_type_pk)
         if quantity == 0:
             if product_type_pk in self.items:
