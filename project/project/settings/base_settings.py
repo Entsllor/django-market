@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
-
+import os
 from pathlib import Path
 
 from project.settings.log_settings import LOGGING_SETTINGS
@@ -24,8 +24,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
+# Allowed hosts
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost')
+if ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ALLOWED_HOSTS.split() 
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "YOUR_SECRET_KEY"
+SECRET_KEY = 'SECRET_KEY'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -165,4 +170,6 @@ CURRENCIES_SYMBOLS = {
     'USD': '$',
     'RUB': '₽'
 }
+
 CURRENCIES = (DEFAULT_CURRENCY_CODE,) + EXTRA_CURRENCIES
+
