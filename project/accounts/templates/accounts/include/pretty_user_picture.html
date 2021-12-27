@@ -3,8 +3,8 @@
 
 <img
   alt={% trans 'user-picture' %}
-    {% if user.profile.profile_picture %}
-      src="{{ user.profile.profile_picture.url }}"
+    {% if user.profile.avatar %}
+      src="{{ user.profile.avatar.url }}"
     {% else %}
   src="{% static 'accounts/img/default_user_avatar.jpg' %}"
     {% endif %}

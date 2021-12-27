@@ -102,8 +102,8 @@ class ProfileFunctionalTest(AccountsFunctionalTestBase):
 
         self.assertNotEqual(self.profile.country, new_country)
         data_to_upload = (self.profile.__dict__.copy() | data_to_update)
-        if 'profile_picture' not in data_to_update:
-            data_to_upload.pop('profile_picture')  # pop if not to change avatar
+        if 'avatar' not in data_to_update:
+            data_to_upload.pop('avatar')  # pop if not to change avatar
         self.client.post(self.update_profile_url, data=data_to_upload)
         self.assertEqual(self.profile.country, new_country)
         self.assertEqual(self.profile.phone_number, self.profile_data['phone_number'])

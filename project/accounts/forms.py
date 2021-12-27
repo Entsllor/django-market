@@ -42,7 +42,7 @@ class ProfileUpdateForm(forms.ModelForm):
 
     first_name = forms.CharField(label=_('Name'), max_length=31, required=False)
     last_name = forms.CharField(label=_('Surname'), max_length=31, required=False)
-    profile_picture = forms.FileField(label=_('Avatar'), required=False)
+    avatar = forms.FileField(label=_('Avatar'), required=False)
     field_order = ['first_name', 'last_name']
 
     def save(self, commit=True):

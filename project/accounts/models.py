@@ -59,7 +59,7 @@ class Profile(models.Model):
         blank=True,
         max_length=1024)
 
-    profile_picture = models.ImageField(
+    avatar = models.ImageField(
         max_length=MAX_AVATAR_SIZE,
         verbose_name=_('avatar'),
         upload_to='avatars/',
