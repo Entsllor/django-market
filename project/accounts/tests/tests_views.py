@@ -5,13 +5,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
+from core_app.file_utils import create_img, delete_if_exists
 from ..views import *
-
-
-def delete_file_if_exists(abs_path):
-    abs_file_path = Path(abs_path)
-    if abs_file_path.is_file():
-        abs_file_path.unlink()
 
 
 class AccountsFunctionalTestBase(TestCase):
@@ -69,7 +64,6 @@ class UserRegistrationTest(AccountsFunctionalTestBase):
 
 class ProfileFunctionalTest(AccountsFunctionalTestBase):
     update_profile_url = reverse_lazy('accounts:update_profile')
-    test_img_path = r'accounts\tests\img_test_folder\TEST_AVATAR_FILE_TO_DELETE_AFTER_TESTS.png'
 
     profile_data = {
         'country': 'Rwanda',
@@ -86,7 +80,7 @@ class ProfileFunctionalTest(AccountsFunctionalTestBase):
         return self.try_get_user_by_username()
 
     @property
-    def profile(self):
+    def profile(self) -> Profile:
         return self.user.profile
 
     def get_response_from_profile_page(self):
@@ -95,11 +89,6 @@ class ProfileFunctionalTest(AccountsFunctionalTestBase):
     def test_can_update_profile_data(self):
         new_country = 'Uganda'
         data_to_update = {'country': new_country}
-
-        # if need to test update with avatar-updating try this or run test_can_upload_avatar
-        # with open(self.test_img_path, 'rb') as avatar_file:
-        #     data_to_update['profile_picture'] = SimpleUploadedFile(avatar_file.name, avatar_file.read())
-
         self.assertNotEqual(self.profile.country, new_country)
         data_to_upload = (self.profile.__dict__.copy() | data_to_update)
         if 'avatar' not in data_to_update:
@@ -109,19 +98,15 @@ class ProfileFunctionalTest(AccountsFunctionalTestBase):
         self.assertEqual(self.profile.phone_number, self.profile_data['phone_number'])
 
     def test_can_upload_avatar(self):
-        profile_picture_value_before_updating = self.profile.profile_picture
-
-        with open(self.test_img_path, 'rb') as avatar_file:
-            data_to_update = {'profile_picture': SimpleUploadedFile(avatar_file.name, avatar_file.read())}
-            self.client.post(
-                self.update_profile_url,
-                data=self.profile.__dict__ | data_to_update
-            )
-            self.assertNotEqual(self.profile.profile_picture, profile_picture_value_before_updating)
-
-            # we have to delete file in tests from media, unless there will be a lot of unused files in media folder
-            delete_file_if_exists(self.profile.profile_picture.path)
-            # print(f'{profile_picture_value_before_updating = } {self.profile.profile_picture = }')
+        avatar_before_updating = self.profile.avatar
+        new_avatar = create_img(Path(__file__).parent / '__test_can_upload_file__new_image.png', 300, 300)
+        with open(new_avatar.path, 'rb') as new_avatar_file:
+            data_to_update = {'avatar': SimpleUploadedFile(new_avatar.path, new_avatar_file.read())}
+            self.client.post(self.update_profile_url, data=self.profile.__dict__ | data_to_update)
+        self.assertNotEqual(self.profile.avatar, avatar_before_updating)
+        # we have to delete test files from the media folder, unless there will be a lot of unused files in the folder
+        delete_if_exists(self.profile.avatar.path, raise_if_not_exists=True)
+        delete_if_exists(new_avatar.path)
 
     def test_fields_are_displayed(self):
         response = self.get_response_from_profile_page()

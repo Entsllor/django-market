@@ -1,4 +1,6 @@
 from pathlib import Path
+from typing import Union
+
 from PIL import Image
 
 
@@ -19,7 +21,7 @@ class OpenFileAndDeleteAfterClosing:
 
 
 def is_file_exists(file_path) -> bool:
-    """check if the file exists"""
+    """Check if the file exists"""
     return Path(file_path).exists()
 
 
@@ -28,15 +30,19 @@ def delete_file(file_path) -> None:
     Path(file_path).unlink()
 
 
-def delete_if_exists(file_path, raise_if_exists=True) -> None:
-    if Path(file_path).exists() and raise_if_exists:
-        FileExistsError('A file or folder with the name already exists')
-    else:
-        delete_file(file_path)
+def delete_if_exists(path, allow_rmdir=False, raise_if_not_exists=False) -> None:
+    path = Path(path)
+    if path.exists():
+        if path.is_file():
+            delete_file(path)
+        elif path.is_dir() and allow_rmdir:
+            path.rmdir()
+    elif raise_if_not_exists:
+        raise FileExistsError('A file or folder with the name does not exist')
 
 
-def create_img(img_name: str, width, height, save=True, color_mode='RGBA', bg_color='white'):
-    """Create a image that is width x height and save it if save is True"""
+def create_img(img_name: Union[str, Path], width, height, save=True, color_mode='RGBA', bg_color='white'):
+    """Create an image that is width x height and save it if save is True"""
     img = Image.new(color_mode, (width, height), bg_color)
     if save:
         img.save(img_name)
