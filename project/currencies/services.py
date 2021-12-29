@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import NamedTuple, Union
+from typing import NamedTuple, Union, Iterable
 
 from django.conf import settings
 from django.core.cache import cache
@@ -38,14 +38,18 @@ def get_currency_choices() -> tuple:
     return tuple(CURRENCY_CHOICES)
 
 
-def create_currencies_from_settings() -> None:
-    rates = get_rates(*settings.CURRENCIES)
-    for currency_code in settings.CURRENCIES:
-        Currency.objects.update_or_create(
+def create_currencies_from_settings(update_old_rates=True) -> None:
+    created_currencies = Currency.objects.values_list('code', flat=True)
+    currencies_to_create = [code for code in settings.CURRENCIES if code not in created_currencies]
+    rates = get_rates()
+    for currency_code in currencies_to_create:
+        Currency.objects.create(
             code=currency_code,
             sym=settings.CURRENCIES_SYMBOLS.get(currency_code, '?'),
             rate=rates[currency_code]
         )
+    if update_old_rates:
+        update_rates(created_currencies, rates)
 
 
 def get_currency_by_code(code: currency_code_type) -> CurrencyObj:
@@ -71,10 +75,17 @@ def get_currency_by_language(language_str: str) -> CurrencyObj:
     return get_currency_by_code(currency_code)
 
 
-def update_rates(*codes: str) -> None:
+def update_rates(codes: Iterable[str] = None, rates: dict = None, show_difference=False) -> None:
+    old_rates = {}
     if not codes:
         codes = settings.EXTRA_CURRENCIES
-    Currency.objects.update_rates(codes)
+    if show_difference:
+        old_rates = Currency.objects.get_rates(codes)
+    Currency.objects.update_rates(codes, rates=rates)
+    if show_difference:
+        new_rates = Currency.objects.get_rates(codes)
+        for code, new_rate in new_rates.items():
+            print(f'[{code}] {old_rates.get(code, "...")} --> {new_rate}')
 
 
 def _exchange(amount: Decimal, exchange_rate: Decimal) -> Decimal:

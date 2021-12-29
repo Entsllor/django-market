@@ -7,8 +7,8 @@ class Command(BaseCommand):
     help = 'Update currencies rates'
 
     def add_arguments(self, parser):
-        parser.add_argument('currencies', nargs='*', help='currencies', type=str.lower)
+        parser.add_argument('currencies', nargs='*', help='currencies', type=str.upper)
 
     def handle(self, *args, **options):
         currencies_to_update = options.get('currencies')
-        update_rates(*currencies_to_update)
+        update_rates(currencies_to_update, show_difference=True)

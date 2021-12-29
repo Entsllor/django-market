@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Iterable
 
 import requests
 from django.conf import settings
@@ -9,15 +10,16 @@ from django.utils.translation import gettext_lazy as _
 logger = logging.getLogger('debug')
 
 DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY_CODE
-SITE_URL = f'https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/{DEFAULT_CURRENCY.lower()}.json'
+# Change this code if you need to connect another currency API
+API_URL = f'https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/{DEFAULT_CURRENCY.lower()}.json'
 
 
 def get_rates(*codes: str) -> dict:
-    """Change this code if need to connect another currency API"""
+    """Make a request to get currency rates"""
     if not codes:
         codes = settings.CURRENCIES
     result = {}
-    response = requests.get(SITE_URL)
+    response = requests.get(API_URL)
     response_currencies = json.loads(response.text).get(DEFAULT_CURRENCY.lower())
     for currency_code in codes:
         rate = response_currencies.get(currency_code.lower())
@@ -36,15 +38,21 @@ class CurrencyManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset()
 
-    def update_rates(self, codes: str) -> None:
-        if not codes:
+    def update_rates(self, codes: Iterable[str], rates: dict = None) -> None:
+        if codes:
             currencies_to_update = self.filter(code__in=codes)
         else:
             currencies_to_update = self.all()
-        rates = get_rates()
+        if rates is None:
+            rates = get_rates()
         for cur_to_update in currencies_to_update:
-            cur_to_update.rate = rates[cur_to_update.code]
+            if cur_to_update.code in rates:
+                cur_to_update.rate = rates[cur_to_update.code]
         currencies_to_update.bulk_update(currencies_to_update, fields=['rate'])
+
+    def get_rates(self, codes: Iterable[str] = '__all__'):
+        codes = settings.CURRENCIES if codes == '__all__' else map(str.upper, codes)
+        return {currency.code: currency.rate for currency in self.filter(code__in=codes)}
 
 
 class Currency(models.Model):
