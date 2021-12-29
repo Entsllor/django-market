@@ -113,8 +113,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'static/'
 STATICFILES_DIRS = [
-    BASE_DIR.joinpath('static'),
     BASE_DIR.joinpath('core_app/static'),
     BASE_DIR.joinpath('accounts/static'),
     BASE_DIR.joinpath('market_app/static'),
@@ -172,4 +172,3 @@ CURRENCIES_SYMBOLS = {
 }
 
 CURRENCIES = (DEFAULT_CURRENCY_CODE,) + EXTRA_CURRENCIES
-
