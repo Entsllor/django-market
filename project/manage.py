@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
-import os
+
 import sys
+
+from project.settings.base_settings import env
 
 
 def main():
     """Run administrative tasks."""
-    if not os.environ.get('DJANGO_SETTINGS_MODULE'):
-        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings.production')
+    if '--settings' not in ' '.join(sys.argv):
+        env('DJANGO_SETTINGS_MODULE', default='project.settings.production')
     if 'test' in sys.argv and '--settings' not in ' '.join(sys.argv):
         sys.argv.append('--settings=project.settings.testing')
     try:
