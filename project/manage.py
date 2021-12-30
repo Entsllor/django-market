@@ -7,7 +7,7 @@ import sys
 def main():
     """Run administrative tasks."""
     if not os.environ.get('DJANGO_SETTINGS_MODULE'):
-        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings.development')
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings.production')
     if 'test' in sys.argv and '--settings' not in ' '.join(sys.argv):
         sys.argv.append('--settings=project.settings.testing')
     try:
