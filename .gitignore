@@ -138,3 +138,6 @@ dmypy.json
 
 # Media files
 /project/media/
+
+# Collected static
+/project/static
