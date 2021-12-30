@@ -75,7 +75,7 @@ sudo systemctl nginx restart
 
 ### Configure Nginx
 
-Write actual paths in django_nginx.conf and check paths are valid.
+Write actual paths in nginx.conf and check paths are valid.
 
 You can configure this file as you need. Then create a symbol link.
 
