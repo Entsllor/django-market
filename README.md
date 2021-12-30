@@ -1,6 +1,6 @@
 # Django Marketplace
 
-* Django 3.2 and Python 3.9
+* Django 4 and Python 3.9
 * Bootstrap 5 as a CSS framework
 
 ## Prerequisites
@@ -54,8 +54,8 @@ SET SECRET_KEY=YOUR_SECRET_KEY
 cd django_market
 pip install -r requirements.txt
 cd project
-python manage.py configure_market
-python manage.py runserver
+python3 manage.py configure_market
+python3 manage.py runserver
 ```
 
 ### Test filling
