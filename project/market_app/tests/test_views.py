@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
-from django.test import TestCase
+from django.test import TransactionTestCase
 from django.urls import reverse_lazy
 
 from currencies.services import DEFAULT_CURRENCY_CODE, exchange_to
@@ -27,7 +27,8 @@ def prepare_product_data_to_post(data) -> dict:
     return data
 
 
-class ViewTestMixin(TestCase):
+class ViewTestMixin(TransactionTestCase):
+    reset_sequences = True
     ViewClass = None
     page_url = None
 
@@ -68,16 +69,13 @@ class CatalogueTest(ViewTestMixin):
         self._test_correct_template()
 
 
-class ProductViewTest(ViewTestMixin, BaseMarketTestCase):
+class ProductViewTest(ViewTestMixin, TestBaseWithFilledCatalogue):
     ViewClass = ProductView
 
     def setUp(self) -> None:
         super(ProductViewTest, self).setUp()
-        self.log_in_as_seller()
-        self.product = self.create_product('TestProduct', original_price=100)
-        for units_count in (10, 5, 0):
-            ProductType.objects.create(product=self.product, units_count=units_count)
-        self.client.logout()
+        self.product = self.products.get(id=1)
+        self.log_in_as_customer()
 
     def get_url(self):
         return self.product.get_absolute_url()
@@ -86,27 +84,23 @@ class ProductViewTest(ViewTestMixin, BaseMarketTestCase):
         self._test_correct_template()
 
     def test_can_add_to_cart(self):
-        self.log_in_as_customer()
         self.assertEqual(self.cart.items, {})
         self.post_to_page(data={'product_type': 1, 'quantity': 3})
         self.assertEqual(self.cart.items, {'1': 3})
 
     def test_can_add_to_cart_different_types(self):
-        self.log_in_as_customer()
         self.assertEqual(self.cart.items, {})
         self.post_to_page(data={'product_type': 1, 'quantity': 3})
         self.post_to_page(data={'product_type': 2, 'quantity': 5})
         self.assertEqual(self.cart.items, {'1': 3, '2': 5})
 
     def test_cannot_add_if_units_count_equals_zero(self):
-        self.log_in_as_customer()
         self.assertEqual(ProductType.objects.get(pk=3).units_count, 0)
         self.assertEqual(self.cart.items, {})
         self.post_to_page(data={'product_type': 3, 'quantity': 1})
         self.assertEqual(self.cart.items, {})
 
     def test_cannot_add_negative_quantity(self):
-        self.log_in_as_customer()
         self.assertEqual(self.cart.items, {})
         self.post_to_page(data={'product_type': 1, 'quantity': 2})
         response = self.post_to_page(data={'product_type': 2, 'quantity': -2})
@@ -114,7 +108,6 @@ class ProductViewTest(ViewTestMixin, BaseMarketTestCase):
         self.assertEqual(self.cart.items, {'1': 2})
 
     def test_cannot_add_types_from_not_relevant_product(self):
-        self.log_in_as_customer()
         self.assertEqual(self.cart.items, {})
         self.post_to_page(data={'product_type': 1, 'quantity': 2})
         response = self.post_to_page(data={'product_type': 4, 'quantity': 1})
@@ -122,7 +115,6 @@ class ProductViewTest(ViewTestMixin, BaseMarketTestCase):
         self.assertEqual(self.cart.items, {'1': 2})
 
     def test_can_change_amount_on_cart(self):
-        self.log_in_as_customer()
         self.assertEqual(self.cart.items, {})
         self.post_to_page(data={'product_type': 1, 'quantity': 3})
         self.post_to_page(data={'product_type': 1, 'quantity': 2})
@@ -135,7 +127,6 @@ class ProductViewTest(ViewTestMixin, BaseMarketTestCase):
         self.assertRedirectsAuth(response)
 
     def test_redirect_if_post(self):
-        self.log_in_as_customer()
         response = self.post_to_page(data={'product_type': 1, 'quantity': 3})
         self.assertRedirects(response, self.ViewClass.success_url)
 
@@ -799,10 +790,9 @@ class OrderDetailTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self._test_correct_template()
 
     def test_another_user_cant_see_details(self):
-        another_user_data = {'username': 'AnotherCustomer', 'password': self.password}
         self.client.logout()
-        self.create_customer(**another_user_data)
-        self.client.login(**another_user_data)
+        self.customer = self.customers.filter(~Q(id=self.order.user_id)).first()
+        self.log_in_as_customer()
         response = self.get_from_page()
         self.assertEqual(response.status_code, 403)
 

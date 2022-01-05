@@ -6,7 +6,7 @@ from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Model, QuerySet
 from django.db.models.signals import post_save
-from django.test import TestCase
+from django.test import TransactionTestCase
 
 from currencies.models import Currency
 from market_app.models import Product, Market, ProductCategory, ProductType, Coupon, Cart, Balance, OrderItem, Order
@@ -35,7 +35,8 @@ def assert_difference(expected_difference):
     return decorator
 
 
-class BaseMarketTestCase(TestCase):
+class BaseMarketTestCase(TransactionTestCase):
+    reset_sequences = True
     password = 'SomePassword123/'  # password for all accounts
     _user = None
 
@@ -50,7 +51,7 @@ class BaseMarketTestCase(TestCase):
 
     @property
     def cart(self) -> Cart:
-        return self.user.cart
+        return Cart.objects.get(user_id=self._user.id)
 
     @property
     def balance(self):
@@ -238,11 +239,12 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
     def setUp(self) -> None:
         assert not User.objects.exists()
         assert not ProductType.objects.exists()
+        assert not ProductCategory.objects.exists()
         assert not Product.objects.exists()
         assert not Market.objects.exists()
         self._init_categories(range(1, 4))
-        self.category = self.create_category()
-        sellers = self._init_users(range(1, 5), name_prefix='seller_')
+        self.category = ProductCategory.objects.get(id=1)
+        sellers = self._init_users(range(1, 6), name_prefix='seller_')
         self._init_markets(sellers)
         self.seller = self.sellers.get(id=1)
         self._init_products(self.PRODUCT_DATA)
@@ -290,7 +292,7 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
         types = []
         for product_id, values in data.items():
             for type_id, type_data in values['types_data'].items():
-                types.append(ProductType(product_id=product_id, **type_data))
+                types.append(ProductType(product_id=product_id, id=type_id, **type_data))
         ProductType.objects.bulk_create(types)
 
     def create_and_set_coupon(self, discount_percent=0, discount_limit=0) -> Coupon:

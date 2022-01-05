@@ -97,10 +97,27 @@ WSGI_APPLICATION = 'project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
+DB_ENGINE = env('DB_ENGINE').lower()
+DB_NAME = env("DB_NAME", default="")
+
+if 'sqlite' in DB_ENGINE:
+    DB_ENGINE = 'django.db.backends.sqlite3'
+    if not DB_NAME:
+        DB_NAME = BASE_DIR / 'db.sqlite3'
+elif 'postgres' in DB_ENGINE:
+    DB_ENGINE = 'django.db.backends.postgresql'
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": DB_ENGINE,
+        "NAME": DB_NAME,
+        "USER": env("DB_USER", default=""),
+        "PASSWORD": env("DB_PASSWORD", default=""),
+        "HOST": env("DB_HOST", default=""),
+        "PORT": env("DB_PORT", default=""),
+        "TEST": {
+            'NAME': env("DB_NAME") + '_test',
+        } if "postgresql" in DB_ENGINE else {}
     }
 }
 
