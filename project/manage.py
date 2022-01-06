@@ -1,31 +1,15 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
-
+import os
 import sys
-
-from project.settings.base_settings import env
-
-PRODUCTION = 'project.settings.production'
-DEVELOPMENT = 'project.settings.development'
-TESTING = 'project.settings.testing'
 
 
 def main():
     """Run administrative tasks."""
-    if '--settings' not in ' '.join(sys.argv):
-        settings_module = env('DJANGO_SETTINGS_MODULE', default='').lower()
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
+    if '--settings' not in ' '.join(sys.argv) and 'test' in sys.argv:
         # if you need to run tests with another module add '--settings SETTINGS_MODULE_NAME' argument
-        if 'test' in sys.argv:
-            settings_module = TESTING
-        # aliases
-        elif settings_module in ('prod', 'production'):
-            settings_module = PRODUCTION
-        elif settings_module in ('dev', 'development'):
-            settings_module = DEVELOPMENT
-        elif settings_module in ('test', 'testing'):
-            settings_module = TESTING
-        sys.argv.append(f"--settings={settings_module}")
-
+        sys.argv.append(f"--settings={'project.settings.testing'}")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

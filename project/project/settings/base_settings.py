@@ -10,11 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
-import os
 from pathlib import Path
 
 import environ
-from django.core.exceptions import ImproperlyConfigured
 
 from project.settings.log_settings import LOGGING_SETTINGS
 
@@ -30,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Environ
 
 env = environ.Env()
-env.read_env(BASE_DIR / '.env')
+env.read_env(BASE_DIR / '.env', overwrite=True)
 SECRET_KEY = env('DJANGO_SECRET_KEY')
 
 # Allowed hosts
@@ -71,7 +69,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
 ROOT_URLCONF = 'project.urls'
 
 TEMPLATES = [
