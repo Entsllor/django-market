@@ -7,10 +7,10 @@ For more information on this file, see
 https://docs.djangoproject.com/en/3.2/howto/deployment/asgi/
 """
 
-import os
+from project.settings.base_settings import env
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
+env('DJANGO_SETTINGS_MODULE')
 
 application = get_asgi_application()
