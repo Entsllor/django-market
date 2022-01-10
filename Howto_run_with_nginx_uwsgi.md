@@ -51,7 +51,7 @@ cd ..
 
 ```text
 # base_settings.py
-...
+# ...
 STATIC_ROOT = <static-files-path>
 MEDIA_ROOT = <media-files-path>
 ```
@@ -64,13 +64,13 @@ Ubuntu:
 
 ```shell
 apt install nginx
-sudo systemctl nginx start
+sudo systemctl start nginx.service
 ```
 
 If you've changed some nginx configs you should run:
 
 ```shell
-sudo systemctl nginx restart
+sudo systemctl restart nginx.service
 ```
 
 ### Configure Nginx
@@ -80,17 +80,17 @@ Write actual paths in nginx.conf and check paths are valid.
 You can configure this file as you need. Then create a symbol link.
 
 ```shell
-sudo ln -s nginx.conf /etc/nginx/sites-enabled/django-market.conf
 sudo usermod -aG www-data $USER
-sudo /etc/init.d/nginx restart
+sudo ln -s nginx.conf /etc/nginx/sites-enabled/django-market.conf
+sudo systemctl restart nginx.service
 ```
 
-If you made nginx listen 80 port and see default nginx page instead of your app you may delete
-/etc/nginx/sites-enabled/default
+If you made nginx listen 80 port and see default nginx page instead of your app, 
+you may delete or edit this file /etc/nginx/sites-enabled/default
 
 
 ### Run uWSGI
 
 ```shell
-uwsgi --ini uwsgi.conf
+uwsgi --ini uwsgi.ini
 ```

@@ -6,3 +6,4 @@ Pillow==8.4.0
 requests==2.26.0
 django-environ==0.8.1
 psycopg2-binary==2.9.3
+#uWSGI read ./Howto_run_with_nginx_uwsgi.md
