@@ -32,7 +32,7 @@ env.read_env(BASE_DIR / '.env', overwrite=True)
 SECRET_KEY = env('DJANGO_SECRET_KEY')
 
 # Allowed hosts
-ALLOWED_HOSTS = env('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1').split(':')
+ALLOWED_HOSTS = env('DJANGO_ALLOWED_HOSTS', default='localhost:127.0.0.1').split(':')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
