@@ -1,13 +1,16 @@
-import os
 from pathlib import Path
+from environ import Env
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-LOG_DIR = BASE_DIR
-TRANSACTION_LOG_PATH = BASE_DIR.joinpath('log/transactions.log')
-if not TRANSACTION_LOG_PATH.parent.exists():
-    TRANSACTION_LOG_PATH.parent.mkdir()
+env = Env()
+env.read_env(BASE_DIR / '.env', overwrite=True)
+LOG_LEVEL = env("DJANGO_LOG_LEVEL", default="INFO")
+LOG_DIR = Path(env("DJANGO_LOG_DIR", default='log'))
+if LOG_DIR.is_absolute():
+    LOG_DIR = BASE_DIR / LOG_DIR
+if not LOG_DIR.exists():
+    LOG_DIR.mkdir(parents=True)
 
-LOG_LEVEL = os.getenv("DJANGO_LOG_LEVEL", "INFO")
 
 LOGGING_SETTINGS = {
     'version': 1,
@@ -41,7 +44,7 @@ LOGGING_SETTINGS = {
         'money_transactions': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': TRANSACTION_LOG_PATH,
+            'filename': LOG_DIR / 'transactions.log',
             'formatter': 'transaction'
         },
         'debug': {
