@@ -11,6 +11,4 @@ from project.settings.base_settings import env
 
 from django.core.asgi import get_asgi_application
 
-env('DJANGO_SETTINGS_MODULE')
-
 application = get_asgi_application()

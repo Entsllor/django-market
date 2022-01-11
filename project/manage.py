@@ -7,7 +7,6 @@ from project.settings.base_settings import env
 
 def main():
     """Run administrative tasks."""
-    env('DJANGO_SETTINGS_MODULE')
     if '--settings' not in ' '.join(sys.argv) and 'test' in sys.argv:
         # if you need to run tests with another module add '--settings SETTINGS_MODULE_NAME' argument
         sys.argv.append(f"--settings={'project.settings.testing'}")
