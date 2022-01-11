@@ -1,17 +1,20 @@
 FROM python:3.9-slim
-COPY ./project /app/
-COPY ./requirements.txt /app/
-RUN apt update
-RUN apt install gettext -y
-RUN python3.9 -m pip install -r /app/requirements.txt
 WORKDIR ./app
 
-RUN python3.9 manage.py configure_market
+RUN apt update
+RUN apt install -y gettext # need for l10n/i18n
+RUN apt install -y gcc python3-dev musl-dev # psycopg2 dependencies
 
-EXPOSE 5050
-ENV PYTHONUNBUFFERED=1
-ENV DJANGO_SETTINGS_MODULE=project.settings.production
-# SECURITY WARNING: you should to change this secret key and keep it used in production secret
-ENV DJANGO_SECRET_KEY=Your_Secret_Key
+# install project requirements
+COPY ./requirements.txt .
+RUN python3.9 -m pip install -r ./requirements.txt
 
-ENTRYPOINT ["python3", "manage.py", "runserver", "0.0.0.0:5050"]
+RUN apt remove gcc -y
+
+COPY ./project .
+
+EXPOSE 8000
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+ENTRYPOINT ["bash", "./docker-entrypoint.sh"]
