@@ -83,14 +83,14 @@ You can configure this file as you need. Then create a symbol link.
 sudo usermod -aG www-data $USER
 sudo ln -s nginx.conf /etc/nginx/sites-enabled/django-market.conf
 sudo systemctl restart nginx.service
+# if you want nginx listen 80 port you may delete or edit /etc/nginx/sites-enabled/default
+sudo rm /etc/nginx/sites-enabled/default
 ```
-
-If you made nginx listen 80 port and see default nginx page instead of your app, 
-you may delete or edit this file /etc/nginx/sites-enabled/default
 
 
 ### Run uWSGI
 
 ```shell
+cd project
 uwsgi --ini uwsgi.ini
 ```
