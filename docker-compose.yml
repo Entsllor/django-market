@@ -1,0 +1,30 @@
+version: '3'
+services:
+  db:
+    image: postgres:14.1-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=django
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=django_market
+  web:
+    build: .
+    env_file:
+      - ./project/.env
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+  nginx:
+    build: ./nginx/
+    volumes:
+      - ./project/static/:/var/www/static/:ro
+      - ./project/media/:/var/www/media/:rw
+    ports:
+      - 9999:80
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:
