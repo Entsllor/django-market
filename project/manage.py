@@ -9,7 +9,7 @@ def main():
     """Run administrative tasks."""
     if '--settings' not in ' '.join(sys.argv) and 'test' in sys.argv:
         # if you need to run tests with another module add '--settings SETTINGS_MODULE_NAME' argument
-        sys.argv.append(f"--settings={'project.settings.testing'}")
+        sys.argv.append("--settings=project.settings.testing")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
