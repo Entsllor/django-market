@@ -1,0 +1,16 @@
+# Docker only ignore
+
+**
+!./accounts
+!./core_app
+!./currencies
+!./locale
+!./market_app
+!./manage.py
+!./.env.template
+!./uwsgi.ini
+!./project
+!./docker-entrypoint.sh
+!./requirements.txt
+
+**/__pycache__/

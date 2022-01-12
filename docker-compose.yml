@@ -9,7 +9,7 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=django_market
   web:
-    build: .
+    build: ./project
     env_file:
       - ./project/.env
     ports:

@@ -11,7 +11,7 @@ RUN python3.9 -m pip install -r ./requirements.txt
 
 RUN apt remove gcc -y
 
-COPY ./project .
+COPY . .
 
 EXPOSE 8000
 ENV PYTHONDONTWRITEBYTECODE 1

@@ -14,11 +14,11 @@ python3 manage.py runserver
 source venv/bin/activate
 ```
 
-Your environment must have libraries from requirements.txt
+Your environment must have libraries from ./project/requirements.txt
 
 ```shell
 pip3 freeze
-cat requirements.txt
+cat ./project/requirements.txt
 ```
 
 It is possible to run server without virtual environment, but you should have it
@@ -33,7 +33,7 @@ You should have python-dev library
 sudo apt install python3.9-dev
 ```
 
-Install this library to your venv
+Install this library in your venv
 
 ```shell
 pip install uwsgi
