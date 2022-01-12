@@ -10,6 +10,9 @@ services:
       - POSTGRES_DB=django_market
   web:
     build: ./project
+    volumes:
+      - ./project/static/:/usr/src/dj-market/static/:rw
+      - ./project/media/:/usr/src/dj-market/media/:rw
     env_file:
       - ./project/.env
     ports:

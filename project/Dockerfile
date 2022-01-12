@@ -1,9 +1,10 @@
 FROM python:3.9-slim
-WORKDIR ./app
 
 RUN apt update
 RUN apt install -y gettext # need for l10n/i18n
 RUN apt install -y gcc python3-dev musl-dev # psycopg2 dependencies
+
+WORKDIR /usr/src/dj-market
 
 # install project requirements
 COPY ./requirements.txt .
