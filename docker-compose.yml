@@ -13,7 +13,7 @@ services:
     env_file:
       - ./project/.env
     ports:
-      - 8000:8000
+      - "8000:8000"
     depends_on:
       - db
   nginx:
@@ -22,7 +22,7 @@ services:
       - ./project/static/:/var/www/static/:ro
       - ./project/media/:/var/www/media/:rw
     ports:
-      - 9999:80
+      - "9999:80"
     depends_on:
       - web
 
