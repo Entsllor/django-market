@@ -11,8 +11,12 @@ services:
   web:
     build: ./project
     volumes:
+      # static files
       - ./project/static/:/usr/src/dj-market/static/:rw
+      # media files
       - ./project/media/:/usr/src/dj-market/media/:rw
+      # log files
+      - ./project/log/:/usr/src/dj-market/log/:rw
     env_file:
       - ./project/.env
     ports:
