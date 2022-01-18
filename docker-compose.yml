@@ -9,6 +9,7 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=django_market
   web:
+    image: entsllor/dj-market-main
     build: ./project
     volumes:
       # static files
@@ -24,6 +25,7 @@ services:
     depends_on:
       - db
   nginx:
+    image: entsllor/dj-market-nginx
     build: ./nginx/
     volumes:
       - ./project/static/:/var/www/static/:ro
