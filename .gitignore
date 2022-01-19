@@ -140,4 +140,8 @@ dmypy.json
 /project/media/
 
 # Collected static
-/project/static
+/project/static/
+
+# Nginx conf files except templates
+/nginx/conf.d/*
+!/nginx/conf.d/*.template

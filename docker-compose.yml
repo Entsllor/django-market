@@ -25,13 +25,14 @@ services:
     depends_on:
       - db
   nginx:
-    image: entsllor/dj-market-nginx
-    build: ./nginx/
+    image: nginx:1.21-alpine
     volumes:
+      - ./nginx/conf.d/:/etc/nginx/conf.d/:ro
       - ./project/static/:/var/www/static/:ro
       - ./project/media/:/var/www/media/:rw
     ports:
-      - "9999:80"
+      - "80:80"
+      - "443:443"
     depends_on:
       - web
 
