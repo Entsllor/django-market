@@ -7,83 +7,87 @@
 
 Install virtual environment:
 
-```
-pip install virtualenv 
-python -m virtualenv env
+```shell
+python3 -m venv venv
+# or
+# pip3 install virtualenv 
+# python3 -m virtualenv venv
 ```
 
 Activate virtual environment:
 
 On macOS and Linux:
 
-```
-source env/bin/activate
+```shell
+source venv/bin/activate
 ```
 
 On Windows:
 
 ```
-.\env\Scripts\activate
+.\venv\Scripts\activate
 ```
 
 ## Installation
 
-1. Clone
-
-```
+```shell
 git clone https://github.com/Entsllor/django_market
 ```
 
-2. Set secret key to your environmental variables
+## Configuration
 
-On macOS and Linux:
+Create .env file in django_market/project
+and put project env variables you need according to a .env.template
 
+```shell
+cd django_market/project
+# [optional] use template
+cat .env.template > .env
+# edit file
+vim .env
 ```
-export SECRET_KEY=YOUR_SECRET_KEY
+
+[WARNING] Keep the secret key used in production secret!
+
+[WARNING] Don't run with debug turned on in production!
+
+Install requirements
+
+```shell
+pip3 install -r requirements.txt
 ```
 
-On Windows:
+Final configuration
 
-```
-SET SECRET_KEY=YOUR_SECRET_KEY
-```
-
-3. Install, configure and run server
-
-```
-cd django_market
-pip install -r requirements.txt
-cd project
+```shell
 python3 manage.py configure_market
+```
+
+## Running
+
+```shell
 python3 manage.py runserver
 ```
 
 ### Test filling
 
 You can use a special command to fill db with test data 
-```
-python manage.py test_filling
+```shell
+python3 manage.py test_filling
 ```
 
 If you want to configure filling use this: 
 
+```shell
+python3 manage.py test_filling --custom
 ```
-python manage.py test_filling --custom
-```
-
-
-## Warning
-
-Keep the secret key used in production secret!
-
-Don't run with debug turned on in production!
 
 ### How to open admin-panel
 
 1. Create a superuser
 
-```
-python manage.py createsuperuser
+```shell
+python3 manage.py createsuperuser
 ```
 
 2. Go to http://localhost:8000/admin
@@ -92,19 +96,17 @@ python manage.py createsuperuser
 ### Currencies
 This project supports multi-currencies system.
 
-1. Set constants in /project/project/settings.py
+1. Set constants in /project/project/settings/base_settings.py
 - LANGUAGES (codes of supported languages)
-- DEFAULT_CURRENCY (use as default for your data base)
+- DEFAULT_CURRENCY (use as default for your database)
 - EXTRA_CURRENCIES (codes of supported currencies)
 - CURRENCIES_SYMBOLS (set associated currencies symbols. For example, 'USD': $)
 - LOCAL_CURRENCIES (associated currencies with languages. For example, 'en-us': 'USD')
 
 2. Run commands
 
+```shell
+python3 manage.py create_currencies
+# [optional] Use 'update_currencies' command when you need to update exchanging rates
+python3 manage.py update_currencies
 ```
-python manage.py create_currencies
-python manage.py update_currencies
-```
-
-[Optional] Use 'update_currencies' command when you need to update exchanging rates
-[Optional] Change rates-source-url if it is necessary
