@@ -20,14 +20,15 @@ services:
       - ./project/log/:/usr/src/dj-market/log/:rw
     env_file:
       - ./project/.env
-    ports:
-      - "8000:8000"
+#   ports:
+#     - "8000:8000"
     depends_on:
       - db
   nginx:
     image: nginx:1.21-alpine
     volumes:
       - ./nginx/conf.d/:/etc/nginx/conf.d/:ro
+      - ./nginx/ssl/:/etc/ssl/:ro
       - ./project/static/:/var/www/static/:ro
       - ./project/media/:/var/www/media/:rw
     ports:

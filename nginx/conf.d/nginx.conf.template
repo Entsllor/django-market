@@ -5,8 +5,21 @@ upstream django {
 server {
     listen 80;
     charset utf-8;
-
     client_max_body_size 75M;
+    # server_name example.com www.example.com;
+
+    ## HTTPS
+    # listen 443 ssl;
+    #ssl_certificate /etc/ssl/your_domain.crt;
+    #ssl_certificate_key /etc/ssl/your_domain.key;
+    #ssl_session_cache   shared:SSL:10m;
+    #ssl_session_timeout 10m; 
+    #keepalive_timeout 70; 
+    #ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    #ssl_prefer_server_ciphers on;
+    #ssl_stapling on;
+    #ssl_trusted_certificate /etc/ssl/ca.crt;
+    #resolver 8.8.8.8;
 
     location /media/ {
         alias /var/www/media/;

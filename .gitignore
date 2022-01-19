@@ -145,3 +145,6 @@ dmypy.json
 # Nginx conf files except templates
 /nginx/conf.d/*
 !/nginx/conf.d/*.template
+
+# Nginx ssl
+/nginx/ssl/
