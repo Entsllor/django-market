@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="120mm"
+   height="120mm"
+   viewBox="0 0 120 120"
+   version="1.1"
+   id="svg5"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs2">
+    <linearGradient
+       id="linearGradient182588">
+      <stop
+         style="stop-color:#ffa000;stop-opacity:1;"
+         offset="0"
+         id="stop182584" />
+      <stop
+         style="stop-color:#ff5e12;stop-opacity:1"
+         offset="1"
+         id="stop182586" />
+    </linearGradient>
+    <rect
+       x="85.20314"
+       y="96.471626"
+       width="99.770889"
+       height="54.966171"
+       id="rect126645" />
+    <rect
+       x="4.8601441"
+       y="134.578"
+       width="500.13004"
+       height="467.61072"
+       id="rect100196" />
+    <rect
+       x="276.08762"
+       y="153.11794"
+       width="298.97839"
+       height="73.4758"
+       id="rect99106" />
+    <rect
+       x="-72.359161"
+       y="87.931488"
+       width="684.98969"
+       height="546.60406"
+       id="rect89036" />
+    <rect
+       x="28.860182"
+       y="371.8262"
+       width="312.29025"
+       height="239.27798"
+       id="rect87258" />
+    <rect
+       x="-25.605366"
+       y="35.583794"
+       width="636.31177"
+       height="482.18378"
+       id="rect80726" />
+    <rect
+       x="316.30368"
+       y="962.33899"
+       width="172.40479"
+       height="305.87097"
+       id="rect27500" />
+    <rect
+       x="308.95764"
+       y="818.59174"
+       width="216.33807"
+       height="193.30542"
+       id="rect13048" />
+    <linearGradient
+       xlink:href="#linearGradient182588"
+       id="linearGradient182590"
+       x1="-13.551329"
+       y1="-34.025887"
+       x2="-74.68383"
+       y2="58.204559"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <g
+     id="layer1">
+    <rect
+       style="mix-blend-mode:normal;fill:url(#linearGradient182590);fill-opacity:1;stroke:none;stroke-width:0.264583;stroke-linecap:round;stroke-opacity:1"
+       id="rect3200"
+       width="120"
+       height="120"
+       x="0"
+       y="0"
+       ry="15"
+       rx="15" />
+    <text
+       xml:space="preserve"
+       transform="matrix(0.43414188,0,0,0.50604265,-109.6741,-401.85925)"
+       id="text13046"
+       style="font-style:oblique;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:160.068px;line-height:1.25;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono, Bold Oblique';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:-9.09183px;word-spacing:0px;white-space:pre;shape-inside:url(#rect13048);fill:#2a2a2a;fill-opacity:1;stroke:none"><tspan
+         x="308.95703"
+         y="960.21445"
+         id="tspan893">Py</tspan></text>
+    <text
+       xml:space="preserve"
+       transform="scale(0.26458333)"
+       id="text27498"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;white-space:pre;shape-inside:url(#rect27500);fill:#000000;fill-opacity:1;stroke:none" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="-47.077354"
+       y="205.33243"
+       id="text71180"><tspan
+         id="tspan71178"
+         style="stroke-width:0.264583"
+         x="-47.077354"
+         y="205.33243" /></text>
+    <text
+       xml:space="preserve"
+       transform="scale(0.26458333)"
+       id="text80724"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;white-space:pre;shape-inside:url(#rect80726);fill:#000000;fill-opacity:1;stroke:none" />
+    <text
+       xml:space="preserve"
+       transform="scale(0.26458333)"
+       id="text87256"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;white-space:pre;shape-inside:url(#rect87258);fill:#000000;fill-opacity:1;stroke:none" />
+    <text
+       xml:space="preserve"
+       transform="scale(0.26458333)"
+       id="text89034"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;white-space:pre;shape-inside:url(#rect89036);fill:#000000;fill-opacity:1;stroke:none" />
+    <text
+       xml:space="preserve"
+       transform="scale(0.26458333)"
+       id="text99104"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;white-space:pre;shape-inside:url(#rect99106);fill:#000000;fill-opacity:1;stroke:none" />
+    <text
+       xml:space="preserve"
+       transform="scale(0.26458333)"
+       id="text100194"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;white-space:pre;shape-inside:url(#rect100196);fill:#000000;fill-opacity:1;stroke:none" />
+    <text
+       xml:space="preserve"
+       transform="scale(0.26458333)"
+       id="text126643"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;white-space:pre;shape-inside:url(#rect126645);fill:#000000;fill-opacity:1;stroke:none" />
+  </g>
+</svg>
