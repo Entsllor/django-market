@@ -4,7 +4,9 @@
 {% load currencies %}
 {% load market_app_blocks %}
 {% load market_app_utils %}
-
+{% block title %}
+  {% trans "My cart" %}
+{% endblock %}
 
 {% block main_center_block %}
   {% if cart.items %}

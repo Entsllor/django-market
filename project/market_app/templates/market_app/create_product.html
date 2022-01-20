@@ -1,9 +1,8 @@
 {% extends 'market_app/form_block.html' %}
 {% load i18n %}
 
-{% block card-title %}
-  {% trans 'Create product' %}
-{% endblock %}
+{% block title %}{% trans "Create product" %}{% endblock %}
+{% block card-title %}{% trans 'Create product' %}{% endblock %}
 
 {% block form_block %}
   <form action="{% url 'market_app:create_product' %}" method="post">

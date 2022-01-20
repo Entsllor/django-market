@@ -1,6 +1,8 @@
 {% extends 'market_app/form_block.html' %}
 {% load i18n %}
 
+{% block title %}{{ product.name }}{% endblock %}
+
 {% block card-title %}
   {% trans 'Edit type' %}
 {% endblock %}

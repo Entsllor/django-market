@@ -2,6 +2,8 @@
 {% load i18n %}
 {% load cache %}
 
+{% block title %}{% trans "Sellers" %}{% endblock %}
+
 {% block main_center_block %}
   {% cache 600 market_list CURRENT_LANGUAGE page_obj.number %}
   <div class="row row-cols-2 row-cols-md-3 g-2 m-0">

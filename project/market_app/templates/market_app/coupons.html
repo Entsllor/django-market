@@ -2,6 +2,9 @@
 {% load i18n %}
 {% load cache %}
 {% load currencies %}
+{% block title %}
+  {% trans "Coupons" %}
+{% endblock %}
 
 {% block main_center_block %}
   {% cache 300 user_coupons_block CURRENT_LANGUAGE user.pk %}

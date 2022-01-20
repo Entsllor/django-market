@@ -4,11 +4,13 @@
 {% load l10n %}
 {% load market_app_blocks %}
 
+{% block title %}{{ product.name }}{% endblock %}
+
 {% block main_center_block %}
   <div class="card card-block">
-    <div class="card-header content-title">
+    <h1 class="card-header content-title">
       {{ product.name }}
-    </div>
+    </h1>
     <div class="card-body">
       <div class="row">
         <div class="col col-12 col-md-6">
