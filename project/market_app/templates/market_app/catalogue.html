@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block main_center_block %}
-  {% cache 300 catalogue CURRENT_LANGUAGE request.GET.page %}
+  {% cache 60 catalogue CURRENT_LANGUAGE request.GET.page %}
     {% products_catalogue products page_size=36 display_text_when_no_products=True %}
   {% endcache %}
 {% endblock %}
