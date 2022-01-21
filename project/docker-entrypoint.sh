@@ -12,4 +12,5 @@ if [ -n "$DB_HOST" ] && [ -n "$DB_PORT" ]; then
 fi
 
 ./manage.py configure_market
+./manage.py collectstatic --noinput
 uwsgi --ini uwsgi.ini
