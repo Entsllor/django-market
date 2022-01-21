@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: unnamed project\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-20 20:54+0300\n"
+"POT-Creation-Date: 2022-01-21 15:42+0300\n"
 "PO-Revision-Date: 2021-12-27 20:49+0500\n"
 "Last-Translator: Entsllor < >\n"
 "Language-Team: English < >\n"
@@ -190,23 +190,13 @@ msgstr "Ваш пароль был изменен."
 msgid "About us"
 msgstr "О нас"
 
-#: core_app/templates/core_app/about_us_template.html:13
-msgid "Contact information"
-msgstr "Контактная информация"
+#: core_app/templates/core_app/about_us_template.html:14
+msgid "Author"
+msgstr "Автор"
 
 #: core_app/templates/core_app/about_us_template.html:17
 msgid "Email"
 msgstr "Email"
-
-#: core_app/templates/core_app/about_us_template.html:20
-msgid "Phone number"
-msgstr "Номер телефона"
-
-#: core_app/templates/core_app/about_us_template.html:23
-#: market_app/templates/market_app/order_detail.html:41
-#: market_app/templates/market_app/order_items_list.html:33
-msgid "Address"
-msgstr "Адрес"
 
 #: core_app/templates/core_app/base_template.html:26
 msgid "Cart"
@@ -527,14 +517,15 @@ msgstr "лимит скидки"
 msgid "coupons"
 msgstr "купоны"
 
-#: market_app/templates/market_app/advanced_search.html:8
-msgid "Advanced search"
-msgstr "Расширенный поиск"
-
+#: market_app/templates/market_app/advanced_search.html:5
 #: market_app/templates/market_app/advanced_search.html:16
 #: market_app/templates/market_app/include/search.html:7
 msgid "Search"
 msgstr "Поиск"
+
+#: market_app/templates/market_app/advanced_search.html:10
+msgid "Advanced search"
+msgstr "Расширенный поиск"
 
 #: market_app/templates/market_app/cart_page.html:8
 #: market_app/templates/market_app/cart_page.html:15
@@ -730,6 +721,11 @@ msgstr "Отправлено"
 msgid "Activated coupon"
 msgstr "Активированный купон"
 
+#: market_app/templates/market_app/order_detail.html:41
+#: market_app/templates/market_app/order_items_list.html:33
+msgid "Address"
+msgstr "Адрес"
+
 #: market_app/templates/market_app/order_detail.html:45
 msgid "Status"
 msgstr "Cостояние"
@@ -857,6 +853,12 @@ msgstr "Вы не можете использовать этот купон '{}'
 #: market_app/views.py:512
 msgid "Sorry, but we cannot find current rate for this currency: {}"
 msgstr "Простите, но мы не можем найти обменный курс для этой валюты: {}"
+
+#~ msgid "Contact information"
+#~ msgstr "Контактная информация"
+
+#~ msgid "Phone number"
+#~ msgstr "Номер телефона"
 
 #~ msgid "max discount"
 #~ msgstr "максимальная скидка"
