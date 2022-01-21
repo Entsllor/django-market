@@ -116,6 +116,8 @@ class Product(models.Model):
         'ProductCategory',
         verbose_name=_('category'),
         on_delete=models.CASCADE,
+        null=True,
+        blank=True
     )
 
     def get_img_url(self):
