@@ -2,9 +2,9 @@
 {% load i18n %}
 
 {% block main_center_card %}
-  <h2 class="card-header content-title">
+  <h1 class="card-header content-title">
     {% trans 'Registration' %}
-  </h2>
+  </h1>
   <div class="card-body">
     <form method="post" action="{% url 'accounts:registration' %}">
       {% csrf_token %}

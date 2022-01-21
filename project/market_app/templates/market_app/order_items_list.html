@@ -8,9 +8,9 @@
   <div class="py-2" style="background: none;">
     {% if orders_items %}
       <div class="card">
-        <div class="card-header content-title">
+        <h1 class="card-header content-title">
           {% trans 'Shipping' %}
-        </div>
+        </h1>
         <div class="list-group list-group-flush">
           <form action="{% url 'market_app:shipping' pk=view.kwargs.pk %}" method="post">
             <div class="w-100" style="overflow-x: auto; overflow-y: hidden">

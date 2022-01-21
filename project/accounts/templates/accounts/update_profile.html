@@ -2,9 +2,9 @@
 {% load i18n %}
 
 {% block main_center_card %}
-  <h2 class="card-header content-title">
+  <h1 class="card-header content-title">
     {% trans 'Edit my profile.' %}
-  </h2>
+  </h1>
   <div class="m-2">
     <form method="post" enctype="multipart/form-data" action="{% url 'accounts:update_profile' %}">
       {% csrf_token %}

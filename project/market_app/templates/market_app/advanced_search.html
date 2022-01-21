@@ -6,9 +6,9 @@
 
 {% block search_form_block %}
   <div class="card my-2">
-    <div class="card-header content-title">
+    <h1 class="card-header content-title">
       {% trans 'Advanced search' %}
-    </div>
+    </h1>
     <div class="p-2">
       <form method="get" action="{% url 'market_app:search_products' %}">
         {% include 'core_app/include/pretty_form.html' with form=form without_button=True %}

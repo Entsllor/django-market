@@ -2,9 +2,9 @@
 {% load i18n %}
 
 {% block main_center_card %}
-  <h2 class="card-header content-title">
+  <h1 class="card-header content-title">
     {% trans 'Profile' %}: {{ user.username }}
-  </h2>
+  </h1>
 
   <div class="list-group list-group-flush">
     {% for label, value in profile.get_public_information.items %}

@@ -7,9 +7,9 @@
 
 {% block main_center_block %}
   <div class="card card-block">
-    <div class="card-header content-title">
+    <h1 class="card-header content-title">
       {% trans 'Check out' %}
-    </div>
+    </h1>
     <ul class="list-group list-group-flush">
       {% for order_item in order.items.all %}
         <li class="list-group-item">
