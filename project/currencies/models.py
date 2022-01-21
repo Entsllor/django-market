@@ -1,6 +1,7 @@
 import json
 import logging
-from typing import Iterable
+from decimal import Decimal
+from typing import Iterable, Union
 
 import requests
 from django.conf import settings
@@ -12,6 +13,7 @@ logger = logging.getLogger('debug')
 DEFAULT_CURRENCY = settings.DEFAULT_CURRENCY_CODE
 # Change this code if you need to connect another currency API
 API_URL = f'https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/{DEFAULT_CURRENCY.lower()}.json'
+Money = Union[Decimal, int]
 
 
 def get_rates(*codes: str) -> dict:

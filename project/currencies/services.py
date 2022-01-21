@@ -4,7 +4,7 @@ from typing import NamedTuple, Union, Iterable
 from django.conf import settings
 from django.core.cache import cache
 
-from .models import Currency, get_rates
+from .models import Currency, get_rates, Money
 
 DEFAULT_CURRENCY_CODE = settings.DEFAULT_CURRENCY_CODE
 LOCAL_CURRENCIES = settings.LOCAL_CURRENCIES
@@ -26,6 +26,13 @@ CURRENCY_CHOICES = []
 
 currency_code_type = str
 CurrencyObj = Union[Currency, LightWeightCurrency]
+
+
+def display_amount(amount: Money, sym: str, put_symbol_after_amount=True) -> str:
+    if put_symbol_after_amount:
+        return f'{amount}{sym}'
+    else:
+        return f'{sym}{amount}'
 
 
 def get_currency_choices() -> tuple:

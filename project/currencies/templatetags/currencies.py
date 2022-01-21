@@ -3,7 +3,7 @@ import logging
 from django import template
 
 from currencies.models import Currency
-from currencies.services import _exchange, DEFAULT_CURRENCY
+from currencies.services import _exchange, DEFAULT_CURRENCY, display_amount
 
 register = template.Library()
 
@@ -19,5 +19,6 @@ def to_local_currency(context, amount):
     try:
         exchanged_amount = _exchange(amount, currency.rate)
     except Currency.DoesNotExist:
-        return f"{amount}{DEFAULT_CURRENCY.sym}"
-    return f'{exchanged_amount}{currency.sym}'
+        currency = Currency(sym=DEFAULT_CURRENCY.sym)
+        exchanged_amount = amount
+    return display_amount(exchanged_amount, currency.sym)
