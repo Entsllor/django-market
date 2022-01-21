@@ -62,7 +62,7 @@ def get_currency_by_code(code: currency_code_type) -> CurrencyObj:
             3600
         )
         if not currency:
-            raise Currency.DoesNotExist(f'Unknown code currency code: {code}')
+            raise Currency.DoesNotExist(f'Unknown currency code: {code}')
         return LightWeightCurrency(**currency)
 
 
