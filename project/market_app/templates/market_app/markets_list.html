@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load cache %}
 
-{% block title %}{% trans "Sellers" %}{% endblock %}
+{% block title %}{% trans "Markets" %}{% endblock %}
 
 {% block main_center_block %}
   {% cache 600 market_list CURRENT_LANGUAGE page_obj.number %}
