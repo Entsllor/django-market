@@ -120,9 +120,11 @@
     <div class="display-5">
       {% trans 'Your cart is empty' %}
     </div>
-    <div class="display-6">
-      {% trans 'But these products will interest you' %}
-    </div>
-    {% products_catalogue limit=12 %}
+    {% if products %}
+      <div class="display-6">
+        {% trans 'But these products will interest you' %}
+      </div>
+      {% products_catalogue limit=12 %}
+    {% endif %}
   {% endif %}
 {% endblock %}

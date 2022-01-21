@@ -303,8 +303,8 @@ class Cart(models.Model):
         return items_count_at_start - len(self.items)
 
     @property
-    def is_filled(self):
-        return self.items != self._default_cart_value
+    def is_filled(self) -> bool:
+        return self.items != self._default_cart_value()
 
     def prepare_items(self) -> int:
         """Remove invalid items if filled, save valid items and return count of removed items"""

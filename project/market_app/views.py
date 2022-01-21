@@ -18,7 +18,7 @@ from currencies.services import get_currency_code_by_language, DEFAULT_CURRENCY_
     get_exchanger
 from .forms import ProductForm, MarketForm, ProductUpdateForm, AddToCartForm, ProductTypeForm, CreditCardForm, \
     AdvancedSearchForm, CartForm, CheckOutForm, TopUpForm, AgreementForm
-from .models import Product, Market, ProductType, Operation, Order, OrderItem, Coupon
+from .models import Product, Market, ProductType, Operation, Order, OrderItem, Coupon, Cart
 from .services import top_up_balance, make_purchase, prepare_order, \
     get_products
 
@@ -197,7 +197,7 @@ class CartView(LoginRequiredMixin, generic.FormView):
     form_class = CartForm
 
     @property
-    def cart(self):
+    def cart(self) -> Cart:
         if not hasattr(self, '_cart'):
             cart = self.request.user.cart
             cart.prepare_items()
@@ -207,6 +207,8 @@ class CartView(LoginRequiredMixin, generic.FormView):
     def get_context_data(self, **kwargs):
         context = super(CartView, self).get_context_data(**kwargs)
         context['cart'] = self.cart
+        if not self.cart.is_filled:
+            context["products"] = get_products()
         return context
 
     def get_form_kwargs(self):
