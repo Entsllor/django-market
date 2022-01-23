@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     # third party apps
     'widget_tweaks',
     'django_cleanup',
+    'rest_framework',
     # local apps
     'core_app',
     'accounts',
@@ -169,6 +170,15 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+
+# DRF
+
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAdminUser"
+    ]
+}
+
 
 # Money and currencies
 MONEY_DECIMAL_PLACES = 2

@@ -23,7 +23,9 @@ urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')),
     path('site/', include('core_app.urls')),
     path('accounts/', include('accounts.urls')),
+    path('api-auth/', include('rest_framework.urls')),
     path('', include('market_app.urls')),
+    path('api/', include('market_app.api.urls')),
 ]
 
 urlpatterns.extend(static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT))
