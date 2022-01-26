@@ -135,7 +135,7 @@ class Product(models.Model):
         return self.name
 
     @property
-    def get_attributes(self) -> Iterable:
+    def attributes_as_list(self) -> Iterable:
         return map(str.strip, self.attributes.split('\n'))
 
     def get_types(self) -> QuerySet['ProductType']:

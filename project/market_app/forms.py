@@ -90,7 +90,7 @@ class ProductTypeForm(forms.ModelForm):
             self.product_type = kwargs.pop('product_type')
         super(ProductTypeForm, self).__init__(*args, **kwargs)
         self.instance.product = self.product
-        for attr in self.product.get_attributes:
+        for attr in self.product.attributes_as_list:
             if attr:
                 self.fields[attr] = forms.CharField(
                     label=attr,
@@ -103,7 +103,7 @@ class ProductTypeForm(forms.ModelForm):
 
     def save(self, commit=True):
         properties = {}
-        for attr in self.product.get_attributes:
+        for attr in self.product.attributes_as_list:
             if attr:
                 properties[attr] = self.cleaned_data.get(attr, '')
         self.instance.properties = properties

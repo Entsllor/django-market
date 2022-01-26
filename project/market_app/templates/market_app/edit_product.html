@@ -21,7 +21,7 @@
         <th scope="col">
           {% trans "amount" %}
         </th>
-        {% for attribute in product.get_attributes %}
+        {% for attribute in product.attributes_as_list %}
           <th scope="col">{{ attribute }}</th>
         {% endfor %}
         <th scope="col">{% trans "edit"|capfirst %}</th>
@@ -31,7 +31,7 @@
       {% for product_type in product.product_types.all %}
         <tr>
           <th>{{ product_type.units_count }}</th>
-          {% for attribute in product.get_attributes %}
+          {% for attribute in product.attributes_as_list %}
             <td>
               {{ product_type.properties_as_dict|get_by_key:attribute }}
             </td>
