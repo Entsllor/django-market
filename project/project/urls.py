@@ -25,7 +25,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('api-auth/', include('rest_framework.urls')),
     path('', include('market_app.urls')),
-    path('api/', include('market_app.api.urls')),
+    path('api/', include('market_app.api.urls', namespace="market-api")),
 ]
 
 urlpatterns.extend(static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT))
