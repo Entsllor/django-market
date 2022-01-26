@@ -6,17 +6,19 @@ from market_app.api.views import (
     BalanceViewSet, CartViewSet, CouponViewSet, UserViewSet,
 )
 
+app_name = "market-api"
+
 router = DefaultRouter()
 router.register("products", ProductViewSet)
 router.register("markets", MarketViewSet)
-router.register("product-category", ProductCategoryViewSet)
-router.register("product-type", ProductTypeViewSet)
-router.register("order-item", OrderItemViewSet)
-router.register("operation", OperationViewSet)
-router.register("balance", BalanceViewSet)
-router.register("coupon", CouponViewSet)
-router.register("order", OrderViewSet)
-router.register("user", UserViewSet)
-router.register("cart", CartViewSet)
+router.register("product-categories", ProductCategoryViewSet)
+router.register("product-types", ProductTypeViewSet)
+router.register("order-items", OrderItemViewSet)
+router.register("operations", OperationViewSet)
+router.register("balances", BalanceViewSet)
+router.register("coupons", CouponViewSet)
+router.register("orders", OrderViewSet)
+router.register("users", UserViewSet)
+router.register("carts", CartViewSet)
 
 urlpatterns = router.urls
