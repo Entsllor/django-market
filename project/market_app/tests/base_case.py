@@ -5,16 +5,13 @@ from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Model, QuerySet
+from django.db.models.base import ModelBase
 from django.db.models.signals import post_save
 from django.test import TransactionTestCase
 
 from currencies.models import Currency
 from market_app.models import Product, Market, ProductCategory, ProductType, Coupon, Cart, Balance, OrderItem, Order
 from market_app.services import prepare_order, top_up_balance, make_purchase
-
-
-class FailedToCreateObject(Exception):
-    """raise if failed to create an object"""
 
 
 def assert_difference(expected_difference):
@@ -37,25 +34,17 @@ def assert_difference(expected_difference):
 
 class BaseMarketTestCase(TransactionTestCase):
     reset_sequences = True
-    password = 'SomePassword123/'  # password for all accounts
+    default_password = 'Pass4TestUser'  # password for all accounts
     _user = None
 
     def setUp(self) -> None:
-        self.customer = self.create_customer()
-        self.seller = self.create_seller()
-        self.category = self.create_category()
-        self.market = self.create_market(owner=self.seller)
+        self._customer = self.create_customer()
+        self._seller = self.create_seller()
+        self._category = self.create_category()
+        self._market = self.create_market(owner=self.seller)
 
     def tearDown(self) -> None:
         cache.clear()
-
-    @property
-    def cart(self) -> Cart:
-        return Cart.objects.get(user_id=self._user.id)
-
-    @property
-    def balance(self):
-        return Balance.objects.get(user_id=self._user.id)
 
     @staticmethod
     def create_currencies():
@@ -69,16 +58,16 @@ class BaseMarketTestCase(TransactionTestCase):
             )
 
     def log_in_as_customer(self) -> bool:
-        return self._log_in(self.customer)
+        return self.log_in_as(self.customer)
 
     def log_in_as_seller(self) -> bool:
-        return self._log_in(self.seller)
+        return self.log_in_as(self.seller)
 
-    def _log_in(self, user) -> bool:
+    def log_in_as(self, user) -> bool:
         if not user.password:
-            user.set_password(self.password)
+            user.set_password(self.default_password)
             user.save()
-        logged_in = self.client.login(username=user.username, password=self.password)
+        logged_in = self.client.login(username=user.username, password=self.default_password)
         self._user = user
         return logged_in
 
@@ -86,9 +75,15 @@ class BaseMarketTestCase(TransactionTestCase):
     def user(self) -> User:
         return User.objects.get(pk=self._user.pk)
 
+    @property
+    def super_user(self):
+        if not hasattr(self, '_super_user'):
+            self._super_user = User.objects.create_superuser("TestSuperUser", password=self.default_password)
+        return User.objects.get(pk=self._super_user.pk)
+
     def create_customer(self, username='customer', password=None):
         if password is None:
-            password = self.password
+            password = self.default_password
         customer = User.objects.create_user(username=username, password=password)
         return customer
 
@@ -98,7 +93,7 @@ class BaseMarketTestCase(TransactionTestCase):
 
     def assertObjectDoesNotExist(self, query_set, **kwargs):
         """Fail if an object matching the given keyword arguments exists"""
-        if isinstance(query_set, Model):
+        if isinstance(query_set, (Model, ModelBase)):
             query_set = query_set.objects
         with self.assertRaises(ObjectDoesNotExist):
             return query_set.get(**kwargs)
@@ -127,130 +122,6 @@ class BaseMarketTestCase(TransactionTestCase):
             available=available, category=category
         )
         return product
-
-
-def _create_coupon(discount_percent, discount_limit):
-    return Coupon.objects.create(discount_percent=discount_percent, discount_limit=discount_limit)
-
-
-class TestBaseWithFilledCatalogue(BaseMarketTestCase):
-    DEFAULT_PRODUCT_PRICE = 100
-    PRODUCT_DATA = {
-        # product_id: {**product_data}
-        '1': {
-            'product_data': {
-                'market_id': 1,
-                'category_id': 1,
-                'original_price': DEFAULT_PRODUCT_PRICE
-            },
-            'types_data': {
-                # type_id: {**product_type_data}
-                '1': {'units_count': 10},
-                '2': {'units_count': 5},
-                '3': {'units_count': 0}
-            }
-        },
-        '2': {
-            'product_data': {
-                'market_id': 1,
-                'category_id': 1,
-                'original_price': DEFAULT_PRODUCT_PRICE
-            },
-            'types_data': {
-                '4': {'units_count': 10},
-                '5': {'units_count': 5},
-                '6': {'units_count': 0}
-            }
-        },
-        '3': {
-            'product_data': {
-                'market_id': 2,
-                'category_id': 1,
-                'original_price': DEFAULT_PRODUCT_PRICE
-            },
-            'types_data': {
-                '7': {'units_count': 10},
-                '8': {'units_count': 5},
-                '9': {'units_count': 0}
-            }
-        },
-        '4': {
-            'product_data': {
-                'market_id': 2,
-                'category_id': 2,
-                'original_price': DEFAULT_PRODUCT_PRICE
-            },
-            'types_data': {
-                '10': {'units_count': 10},
-                '11': {'units_count': 5},
-                '12': {'units_count': 0}
-            }
-        },
-        '5': {
-            'product_data': {
-                'market_id': 3,
-                'category_id': 2,
-                'original_price': DEFAULT_PRODUCT_PRICE
-            },
-            'types_data': {
-                '13': {'units_count': 10},
-                '14': {'units_count': 5},
-                '15': {'units_count': 0}
-            }
-        },
-        '6': {
-            'product_data': {
-                'market_id': 3,
-                'category_id': 2,
-                'original_price': DEFAULT_PRODUCT_PRICE
-            },
-            'types_data': {
-                '16': {'units_count': 10},
-                '17': {'units_count': 5},
-                '18': {'units_count': 0}
-            }
-        },
-        '7': {
-            'product_data': {
-                'market_id': 4,
-                'category_id': 2,
-                'original_price': DEFAULT_PRODUCT_PRICE
-            },
-            'types_data': {
-                '19': {'units_count': 10},
-                '20': {'units_count': 5},
-                '21': {'units_count': 0}
-            }
-        },
-        '8': {
-            'product_data': {
-                'market_id': 4,
-                'category_id': 3,
-                'original_price': DEFAULT_PRODUCT_PRICE
-            },
-            'types_data': {
-                '22': {'units_count': 10},
-                '23': {'units_count': 5},
-                '24': {'units_count': 0}
-            }
-        },
-    }
-
-    def setUp(self) -> None:
-        assert not User.objects.exists()
-        assert not ProductType.objects.exists()
-        assert not ProductCategory.objects.exists()
-        assert not Product.objects.exists()
-        assert not Market.objects.exists()
-        self._init_categories(range(1, 4))
-        self.category = ProductCategory.objects.get(id=1)
-        sellers = self._init_users(range(1, 6), name_prefix='seller_')
-        self._init_markets(sellers)
-        self.seller = self.sellers.get(id=1)
-        self._init_products(self.PRODUCT_DATA)
-        self._init_product_types(self.PRODUCT_DATA)
-        self._init_users([6, 7], name_prefix='customer_')
-        self.customer = self.customers.get(pk=6)
 
     @staticmethod
     def _init_users(id_list, name_prefix='user_'):
@@ -296,7 +167,7 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
         ProductType.objects.bulk_create(types)
 
     def create_and_set_coupon(self, discount_percent=0, discount_limit=0) -> Coupon:
-        coupon = _create_coupon(discount_percent, discount_limit)
+        coupon = Coupon.objects.create(discount_percent=discount_percent, discount_limit=discount_limit)
         coupon.customers.add(self.user)
         return coupon
 
@@ -318,12 +189,32 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
         return User.objects.filter(market__isnull=False)
 
     @property
+    def seller(self):
+        return User.objects.get(pk=self._seller.pk)
+
+    @property
+    def customer(self):
+        return User.objects.get(pk=self._customer.pk)
+
+    @property
+    def category(self):
+        return ProductCategory.objects.get(pk=self._category.pk)
+
+    @property
     def customers(self):
         return User.objects.filter(market__isnull=True)
 
     @property
     def products(self):
         return Product.objects.all()
+
+    @property
+    def cart(self) -> Cart:
+        return Cart.objects.get(user_id=self._user.id)
+
+    @property
+    def balance(self):
+        return Balance.objects.get(user_id=self._user.id)
 
     @property
     def product_types(self):
@@ -335,23 +226,8 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
         ).filter(payment__user_id=self.market.owner_id)
 
     @staticmethod
-    def all_items_are_shipped(ids):
+    def are_items_shipped(ids):
         return not OrderItem.objects.filter(id__in=ids, is_shipped=False).exists()
-
-    def _init_orders(self):
-        cur_user = self._user
-        self._log_in(User.objects.get(username='customer_6'))
-        top_up_balance(self.user.id, 10000)
-        self.order_1 = self.prepare_order({'1': 2, '3': 1})
-        make_purchase(self.order_1)
-        self.order_2 = self.prepare_order({'1': 5, '3': 2, '5': 4, '8': 4})
-        make_purchase(self.order_2)
-        self._log_in(User.objects.get(username='customer_7'))
-        top_up_balance(self.user.id, 700)
-        self.order_3 = self.prepare_order({'4': 3, '13': 3})
-        make_purchase(self.order_3)
-        if cur_user:
-            self._log_in(cur_user)
 
     def fill_cart(self, types_to_add):
         cart = self.cart
@@ -365,3 +241,144 @@ class TestBaseWithFilledCatalogue(BaseMarketTestCase):
         Cart.objects.filter(pk=self.cart.pk).update(items=order_items)
         self._order = prepare_order(self.cart)
         return self._order
+
+
+class FilledCatalogueMixin:
+    _default_product_price = 100
+    _product_data = {
+        # product_id: {**product_data}
+        '1': {
+            'product_data': {
+                'market_id': 1,
+                'category_id': 1,
+                'original_price': _default_product_price
+            },
+            'types_data': {
+                # type_id: {**product_type_data}
+                '1': {'units_count': 10},
+                '2': {'units_count': 5},
+                '3': {'units_count': 0}
+            }
+        },
+        '2': {
+            'product_data': {
+                'market_id': 1,
+                'category_id': 1,
+                'original_price': _default_product_price
+            },
+            'types_data': {
+                '4': {'units_count': 10},
+                '5': {'units_count': 5},
+                '6': {'units_count': 0}
+            }
+        },
+        '3': {
+            'product_data': {
+                'market_id': 2,
+                'category_id': 1,
+                'original_price': _default_product_price
+            },
+            'types_data': {
+                '7': {'units_count': 10},
+                '8': {'units_count': 5},
+                '9': {'units_count': 0}
+            }
+        },
+        '4': {
+            'product_data': {
+                'market_id': 2,
+                'category_id': 2,
+                'original_price': _default_product_price
+            },
+            'types_data': {
+                '10': {'units_count': 10},
+                '11': {'units_count': 5},
+                '12': {'units_count': 0}
+            }
+        },
+        '5': {
+            'product_data': {
+                'market_id': 3,
+                'category_id': 2,
+                'original_price': _default_product_price
+            },
+            'types_data': {
+                '13': {'units_count': 10},
+                '14': {'units_count': 5},
+                '15': {'units_count': 0}
+            }
+        },
+        '6': {
+            'product_data': {
+                'market_id': 3,
+                'category_id': 2,
+                'original_price': _default_product_price
+            },
+            'types_data': {
+                '16': {'units_count': 10},
+                '17': {'units_count': 5},
+                '18': {'units_count': 0}
+            }
+        },
+        '7': {
+            'product_data': {
+                'market_id': 4,
+                'category_id': 2,
+                'original_price': _default_product_price
+            },
+            'types_data': {
+                '19': {'units_count': 10},
+                '20': {'units_count': 5},
+                '21': {'units_count': 0}
+            }
+        },
+        '8': {
+            'product_data': {
+                'market_id': 4,
+                'category_id': 3,
+                'original_price': _default_product_price
+            },
+            'types_data': {
+                '22': {'units_count': 10},
+                '23': {'units_count': 5},
+                '24': {'units_count': 0}
+            }
+        },
+    }
+    _categories_count = 3
+    _sellers_count = 5
+    _customers_count = 2
+
+
+class TestBaseWithFilledCatalogue(FilledCatalogueMixin, BaseMarketTestCase):
+    def setUp(self) -> None:
+        assert not User.objects.exists()
+        assert not ProductType.objects.exists()
+        assert not ProductCategory.objects.exists()
+        assert not Product.objects.exists()
+        assert not Market.objects.exists()
+        self._init_categories(range(1, self._categories_count + 1))
+        self._category = ProductCategory.objects.get(id=1)
+        sellers = self._init_users(range(1, 6), name_prefix='seller_')
+        self._init_markets(sellers)
+        self._seller = self.sellers.get(id=1)
+        self._init_products(self._product_data)
+        self._init_product_types(self._product_data)
+        self._init_users(
+            range(self._sellers_count + 1, self._sellers_count + self._customers_count + 1), name_prefix='customer_')
+        self._customer = self.customers.get(pk=6)
+
+    def _init_orders(self):
+        user_at_start = self._user
+        self.log_in_as(User.objects.get(username=f'customer_{self._sellers_count + 1}'))
+        top_up_balance(self.user.id, 10000)
+        self.order_1 = self.prepare_order({'1': 2, '3': 1})
+        make_purchase(self.order_1)
+        self.order_2 = self.prepare_order({'1': 5, '3': 2, '5': 4, '8': 4})
+        make_purchase(self.order_2)
+        self.log_in_as(User.objects.get(username=f'customer_{self._sellers_count + 2}'))
+        top_up_balance(self.user.id, 700)
+        self.order_3 = self.prepare_order({'4': 3, '13': 3})
+        make_purchase(self.order_3)
+        if user_at_start:
+            self.log_in_as(user_at_start)

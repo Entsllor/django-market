@@ -4,6 +4,7 @@ from typing import Iterable, Union
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models import F, QuerySet, Sum
@@ -13,7 +14,7 @@ from django.utils.translation import gettext_lazy as _
 from market_app.validators import default_image_format_validator, product_image_size_validator, \
     market_logo_size_validator, product_attributes_symbols_validator, product_type_property_symbols_validator
 
-User = get_user_model()
+User: User = get_user_model()
 MAX_PRODUCT_PRICE_DIGITS_COUNT = settings.MAX_PRODUCT_PRICE_DIGITS_COUNT
 MAX_BALANCE_DIGITS_COUNT = settings.MAX_BALANCE_DIGITS_COUNT
 MONEY_DECIMAL_PLACES = settings.MONEY_DECIMAL_PLACES

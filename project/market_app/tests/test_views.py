@@ -1,6 +1,5 @@
 from decimal import Decimal
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.test import TransactionTestCase
 from django.urls import reverse_lazy
@@ -139,7 +138,6 @@ class ProductCreateTest(ViewTestMixin, BaseMarketTestCase):
         self.create_currencies()
         super(ProductCreateTest, self).setUp()
         self.created_product = None
-        self.market = self.seller.market
         self.product_data = {
             'name': 'TestProductName', 'description': 'text', 'market': self.market,
             'original_price': 100, 'discount_percent': 0,
@@ -210,7 +208,7 @@ class ProductEditTest(ViewTestMixin, BaseMarketTestCase):
     def setUp(self) -> None:
         self.create_currencies()
         super(ProductEditTest, self).setUp()
-        self.new_category = self.create_category('NewProductCategory')
+        self.new_category = self.create_category('_ProductEditTest__NewCategoryName')
         self.old_data = {
             'name': 'OldProductName', 'description': 'text',
             'original_price': 100, 'discount_percent': 0,
@@ -251,7 +249,7 @@ class ProductEditTest(ViewTestMixin, BaseMarketTestCase):
 
     def test_edit_product_if_user_is_not_owner(self):
         new_seller = self.create_seller(username='NewSeller')
-        self.client.login(username=new_seller.username, password=self.password)
+        self.client.login(username=new_seller.username, password=self.default_password)
         self.assertEqual(self.product.name, self.old_data['name'])
         response = self.post_to_product_edit(self.product.id, self.new_data)
         self.assertEqual(response.status_code, 403)
@@ -306,10 +304,9 @@ class MarketEditTest(ViewTestMixin, BaseMarketTestCase):
         super(MarketEditTest, self).setUp()
         self.old_data = {'name': 'OldName', 'description': 'OldDescription'}
         self.new_data = {'name': 'NewName', 'description': 'NewDescription'}
-        self.market = self.seller.market
         for key, value in self.old_data.items():
-            setattr(self.market, key, value)
-        self.market.save()
+            setattr(self._market, key, value)
+        self._market.save()
 
     def get_url(self):
         return reverse_lazy('market_app:edit_market', kwargs={'pk': self.market.pk})
@@ -355,7 +352,7 @@ class MarketEditTest(ViewTestMixin, BaseMarketTestCase):
 
     def test_can_another_seller_edit_side_market(self):
         another_seller = self.create_seller(username="AnotherSeller")
-        self.client.login(username=another_seller, password=self.password)
+        self.client.login(username=another_seller, password=self.default_password)
         response = self.post_to_market_edit(market=self.market)
         for key in self.new_data:
             self.assertEqual(getattr(self.market, key), self.old_data[key])
@@ -373,11 +370,15 @@ class MarketEditTest(ViewTestMixin, BaseMarketTestCase):
 class MarketCreateViewsTest(ViewTestMixin, BaseMarketTestCase):
     ViewClass = MarketCreateView
     page_url = reverse_lazy('market_app:create_market')
+    market_data = {
+        'name': '_MarketCreateViewsTest__MarketName',
+        'description': '_MarketCreateViewsTest__MarketDescription'
+    }
 
     def setUp(self) -> None:
-        self.market_data = {'name': 'TestMarketName', 'description': 'some text'}
-        self.customer = self.create_customer()
-        self.seller = self.create_seller()
+        super(MarketCreateViewsTest, self).setUp()
+        self._seller = self.create_seller(username='_MarketCreateViewsTest__SellerName')
+        self.assertObjectDoesNotExist(Market, name=self.market_data['name'])
 
     def post_to_market_create(self, data: dict = None, extra_data: dict = None, check_unique=True, **kwargs):
         if data is None:
@@ -385,30 +386,17 @@ class MarketCreateViewsTest(ViewTestMixin, BaseMarketTestCase):
         data = data.copy()
         if extra_data:
             data.update(extra_data)
-
-        if check_unique:
-            self.assertObjectDoesNotExist(Market.objects, name=data['name'])
         response = self.post_to_page(self.page_url, data=data, **kwargs)
-        self.try_set_created_market(**data)
         return response
-
-    def try_set_created_market(self, **data):
-        try:
-            self.created_market: Market = Market.objects.get(**data)
-        except ObjectDoesNotExist:
-            self.created_market = None
 
     def test_can_create_market(self):
         self.log_in_as_seller()
         self.post_to_market_create()
-        self.assertIsInstance(self.created_market, Market)
-        self.assertEqual(self.created_market.owner.id, self.user.id)
+        self.assertIsInstance(self.seller.market, Market)
 
     def test_cannot_post_if_logged_out(self):
         self.client.logout()
         response = self.post_to_market_create()
-        self.assertEqual(self.created_market, None)
-        self.assertFalse(Market.objects.exists())
         self.assertRedirectsAuth(response)
 
     def test_redirects_after_create(self):
@@ -474,7 +462,7 @@ class ProductTypeEditTest(ViewTestMixin, BaseMarketTestCase):
     def test_edit_if_not_owner(self):
         units_count = 10
         new_seller = self.create_seller(username='NewSeller')
-        self.client.login(username=new_seller.username, password=self.password)
+        self.client.login(username=new_seller.username, password=self.default_password)
         response = self.post_to_edit_type(pk=self.product.pk, units_count=units_count)
         self.assertEqual(response.status_code, 403)
 
@@ -699,8 +687,8 @@ class PayingTest(ViewTestMixin, TestBaseWithFilledCatalogue):
     def test_cannot_post_if_user_id_does_not_equal_order_owner_id(self):
         units_to_buy = {'1': 1}
         self.prepare_order(units_to_buy)
-        self.customer = User.objects.get(username='customer_7')
-        self.assertTrue(self.log_in_as_customer())
+        customer = User.objects.get(username='customer_7')
+        self.assertTrue(self.log_in_as(customer))
         self.assertFalse(self.order.operation_id)
         response = self.post_to_page(data=self.test_credit_cart_data)
         self.assertEqual(response.status_code, 403)
@@ -791,8 +779,8 @@ class OrderDetailTest(ViewTestMixin, TestBaseWithFilledCatalogue):
 
     def test_another_user_cant_see_details(self):
         self.client.logout()
-        self.customer = self.customers.filter(~Q(id=self.order.user_id)).first()
-        self.log_in_as_customer()
+        customer = self.customers.filter(~Q(id=self.order.user_id)).first()
+        self.log_in_as(customer)
         response = self.get_from_page()
         self.assertEqual(response.status_code, 403)
 
@@ -866,7 +854,7 @@ class ShippingPageTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         self.assertTrue(items_to_mark_pks)
         self.assertTrue(items_not_to_mark_pks)
         self.post_to_page(data={f'item_{pk}': 'on' for pk in items_to_mark_pks})
-        self.assertTrue(self.all_items_are_shipped(items_to_mark_pks))
+        self.assertTrue(self.are_items_shipped(items_to_mark_pks))
         self.assertFalse(any(order_items.filter(id__in=items_not_to_mark_pks).values_list('is_shipped', flat=True)))
 
     def test_cannot_post_if_logged_out(self):
@@ -889,7 +877,7 @@ class ShippingPageTest(ViewTestMixin, TestBaseWithFilledCatalogue):
         order_items.update(is_shipped=True)
         items_to_unmark_pks = order_items.filter(product_type_id__in=(3, 5)).values_list('pk', flat=True)
         self.post_to_page(data={f'item_{pk}': 'off' for pk in items_to_unmark_pks})
-        self.assertTrue(self.all_items_are_shipped(items_to_unmark_pks))
+        self.assertTrue(self.are_items_shipped(items_to_unmark_pks))
 
     def test_order_has_changed_its_status(self):
         self._init_orders()

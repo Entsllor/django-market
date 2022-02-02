@@ -15,8 +15,8 @@ def get_product_type(pk):
 
 class ChangeBalanceTest(BaseMarketTestCase):
     def setUp(self) -> None:
-        self.customer = self.create_customer()
-        self.log_in_as_customer()
+        self._customer = self.create_customer()
+        self.log_in_as(self._customer)
 
     def check_data_to_compare(self):
         return self.balance.amount
