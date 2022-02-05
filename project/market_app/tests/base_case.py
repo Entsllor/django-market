@@ -32,36 +32,20 @@ def assert_difference(expected_difference):
     return decorator
 
 
-class BaseMarketTestCase(TransactionTestCase):
+class BaseTestCase(TransactionTestCase):
     reset_sequences = True
     default_password = 'Pass4TestUser'  # password for all accounts
     _user = None
 
-    def setUp(self) -> None:
-        self._customer = self.create_customer()
-        self._seller = self.create_seller()
-        self._category = self.create_category()
-        self._market = self.create_market(owner=self.seller)
-
     def tearDown(self) -> None:
         cache.clear()
 
-    @staticmethod
-    def create_currencies():
-        rates = {code: 50 for code in settings.EXTRA_CURRENCIES}
-        rates[settings.DEFAULT_CURRENCY_CODE] = 1
-        for currency_code in settings.CURRENCIES:
-            Currency.objects.update_or_create(
-                code=currency_code,
-                sym=settings.CURRENCIES_SYMBOLS.get(currency_code, '?'),
-                rate=rates[currency_code]
-            )
-
-    def log_in_as_customer(self) -> bool:
-        return self.log_in_as(self.customer)
-
-    def log_in_as_seller(self) -> bool:
-        return self.log_in_as(self.seller)
+    def assertObjectDoesNotExist(self, query_set, **kwargs):
+        """Fail if an object matching the given keyword arguments exists"""
+        if isinstance(query_set, (Model, ModelBase)):
+            query_set = query_set.objects
+        with self.assertRaises(ObjectDoesNotExist):
+            return query_set.get(**kwargs)
 
     def log_in_as(self, user) -> bool:
         if not user.password:
@@ -81,6 +65,31 @@ class BaseMarketTestCase(TransactionTestCase):
             self._super_user = User.objects.create_superuser("TestSuperUser", password=self.default_password)
         return User.objects.get(pk=self._super_user.pk)
 
+
+class BaseMarketTestCase(BaseTestCase):
+    def setUp(self) -> None:
+        self._customer = self.create_customer()
+        self._seller = self.create_seller()
+        self._category = self.create_category()
+        self._market = self.create_market(owner=self.seller)
+
+    @staticmethod
+    def create_currencies():
+        rates = {code: 50 for code in settings.EXTRA_CURRENCIES}
+        rates[settings.DEFAULT_CURRENCY_CODE] = 1
+        for currency_code in settings.CURRENCIES:
+            Currency.objects.update_or_create(
+                code=currency_code,
+                sym=settings.CURRENCIES_SYMBOLS.get(currency_code, '?'),
+                rate=rates[currency_code]
+            )
+
+    def log_in_as_customer(self) -> bool:
+        return self.log_in_as(self.customer)
+
+    def log_in_as_seller(self) -> bool:
+        return self.log_in_as(self.seller)
+
     def create_customer(self, username='customer', password=None):
         if password is None:
             password = self.default_password
@@ -90,13 +99,6 @@ class BaseMarketTestCase(TransactionTestCase):
     def create_seller(self, username='seller', password=None):
         seller = self.create_customer(username=username, password=password)
         return seller
-
-    def assertObjectDoesNotExist(self, query_set, **kwargs):
-        """Fail if an object matching the given keyword arguments exists"""
-        if isinstance(query_set, (Model, ModelBase)):
-            query_set = query_set.objects
-        with self.assertRaises(ObjectDoesNotExist):
-            return query_set.get(**kwargs)
 
     def create_market(self, **kwargs):
         if 'owner' not in kwargs:
@@ -243,7 +245,7 @@ class BaseMarketTestCase(TransactionTestCase):
         return self._order
 
 
-class FilledCatalogueMixin:
+class TestBaseWithFilledCatalogue(BaseMarketTestCase):
     _default_product_price = 100
     _product_data = {
         # product_id: {**product_data}
@@ -349,8 +351,6 @@ class FilledCatalogueMixin:
     _sellers_count = 5
     _customers_count = 2
 
-
-class TestBaseWithFilledCatalogue(FilledCatalogueMixin, BaseMarketTestCase):
     def setUp(self) -> None:
         assert not User.objects.exists()
         assert not ProductType.objects.exists()
