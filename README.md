@@ -31,16 +31,16 @@ On Windows:
 ## Installation
 
 ```shell
-git clone https://github.com/Entsllor/django_market
+git clone https://github.com/Entsllor/django-market
 ```
 
 ## Configuration
 
-Create .env file in django_market/project
+Create .env file in django-market/project
 and put project env variables you need according to a .env.template
 
 ```shell
-cd django_market/project
+cd django-market/project
 # [optional] use template
 cat .env.template > .env
 # edit file
